@@ -1,0 +1,25 @@
+var searchData=
+[
+  ['f_5florentzian_65',['f_Lorentzian',['../namespacedmerge.html#a322943a152d4d4ee88bdf45093e38101',1,'dmerge']]],
+  ['fftgain_66',['fftgain',['../classdmerge_1_1_fixed_data.html#a911c56e3a7ace0471e57053249d027e9',1,'dmerge.FixedData.fftgain()'],['../classdmerge_1_1_t_o_ds.html#a5dd01710f324fb1aca2254368630ec59',1,'dmerge.TODs.fftgain()']]],
+  ['fig1_67',['fig1',['../namespaceplot.html#aded85a6f9b5b10867e1799b1442c5359',1,'plot']]],
+  ['fig2_68',['fig2',['../namespaceplot.html#a6e5fa4a9a44f55274e69f191e527c80d',1,'plot']]],
+  ['filename_69',['filename',['../namespacecalc__resonance__params.html#a32861371321ebed454b78cbbdc2e9b6c',1,'calc_resonance_params.filename()'],['../namespaceplot.html#a10cf634990454ca5d82d4e1d7d314940',1,'plot.filename()']]],
+  ['find_5fglitch_70',['find_glitch',['../namespacedmerge.html#a485ef880934aee663033a7285816bf26',1,'dmerge']]],
+  ['find_5fnearest_5fblind_5ftones_71',['find_nearest_blind_tones',['../namespacedmerge.html#a5c5f354b614667caaf5213c5bb944133',1,'dmerge']]],
+  ['find_5fpeaks_72',['find_peaks',['../namespacedmerge.html#a395e452ead51556992d27cc181fea261',1,'dmerge.find_peaks()'],['../namespacedeshima.html#a8ec6c59581e29b68486b48b62f7e8bfd',1,'deshima.find_peaks()']]],
+  ['fit_5fonepeak_73',['fit_onepeak',['../namespacedmerge.html#a1bb4b2855e6f6ba8be356cd3e0bc17d3',1,'dmerge.fit_onepeak()'],['../namespacedeshima.html#aa4dab5b5999ca9d1ea2383ca741ae413',1,'deshima.fit_onepeak(dat, fc, errors=None, nfwhm=3, fitter=&apos;gaolinbg&apos;, Q_search=10000, plot=False)']]],
+  ['fit_5fonepeak_5fkai_74',['fit_onepeak_kai',['../namespacedeshima.html#a580034914b9a73098b5e676345cfa2ea',1,'deshima']]],
+  ['fitlorentzian_75',['fitLorentzian',['../namespacedmerge.html#a7c621ad35f72bace4f3c9eb627a3278b',1,'dmerge.fitLorentzian()'],['../namespacedeshima.html#a751a4acfd393a04950f9bd7496d7d153',1,'deshima.fitLorentzian()']]],
+  ['fitparamdict_76',['fitparamdict',['../classdeshima_1_1_kid_fit_result.html#ad06c5f62c5a6fe2d62a3fc04158b5dbc',1,'deshima::KidFitResult']]],
+  ['fitrange_77',['fitrange',['../classdeshima_1_1_kid_fit_result.html#a5ba4b7bce7ff693a9aa4c02c1130acba',1,'deshima::KidFitResult']]],
+  ['fitted_78',['fitted',['../classdeshima_1_1_kid_fit_result.html#a9c45f85cb5a2e1410c531a35ce6746c9',1,'deshima::KidFitResult']]],
+  ['fixeddata_79',['FixedData',['../classdmerge_1_1_fixed_data.html',1,'dmerge']]],
+  ['fixedfitdata_80',['FixedFitData',['../classdmerge_1_1_fixed_fit_data.html',1,'dmerge']]],
+  ['form_5ffitstime_81',['FORM_FITSTIME',['../namespacemerge__function.html#a2d0370761e5595af706e7567c5d91659',1,'merge_function.FORM_FITSTIME()'],['../namespacemerge__to__dfits.html#a39d0b9e07056a4e2a810e7686f2f81e8',1,'merge_to_dfits.FORM_FITSTIME()']]],
+  ['form_5ffitstime_5fp_82',['FORM_FITSTIME_P',['../namespacemerge__function.html#a53feafb597de2241f1f0e4310c756149',1,'merge_function.FORM_FITSTIME_P()'],['../namespacemerge__to__dfits.html#ac107e44563a51a0b1425a8108439b894',1,'merge_to_dfits.FORM_FITSTIME_P()']]],
+  ['framenr_83',['framenr',['../classdmerge_1_1_t_o_ds.html#ae9c07a54710c6e79c02103187e662e24',1,'dmerge::TODs']]],
+  ['framert_84',['framert',['../classdmerge_1_1_t_o_ds.html#a8001ce20c8011fd68d6acf1a9be713a9',1,'dmerge::TODs']]],
+  ['freq_85',['freq',['../classdmerge_1_1_fixed_data.html#afd48bc01a7a854f793913baf43c3b979',1,'dmerge.FixedData.freq()'],['../classdmerge_1_1_sweep_data.html#a87b882a189de131abea03bac57d806a6',1,'dmerge.SweepData.freq()']]],
+  ['frequency_86',['frequency',['../classdmerge_1_1_fixed_fit_data.html#a9b43f96f7adb3ea67073afc92e6a1bb9',1,'dmerge.FixedFitData.frequency()'],['../classdmerge_1_1_fixed_data.html#ae66f9646dcedcafb4557e32a094a07db',1,'dmerge.FixedData.frequency()']]]
+];

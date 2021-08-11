@@ -64,7 +64,8 @@ if [ -z $GRAPH_DIR ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
 if [ -z $DATA_DIR ]; then
-    DATA_DIR="../raw_dataset/obs" # 観測データの場所の規定値
+    #DATA_DIR="../raw_dataset/obs" # 観測データの場所の規定値
+    DATA_DIR="/home/deshima/desql/ASTE2017/data/ASTE2017/obs" # 観測データの場所の規定値
 fi
 
 # キャッシュやグラフを格納するディレクトリを作成する
@@ -130,7 +131,7 @@ python mergetofits.py \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs" \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant" \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea" \
-       "../caldb/DDB_20180619.fits.gz" \
+       "DDB_20180619.fits.gz" \
        "dfits_dict.yaml" \
        "cabin.db"
 if [ $? -ne 0 ]; then

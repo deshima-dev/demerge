@@ -1,1 +1,3 @@
 # dmerge
+DFITSをASTE生データからマージするスクリプト
+内藤さんrefactoring済み

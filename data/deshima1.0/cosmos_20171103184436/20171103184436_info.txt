@@ -1,0 +1,10 @@
+# OBSERVATION INFO
+# chain = 0
+# framelen = 19
+# averages = 24
+# scalebits = 10
+# ntones = 113
+# inattenuator = 20
+# outattenuator = 5
+# adcmin = -176
+# adcmax = 175

@@ -1,0 +1,26 @@
+# DESHIMA 1.0 raw data
+## pointing
+- cosmos_20171110114116 (mars_azel_raster_1cosmos_20_d6_t4)
+## subref z scan
+- cosmos_20171103184436 (saturn_zscan_cont)
+## beammap/fluxcal
+- cosmos_20171111110002 (mars_azel_raster_240_d3_t4)
+## skydip
+- cosmos_20171111103248 (skydip_el32-88)
+## science map
+- cosmos_20171113070539 (orikl_radec_raster_240_d6_t4)
+
+# .fits のgzip
+- githubの制限のため、cosmos_*/2017*.fitsはgzipした。データ容量が半分になるので、SRON読み出しの出力時に自動でしてもらうとよい
+
+# D2 testデータの生成
+> cp -r deshima1.0 deshima2.0
+> sh make_d2_data.sh
+
+# その他
+- 参考までにskychop, bbchop, misty, cabinの生データも置いておく
+  - in D2_supplements dir.
+  - MiSTY data provided by Tamura-san: 0803102015_comp.txt 
+  - Skychop data provided by Karatsu-san: xytrace.txt
+  - cabin temperature from D1 dataset: cabin_201711
+  - BBchopper from D1 dataset: chopper

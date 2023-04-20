@@ -18,7 +18,7 @@
 > sh make_d2_data.sh
 
 # その他
-- 参考までにskychop, bbchop, misty, cabinの生データも置いておく
+- 参考までにskychop, roomchop, misty, cabinの生データも置いておく
   - in D2_supplements dir.
   - MiSTY data provided by Tamura-san: 0803102015_comp.txt 
   - Skychop data provided by Karatsu-san: xytrace.txt

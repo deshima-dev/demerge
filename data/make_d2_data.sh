@@ -14,10 +14,13 @@ for d in $data_d2; do
     NR=`echo "$ant_time_data" | wc -l `
     echo "$obsid $t_max $t_min $NR"
     echo "# MiSTY test data" > $obsid.misty
-    echo '#X Y timestamp framecnt Z flag' > ${obsid}.skychop
-    echo '# /data/spacekids/local/bin/des_chopper_logger.py /data/spacekids/data/log_chile/des_chopper/chopper --ip 192.168.2.181 --port 4001 --interval 1 --n_heaters 0 --n_motors 1 --rotate_daily# /data/spacekids/local/bin/des_chopper_logger.py /data/spacekids/data/log_chile/des_chopper/chopper --ip 192.168.2.181 --port 4001 --interval 1 --n_heaters 0 --n_motors 1 --rotate_daily\n# [ 1] C Time\n# [ 2] motor0: 126 127    ready\n# [ 3] motor0: 126 127    move\n# [ 4] motor0: 126 127    inposition\n# [ 5] motor0: 128 129    current alarm code\n# [ 6] motor0: 194 195    current selected  data No.\n# [ 7] motor0: 196 197    current operation data No.\n# [ 8] motor0: 198 199    command position\n# [ 9] motor0: 200 201    command speed [r/min]\n# [10] motor0: 202 203    command speed [Hz]\n# [11] motor0: 204 205    feedback position\n# [12] motor0: 206 207    feedback speed [r/min]\n# [13] motor0: 208 209    feedback speed [Hz]\n# [14] motor0: 210 211    remaining dwell time [msec]\n# [15] motor0: 212 213    direct I/O\n# [16] motor0: 214 215    torque monitor\n# [17] motor0: 218 219    cumulative load monitor\n# [18] motor0: 248 249    driver temperature [degC]\n# [19] motor0: 250 251    motor temperature  [degC]\n# [20] motor0: 252 253    odometer  [kRev]\n# [21] motor0: 254 255    tripmeter [kRev]\n' > ${obsid}.bbchop
+    echo '#set velocity (rpm): 87.000000\n#set smapling rate (Hz): 1000.000000\n#ts state' > ${obsid}.skychop
+    echo '# /data/spacekids/local/bin/des_chopper_logger.py /data/spacekids/data/log_chile/des_chopper/chopper --ip 192.168.2.181 --port 4001 --interval 1 --n_heaters 0 --n_motors 1 --rotate_daily# /data/spacekids/local/bin/des_chopper_logger.py /data/spacekids/data/log_chile/des_chopper/chopper --ip 192.168.2.181 --port 4001 --interval 1 --n_heaters 0 --n_motors 1 --rotate_daily\n# [ 1] C Time\n# [ 2] motor0: 126 127    ready\n# [ 3] motor0: 126 127    move\n# [ 4] motor0: 126 127    inposition\n# [ 5] motor0: 128 129    current alarm code\n# [ 6] motor0: 194 195    current selected  data No.\n# [ 7] motor0: 196 197    current operation data No.\n# [ 8] motor0: 198 199    command position\n# [ 9] motor0: 200 201    command speed [r/min]\n# [10] motor0: 202 203    command speed [Hz]\n# [11] motor0: 204 205    feedback position\n# [12] motor0: 206 207    feedback speed [r/min]\n# [13] motor0: 208 209    feedback speed [Hz]\n# [14] motor0: 210 211    remaining dwell time [msec]\n# [15] motor0: 212 213    direct I/O\n# [16] motor0: 214 215    torque monitor\n# [17] motor0: 218 219    cumulative load monitor\n# [18] motor0: 248 249    driver temperature [degC]\n# [19] motor0: 250 251    motor temperature  [degC]\n# [20] motor0: 252 253    odometer  [kRev]\n# [21] motor0: 254 255    tripmeter [kRev]' > ${obsid}.bbchop
     echo '# cabin temperature' > ${obsid}.cabin
- 
+
+    ut_start=`date -d "$(echo $t_min | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
+    ut_end=`date -d "$(echo $t_max | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
+	
     for t in ${ant_time_data}; do
         ut=`date -d "$(echo $t | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%2N`
 	
@@ -29,10 +32,15 @@ for d in $data_d2; do
 	fi
         cabin_data2="$cabin_data"
 	
-	echo "103.0 82.6 $ut 29929 0.0 0" >> $obsid.skychop
 	
-	echo "$ut 0 1 0 00 210 210 294.20 3000 10.000 289.60 3000 10.000 0 80340000 17.5   36 26.80 37.30 223543 223543" >> $obsid.bbchop
+	echo "$ut 0 1 0 00 210 210 294.20 3000 10.000 289.60 3000 10.000 0 80340000 17.5   36 26.80 37.30 223543 223543" >> $obsid.roomchop
     done 
+   
+    for ut in `seq $ut_start 0.0010 $ut_end`; do
+	echo "$ut 1" >> $obsid.skychop
+    done
+    #gzip $obsid.skychop    
+    
     cd ../../
 done
 

@@ -25,7 +25,7 @@ DFITSをASTE生データからマージするスクリプト
 $ pip install -q "dems==0.2.0"
 ```
 
-参考:!https://github.com/deshima-dev/dems
+参考:https://github.com/deshima-dev/dems
 
 # 実行例
 

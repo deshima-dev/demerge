@@ -87,7 +87,7 @@ START_TIME=`date +%s`
 python make_divided_data.py \
        "${DATA_DIR}/cosmos_${OBSID}/kids.list" \
        "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits" \
+       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" \
        "${CACHE_DIR}/${OBSID}"
 if [ $? -ne 0 ]; then
     echo "失敗:make_divided_data.py"

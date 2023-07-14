@@ -877,7 +877,7 @@ def cartesian2darray_to_complex(x):
     size = x.shape[-1] / 2
     return x[...,:size] + 1j*x[...,size:]
 
-def power_spectrum_density(data, dt, ndivide=1, window=scipy.signal.hanning, overwrap_half=False):
+def power_spectrum_density(data, dt, ndivide=1, window=scipy.signal.windows.hann, overwrap_half=False):
     """Calculate power spectrum density of data.
     引数
     ----

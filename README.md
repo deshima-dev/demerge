@@ -17,6 +17,15 @@ DFITSをASTE生データからマージするスクリプト
 | ad           | 1.3.2     |
 | sympy        | 1.12      |
 | pyyaml       | 6.0       |
+| dems         | 0.2.0     |
+
+# demsのインストール方法
+
+```
+$ pip install -q "dems==0.2.0"
+```
+
+参考:!https://github.com/deshima-dev/dems
 
 # 実行例
 

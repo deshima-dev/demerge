@@ -21,6 +21,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
             self.obsinfo = hdul['OBSINFO'].data
             self.antenna = hdul['ANTENNA'].data
             self.weather = hdul['WEATHER'].data
+            self.cabin   = hdul['CABIN_T'].data
         
         return
 
@@ -45,14 +46,51 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
         self.assertTrue((result == expected).all(), 'MS::chan')
 
-        expected = len(self.readout['starttime'])
+        result = np.array(np.where(ms.scan != ''))
+        self.assertTrue(result.any(), 'MS::scanに規定値以外がセットされたことを確認する')
+        
+        result = np.array(np.where(ms.temperature > 0.0))
+        self.assertTrue(result.any(), 'MS::temperatureに規定値以外がセットされたことを確認する')
 
-        self.assertEqual(len(ms.scan), expected, 'MS::scanの要素数')
-        self.assertEqual(len(ms.temperature), expected, 'MS::temperatureの要素数')
-        self.assertEqual(len(ms.pressure), expected, 'MS::pressureの要素数')
-        self.assertEqual(len(ms.humidity), expected, 'MS::humidityの要素数')
-        self.assertEqual(len(ms.wind_speed), expected, 'MS::wind_speedの要素数')
-        self.assertEqual(len(ms.wind_direction), expected, 'MS::wind_directionの要素数')
+        result = np.array(np.where(ms.pressure > 0.0))
+        self.assertTrue(result.any(), 'MS::pressureに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.humidity > 0.0))
+        self.assertTrue(result.any(), 'MS::humidityに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.wind_speed > 0.0))
+        self.assertTrue(result.any(), 'MS::wind_speedに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.wind_direction > 0.0))
+        self.assertTrue(result.any(), 'MS::wind_directionに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.aste_cabin_temperature > 0.0))
+        self.assertTrue(result.any(), 'MS::aste_cabin_temperatureに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.d2_mkid_id > 0))
+        self.assertTrue(result.any(), 'MS::d2_mkid_idに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.d2_mkid_type != ''))
+        self.assertTrue(result.any(), 'MS::d2_mkid_typeに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.d2_mkid_frequency > 0.0))
+        self.assertTrue(result.any(), 'MS::d2_mkid_frequencyに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.beam_major > 0.0))
+        self.assertTrue(result.any(), 'MS::beam_majorに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.beam_minor > 0.0))
+        self.assertTrue(result.any(), 'MS::beam_minorに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.beam_pa > 0.0))
+        self.assertTrue(result.any(), 'MS::beam_paに規定値以外がセットされたことを確認する')
+        
+        self.assertEqual(ms.observer,       'clumsy', 'MS::observer')
+        self.assertEqual(ms.object,         'MARS',   'MS::object')
+        self.assertEqual(ms.telescope_name, 'ASTE',   'MS::telescope_name')
+
+        self.assertEqual(ms.exposure, self.obsinfo['integtime'][0], 'MS::exposure')
+        self.assertEqual(ms.interval, self.obsinfo['interval'][0],  'MS::interval')
 
         return 
 

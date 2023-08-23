@@ -20,6 +20,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
             self.readout = hdul['READOUT'].data
             self.obsinfo = hdul['OBSINFO'].data
             self.antenna = hdul['ANTENNA'].data
+            self.weather = hdul['WEATHER'].data
         
         return
 
@@ -45,10 +46,14 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertTrue((result == expected).all(), 'MS::chan')
 
         expected = len(self.readout['starttime'])
-        result   = len(ms.scan)
 
-        self.assertEqual(result, expected, 'MS::scanの要素数')
-        
+        self.assertEqual(len(ms.scan), expected, 'MS::scanの要素数')
+        self.assertEqual(len(ms.temperature), expected, 'MS::temperatureの要素数')
+        self.assertEqual(len(ms.pressure), expected, 'MS::pressureの要素数')
+        self.assertEqual(len(ms.humidity), expected, 'MS::humidityの要素数')
+        self.assertEqual(len(ms.wind_speed), expected, 'MS::wind_speedの要素数')
+        self.assertEqual(len(ms.wind_direction), expected, 'MS::wind_directionの要素数')
+
         return 
 
 if __name__=='__main__':

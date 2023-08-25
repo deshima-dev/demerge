@@ -15,8 +15,8 @@ from dems.d2    import MS
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
-        filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
-        with fits.open(filename) as hdul:
+        self.filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
+        with fits.open(self.filename) as hdul:
             self.readout = hdul['READOUT'].data
             self.obsinfo = hdul['OBSINFO'].data
             self.antenna = hdul['ANTENNA'].data
@@ -27,7 +27,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
     def test_dfits2dems(self):
         """dfits2dems関数のテスト"""
-        ms       = dd.dfits2dems()
+        ms       = dd.convert_dfits_to_dems(self.filename)
         expected = self.readout['Tsignal'].astype(np.float64)
 
         # (NaN==NaN)はall()による判定がFalseになるので一時的に-1へ変換する
@@ -84,6 +84,15 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
         result = np.array(np.where(ms.beam_pa > 0.0))
         self.assertTrue(result.any(), 'MS::beam_paに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.lon > 0.0))
+        self.assertTrue(result.any(), 'MS::lonに規定値以外がセットされたことを確認する')
+
+        result = np.array(np.where(ms.lat > 0.0))
+        self.assertTrue(result.any(), 'MS::latに規定値以外がセットされたことを確認する')
+
+        self.assertTrue(ms.lon_origin > 0.0, 'MS::lon_originに規定値以外がセットされたことを確認する')
+        self.assertTrue(ms.lat_origin > 0.0, 'MS::lat_originに規定値以外がセットされたことを確認する')
         
         self.assertEqual(ms.observer,       'clumsy', 'MS::observer')
         self.assertEqual(ms.object,         'MARS',   'MS::object')

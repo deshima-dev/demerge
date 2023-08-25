@@ -11,8 +11,9 @@ from astropy.io        import fits
 from dems.d2           import MS
 from scipy.interpolate import interp1d
 
-def dfits2dems():
-    filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
+def convert_dfits_to_dems(filename):
+    coodinate='azel'
+    loadmode=0
     with fits.open(filename) as hdul:
         readout   = hdul['READOUT'].data
         obsinfo   = hdul['OBSINFO'].data
@@ -28,6 +29,25 @@ def dfits2dems():
 
     chan         = obsinfo['kidids'][0].astype(np.int64)
     scan         = np.array(antenna['scantype'])
+
+    # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
+    if coodinate == 'azel':
+        lon        = antenna['az']
+        lat        = antenna['el']
+        lon_origin = np.median(antenna['az_center'])
+        lat_origin = np.median(antenna['el_center'])
+        if loadmode in [0, 1]:
+            lon -= antenna['az_center']
+            lat -= antenna['el_center']
+            if loadmode == 0:
+                lon *= np.cos(np.deg2rad(antenna['el']))
+    elif coodinate == 'radec':
+        lon        = antenna['ra']
+        lat        = antenna['dec']
+        lon_origin = obsheader['RA']
+        lat_origin = obsheader['DEC']
+    else:
+        raise KeyError('Invalid coodinate type: {}'.format(coodinate))
 
     # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
     seconds         = (time         - time[0])/np.timedelta64(1, 's')
@@ -50,7 +70,9 @@ def dfits2dems():
     for scantype, i in scan_types.items():
         scan[scan == i] = scantype
 
-    # 気象情報とキャビン情報もREADOUTの時間に合わせて補間する
+    # 座標、気象情報、キャビン情報もREADOUTの時間に合わせて補間する
+    lon                    = np.interp(seconds, seconds_antenna, lon)
+    lat                    = np.interp(seconds, seconds_antenna, lat)
     temperature            = np.interp(seconds, seconds_weather, weather['temperature'])
     pressure               = np.interp(seconds, seconds_weather, weather['pressure'])
     humidity               = np.interp(seconds, seconds_weather, weather['vapor-pressure'])
@@ -63,6 +85,10 @@ def dfits2dems():
         time=time,
         chan=chan,
         scan=scan,
+        lon=lon,
+        lat=lat,
+        lon_origin=lon_origin,
+        lat_origin=lat_origin,
         temperature=temperature,
         pressure=pressure,
         humidity=humidity,

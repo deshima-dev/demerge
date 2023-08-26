@@ -11,9 +11,35 @@ from astropy.io        import fits
 from dems.d2           import MS
 from scipy.interpolate import interp1d
 
-def convert_dfits_to_dems(filename):
-    coodinate='azel'
-    loadmode=0
+def convert_dfits_to_dems(filename, **kwargs):
+    # Optionalな引数の処理
+    coodinate           = kwargs.pop('coodinate', 'azel')
+    loadmode            = kwargs.pop('loadmode', 0)
+    # still data
+    still_period        = kwargs.pop('still_period', None) # 秒(整数)
+    # shuttle observation
+    shuttle_min_lon_off = kwargs.pop('shuttle_min_lon_off', None)
+    shuttle_max_lon_off = kwargs.pop('shuttle_max_lon_off', None)
+    shuttle_min_lon_on  = kwargs.pop('shuttle_min_lon_on', None)
+    shuttle_max_lon_on  = kwargs.pop('shuttle_max_lon_on', None)
+    # find R
+    ch                  = kwargs.pop('ch', 0)      # チャネル
+    Rth                 = kwargs.pop('Rth', 280)   # R閾値
+    skyth               = kwargs.pop('skyth', 150) # sky閾値
+    cutnum              = kwargs.pop('cutnum', 1)  # カット番号
+
+    # shuttle観測に関する引数が1つでも与えられたら与えられなかった変数に規定値(0.0)を設定する。
+    # 1つも引数が与えられなかった場合はshuttle観測に関するマスクは無効とする。
+    if not (shuttle_min_lon_off == None and shuttle_max_lon_off == None and shuttle_min_lon_on  == None and shuttle_max_lon_on  == None):
+        if shuttle_min_lon_off == None:
+            shuttle_min_lon_off = 0.0
+        if shuttle_max_lon_off == None:
+            shuttle_max_lon_off = 0.0
+        if shuttle_min_lon_on  == None:
+            shuttle_min_lon_on  = 0.0
+        if shuttle_max_lon_on  == None:
+            shuttle_max_lon_on  = 0.0
+
     with fits.open(filename) as hdul:
         readout   = hdul['READOUT'].data
         obsinfo   = hdul['OBSINFO'].data
@@ -27,8 +53,11 @@ def convert_dfits_to_dems(filename):
     time_weather = np.array(weather['time']).astype(np.datetime64)
     time_cabin   = np.array(cabin['time']).astype(np.datetime64)
 
-    chan         = obsinfo['kidids'][0].astype(np.int64)
-    scan         = np.array(antenna['scantype'])
+    # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
+    seconds         = (time         - time[0])/np.timedelta64(1, 's')
+    seconds_antenna = (time_antenna - time[0])/np.timedelta64(1, 's')
+    seconds_weather = (time_weather - time[0])/np.timedelta64(1, 's')
+    seconds_cabin   = (time_cabin   - time[0])/np.timedelta64(1, 's')
 
     # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
     if coodinate == 'azel':
@@ -49,11 +78,7 @@ def convert_dfits_to_dems(filename):
     else:
         raise KeyError('Invalid coodinate type: {}'.format(coodinate))
 
-    # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
-    seconds         = (time         - time[0])/np.timedelta64(1, 's')
-    seconds_antenna = (time_antenna - time[0])/np.timedelta64(1, 's')
-    seconds_weather = (time_weather - time[0])/np.timedelta64(1, 's')
-    seconds_cabin   = (time_cabin   - time[0])/np.timedelta64(1, 's')
+    scan = np.array(antenna['scantype'])
 
     # 補間関数で扱うためにSCANTYPE(文字列)を整数に置き換える
     scan_types = {scantype:i for i, scantype in enumerate(np.unique(scan))}
@@ -79,11 +104,35 @@ def convert_dfits_to_dems(filename):
     wind_speed             = np.interp(seconds, seconds_weather, weather['windspd'])
     wind_direction         = np.interp(seconds, seconds_weather, weather['winddir'])
     aste_cabin_temperature = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
-    
+
+    # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
+    if still_period != None:
+        for i in range(int(seconds[-1]) // still_period + 1):
+            off_mask = (still_period*(2*i)     <= seconds) & (seconds < still_period*(2*i + 1))
+            on_mask  = (still_period*(2*i + 1) <= seconds) & (seconds < still_period*(2*i + 2))
+            scan[off_mask] = 'OFF'
+            scan[on_mask]  = 'SCAN'
+
+    # shuttle観測のマスクを設定する
+    if shuttle_min_lon_off != None:
+        print(shuttle_min_lon_on < lon)
+        off_mask = (shuttle_min_lon_off < lon) & (lon < shuttle_max_lon_off)
+        on_mask  = (shuttle_min_lon_on  < lon) & (lon < shuttle_max_lon_on)
+        scan[off_mask]                 = 'OFF'
+        scan[on_mask]                  = 'SCAN'
+        scan[(~off_mask) & (~on_mask)] = 'JUNK'
+
+    response = readout['Tsignal']
+        
+    # findR
+    if True:
+        mask = np.where(response[:, ch] >= Rth)
+        scan[mask] = 'R'
+            
     ms = MS.new(
-        data=readout['Tsignal'],
+        data=response,
         time=time,
-        chan=chan,
+        chan=obsinfo['kidids'][0].astype(np.int64),
         scan=scan,
         lon=lon,
         lat=lat,

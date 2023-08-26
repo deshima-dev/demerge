@@ -27,7 +27,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
     def test_dfits2dems(self):
         """dfits2dems関数のテスト"""
-        ms       = dd.convert_dfits_to_dems(self.filename)
+        ms       = dd.convert_dfits_to_dems(self.filename, still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
         expected = self.readout['Tsignal'].astype(np.float64)
 
         # (NaN==NaN)はall()による判定がFalseになるので一時的に-1へ変換する
@@ -101,6 +101,15 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(ms.exposure, self.obsinfo['integtime'][0], 'MS::exposure')
         self.assertEqual(ms.interval, self.obsinfo['interval'][0],  'MS::interval')
 
+        print('total: {}'.format(len(ms.scan)))
+        print('GRAD : {}'.format(len(np.where(ms.scan == 'GRAD')[0])))
+        print('OFF  : {}'.format(len(np.where(ms.scan == 'OFF')[0])))
+        print('SCAN : {}'.format(len(np.where(ms.scan == 'SCAN')[0])))
+        print('JUNK : {}'.format(len(np.where(ms.scan == 'JUNK')[0])))
+        print(ms.lon)
+        # for scan in np.array(ms.scan):
+        #     print(scan, end=' ')
+        print(np.array(ms.chan))
         return 
 
 if __name__=='__main__':

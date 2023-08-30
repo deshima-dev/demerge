@@ -99,6 +99,7 @@ class MergeToDfits:
         if cabinlog is None:
             self.cabinlog = None
         else:
+            #-------- Define Troom
             self.cabinlog = os.path.expanduser(cabinlog)
             self.cabin_datetimes, upper_cabin_temps, lower_cabin_temps = dfits2dems.retrieve_cabin_temps(self.cabinlog)
             self.upper_cabin_temps = upper_cabin_temps + 273.15
@@ -112,12 +113,6 @@ class MergeToDfits:
         #-------- Read 'antennalog'
         antlog_data = ascii.read(self.antennalog)[:-1]
         self.ant_time = fc.convert_asciitime(antlog_data['time'], FORM_FITSTIME_P)
-
-        #-------- Prepare class for cabin temperature
-        # if cabinlog is not None:
-        #     self.cabin_db = fc.CabinTempDB(self.cabinlog)
-        # else:
-        #     self.cabin_db = None
 
     @property
     def dfits(self):
@@ -201,21 +196,14 @@ class MergeToDfits:
         """HDU of 'READOUT'"""
         #-------- Get the Dicitinary of 'READOUT': 'readout_dict'
         rd = self.dfits_dict['readout_dict']
+
         #-------- Get Header Values
         rd['hdr_vals']['FILENAME'] = os.path.basename(self.rout_data)
+
         #-------- Open 'DDB' and 'rout_data'
         ddb   = fits.open(self.ddbfits)
         rhdus = fits.open(self.rout_data)
-        #-------- Define Troom
-        # if self.cabin_db:
-        #     Troom, db_ret = fc.get_Troom(rhdus, self.cabin_db)
-        #     dTroom = np.zeros( len(Troom) ) # 使ってない
-        #     self.db_ret = db_ret
-        # else:
-        #     print('Cabin Temperature DB is not specified.', file=sys.stderr)
-        #     print('Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
-        #     Troom = DEFAULT_ROOM_T
-        #     dTroom = 0.  # 使ってない
+
         #-------- Define Tamb
         if self.weatherlog:
             wlog_data = ascii.read(self.weatherlog)
@@ -234,7 +222,6 @@ class MergeToDfits:
         rd['col_vals']['lin_phase'] = reduce_data[:, 2]
 
         #(Comment for dfits 20180703: Troom is fixed to Troom[0], because we should not change Troom from base temperature (but Tamb should be in future...)
-        #Tsignal = fc.calibrate_to_power(self.pixelid, Troom[0], Tamb, rhdus, ddb)
         Tsignal = fc.calibrate_to_power(self.pixelid, self.lower_cabin_temps[0], Tamb, rhdus, ddb)
         rd['col_vals']['Tsignal'] = Tsignal
         ddb.close()

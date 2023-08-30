@@ -119,10 +119,15 @@ class Dfits2demsTestDrive(unittest.TestCase):
     def test_retrieve_cabin_temps(self):
         """cabinの温度をロードする"""
         datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171110114116/20171110114116.cabin')
+        self.assertEqual(8, len(datetimes))
+        self.assertEqual(8, len(upper))
+        self.assertEqual(8, len(lower))
         return
 
     def test_retrieve_skychop_states(self):
         datetimes, states = dd.retrieve_skychop_states('data/deshima2.0/cosmos_20171110114116/20171110114116.skychop')
+        self.assertEqual(428200, len(datetimes))
+        self.assertEqual(428200, len(states))
         return
 
     def test_MergeToDfits(self):
@@ -147,8 +152,11 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(len(dfits_hdus['cabin_t'].data['time']),        8)
         self.assertEqual(len(dfits_hdus['cabin_t'].data['upper_cabin']), 8)
         self.assertEqual(len(dfits_hdus['cabin_t'].data['main_cabin']),  8)
+
         self.assertTrue('skychop' in dfits_hdus)
-        
+        self.assertEqual(len(dfits_hdus['skychop'].data['time']), 428200)
+        self.assertEqual(len(dfits_hdus['skychop'].data['state']), 428200)
+
         return
         
 if __name__=='__main__':

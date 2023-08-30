@@ -274,9 +274,10 @@ class MergeToDfits:
     @property
     def skychop(self):
         skychop_dict = self.dfits_dict['skychop_dict']
+        datetimes, states = dfits2dems.retrieve_skychop_states(self.skychoplog)
         #-------- Set Data to the Dictinary 'cabin_t_dict'
-        skychop_dict['hdr_vals']['FILENAME'] = ''
-        skychop_dict['col_vals']['time']     = np.array([0.0, 0.0])
-        skychop_dict['col_vals']['state']    = np.array([0, 1])
+        skychop_dict['hdr_vals']['FILENAME'] = os.path.basename(self.skychoplog)
+        skychop_dict['col_vals']['time']     = datetimes
+        skychop_dict['col_vals']['state']    = states
         return fc.create_bintablehdu(skychop_dict)
 

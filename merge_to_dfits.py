@@ -123,6 +123,7 @@ class MergeToDfits:
         hdus.append(self.antenna)      # ANTENNA
         hdus.append(self.kidsinfo)     # KIDSINFO
         hdus.append(self.readout)      # READOUT: must be before CABIN_T
+        hdus.append(self.skychop)
         if not self.weatherlog is None:
             hdus.append(self.weather)  # WEATHER
         if not self.cabinlog is None:
@@ -268,4 +269,13 @@ class MergeToDfits:
         cabin_t_dict['col_vals']['upper_cabin'] = self.upper_cabin_temps
         cabin_t_dict['col_vals']['main_cabin']  = self.lower_cabin_temps
         return fc.create_bintablehdu(cabin_t_dict)
+
+    @property
+    def skychop(self):
+        skychop_dict = self.dfits_dict['skychop_dict']
+        #-------- Set Data to the Dictinary 'cabin_t_dict'
+        skychop_dict['hdr_vals']['FILENAME'] = ''
+        skychop_dict['col_vals']['time']     = np.array([0.0, 0.0])
+        skychop_dict['col_vals']['state']    = np.array([0, 1])
+        return fc.create_bintablehdu(skychop_dict)
 

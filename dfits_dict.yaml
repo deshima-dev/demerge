@@ -389,3 +389,32 @@ cabin_t_dict:
       - CABIN_T
     - - FILENAME
       - null
+skychop_dict:
+  col_form: !!python/object/apply:collections.OrderedDict
+  - - - time
+      - D
+    - - state
+      - I
+  col_unit: !!python/object/apply:collections.OrderedDict
+  - - - time
+      - null
+    - - state
+      - boolean
+  col_vals: !!python/object/apply:collections.OrderedDict
+  - - - time
+      - null
+    - - state
+      - null
+  hdr_coms:
+    EXTNAME: name of binary table
+    FILENAME: filename of "Skychop Log"
+    TFORM1: data format of field 1
+    TFORM2: data format of field 2
+    TTYPE1: label for field 1
+    TTYPE2: label for field 2
+    TUNIT2: data unit of field 3
+  hdr_vals: !!python/object/apply:collections.OrderedDict
+  - - - EXTNAME
+      - SKYCHOP
+    - - FILENAME
+      - null

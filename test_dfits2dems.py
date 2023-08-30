@@ -9,10 +9,12 @@ import dfits2dems as dd
 import numpy      as np
 import math
 
-from astropy.io import fits
-from dems.d2    import MS
+from astropy.io     import fits
+from dems.d2        import MS
+from merge_to_dfits import MergeToDfits
 
 import merge_function as fc
+
 
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
@@ -117,16 +119,33 @@ class Dfits2demsTestDrive(unittest.TestCase):
     def test_retrieve_cabin_temps(self):
         """cabinの温度をロードする"""
         datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171110114116/20171110114116.cabin')
-        print(lower[0])
         return
 
-    # def test_get_Troom(self):
-    #     hdul          = fits.open('cache/20171110114116/reduced_20171110114116.fits')
-    #     cabin_db      = fc.CabinTempDB('cabin.db')
-    #     Troom, db_ret = fc.get_Troom(hdul, cabin_db)
-    #     #print(Troom)
-    #     hdul.close()
-    #     return
+    def test_MergeToDfits(self):
+        """MergeToDfitsクラスのテスト
+        このテストを行うにはreduced_XXX.fitsがあらかじめ作成されている必要がある。
+        """
+        obsid = '20171110114116'
+        path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
+        mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
+                           dfitsdict  = 'dfits_dict.yaml',
+                           obsinst    = '{}/{}.obs'.format(path, obsid),
+                           antennalog = '{}/{}.ant'.format(path, obsid),
+                           weatherlog = '{}/{}.wea'.format(path, obsid),
+                           cabinlog   = '{}/{}.cabin'.format(path, obsid),
+                           # skychop    = '{}/{}.skychop'.format(path, obsid),
+                           rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
+        
+        dfits_hdus = mtd.dfits
+        mtd.kidsinfo_hdus.close()
 
+        # 20171110114116.cabinには8行のデータがある
+        self.assertEqual(len(dfits_hdus['cabin_t'].data['time']),        8)
+        self.assertEqual(len(dfits_hdus['cabin_t'].data['upper_cabin']), 8)
+        self.assertEqual(len(dfits_hdus['cabin_t'].data['main_cabin']),  8)
+        self.assertTrue('skychop' in dfits_hdus)
+        
+        return
+        
 if __name__=='__main__':
     unittest.main()

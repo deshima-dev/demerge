@@ -13,13 +13,11 @@ __all__ = [
     'FORM_FITSTIME',
     'FORM_FITSTIME_P',
     'DEFAULT_ROOM_T',
-    'CabinTempDB',
     'create_bintablehdu',
     'load_obsinst',
     'get_maskid_corresp'
     'Tlos_model',
     'calibrate_to_power',
-    'get_Troom',
     'convert_asciitime',
     'convert_timestamp'
 ]
@@ -30,7 +28,6 @@ from calendar import timegm
 import numpy as np
 import scipy.interpolate
 from astropy.io import fits
-import sqlite3
 import sys
 import dfits2dems
 
@@ -41,26 +38,6 @@ FORM_FITSTIME_P = '%Y-%m-%dT%H:%M:%S.%f'                       # YYYY-mm-ddTHH:M
 CABIN_Q_MARGIN  = 5*60 # seconds. Margin for cabin data query.
 DEFAULT_ROOM_T  = 17. + 273. # Kelvin
 DEFAULT_AMB_T  = 0. + 273. # Kelvin
-
-class CabinTempDB:
-    def __init__(self, db_path):
-        self._conn = sqlite3.connect(db_path)
-        self._cur = self._conn.cursor()
-        self.db_path = db_path
-
-    def get_between(self, start_str, end_str):
-        sql = '''
-        SELECT datetime, upper_cabin, main_cabin FROM cabin_temp
-        WHERE
-            datetime >= '{0}'
-            AND
-            datetime <= '{1}';
-        '''.format(start_str, end_str)        
-        self._cur.execute(sql)
-        return self._cur.fetchall()
-
-    def __del__(self):
-        self._conn.close()
 
 def create_bintablehdu(hd):
     """Create Binary Table HDU from 'hdu_dict'"""
@@ -168,41 +145,6 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
         #---- Convert to power
         Tsignal.append(Tlos_model(fshift[i], p0[i], etaf[i], T0[i], Troom, Tamb))
     return np.array(Tsignal).T
-
-# def get_Troom(rhdus, cabin_db):
-#     """Get Troom from cabin temperature database"""
-#     starttime = convert_timestamp(rhdus['READOUT'].data['timestamp'])
-#     margin = timedelta(seconds=CABIN_Q_MARGIN)
-#     db_start = datetime.strptime(starttime[0], FORM_FITSTIME_P)
-#     db_start_mod = db_start - timedelta(microseconds=db_start.microsecond) - margin
-#     db_end = datetime.strptime(starttime[-1], FORM_FITSTIME_P)
-#     db_end_mod = db_end - timedelta(microseconds=db_end.microsecond) + margin        
-#     db_ret = cabin_db.get_between(db_start_mod.isoformat(), db_end_mod.isoformat())
-#     if len(db_ret)==0:
-#         print('Cannot find cabin temperature data in', cabin_db.db_path, file=sys.stderr)
-#         print('Instead, Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
-#         Troom = DEFAULT_ROOM_T
-#     else:
-#         # Check whether the database covers the measurement 
-#         db_dts = [datetime.strptime(entry[0], FORM_FITSTIME) for entry in db_ret]
-#         main_t = [entry[2] for entry in db_ret]
-#         if (db_start < db_dts[0]) or (db_dts[-1] < db_end):
-#             print('DB data does not cover the measurement span', file=sys.stderr)
-#             print('Temperature at the edge(s) will be used to cover the range', file=sys.stderr)
-#             # Expand
-#             if (db_start < db_dts[0]):
-#                 db_dts = [db_start] + db_dts
-#                 main_t = [main_t[0]] + main_t
-#             if (db_dts[-1] < db_end):
-#                 db_dts = db_dts + [db_end]
-#                 main_t = main_t + [main_t[-1]]
-
-#         starttime_ut = rhdus['READOUT'].data['timestamp']
-#         db_uts = [timegm(dt.timetuple()) for dt in db_dts]
-#         ## linear interpolate 
-#         int_func = scipy.interpolate.interp1d(db_uts, main_t)
-#         Troom = int_func(starttime_ut) + 273.15
-#     return Troom, db_ret
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""

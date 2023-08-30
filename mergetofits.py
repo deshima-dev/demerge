@@ -46,6 +46,7 @@ if __name__=='__main__':
     args[6] string caldb fitsファイルへの相対パス
     args[7] string yamlファイルへの相対パス
     args[8] string cabinファイルへの相対パス
+    args[9] string skychopファイルへの相対パス
     """
     args            = sys.argv
     reducedfitsfile = args[1]
@@ -56,6 +57,7 @@ if __name__=='__main__':
     ddb_fits        = args[6]
     dfitsdict       = args[7]
     cabinlog        = args[8]
+    skychoplog      = args[9]
 
     if os.path.exists(dfitsfile):
         os.remove(dfitsfile)
@@ -66,7 +68,8 @@ if __name__=='__main__':
                        antennalog=antennalog,
                        rout_data=reducedfitsfile,
                        weatherlog=weatherlog,
-                       cabinlog=cabinlog)
+                       cabinlog=cabinlog,
+                       skychoplog=skychoplog)
     dfits_hdus = mtd.dfits
     dfits_hdus.writeto(dfitsfile)
     mtd.kidsinfo_hdus.close()

@@ -187,3 +187,16 @@ def retrieve_cabin_temps(filename):
     lower_cabin_temps = np.array(table['col4']).astype(np.float64)
 
     return (datetimes, upper_cabin_temps, lower_cabin_temps)
+
+def retrieve_skychop_states(filename):
+    """skychopファイルからskychopの時系列状態を取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, states)
+      tupleの各要素はnumpy.array。要素数は同じ。
+    """
+    return

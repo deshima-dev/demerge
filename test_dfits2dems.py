@@ -121,6 +121,10 @@ class Dfits2demsTestDrive(unittest.TestCase):
         datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171110114116/20171110114116.cabin')
         return
 
+    def test_retrieve_skychop_states(self):
+        dd.retrieve_skychop_states('hoge')
+        return
+
     def test_MergeToDfits(self):
         """MergeToDfitsクラスのテスト
         このテストを行うにはreduced_XXX.fitsがあらかじめ作成されている必要がある。
@@ -133,7 +137,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
                            antennalog = '{}/{}.ant'.format(path, obsid),
                            weatherlog = '{}/{}.wea'.format(path, obsid),
                            cabinlog   = '{}/{}.cabin'.format(path, obsid),
-                           # skychop    = '{}/{}.skychop'.format(path, obsid),
+                           skychoplog = '{}/{}.skychop'.format(path, obsid),
                            rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
         
         dfits_hdus = mtd.dfits

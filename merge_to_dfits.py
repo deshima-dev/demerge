@@ -85,12 +85,13 @@ class MergeToDfits:
         >>> readout = mtd.readout
         >>> weather = mtd.weather
     """
-    def __init__(self, ddbfits, dfitsdict, obsinst, antennalog, rout_data, weatherlog=None, cabinlog=None):
+    def __init__(self, ddbfits, dfitsdict, obsinst, antennalog, rout_data, skychoplog, weatherlog=None, cabinlog=None, ):
         #-------- Path
         self.ddbfits    = os.path.expanduser(ddbfits)
         self.dfitsdict  = os.path.expanduser(dfitsdict)
         self.obsinst    = os.path.expanduser(obsinst)
         self.antennalog = os.path.expanduser(antennalog)
+        self.skychoplog = os.path.expanduser(skychoplog)
         self.rout_data  = os.path.expanduser(rout_data)
         if weatherlog is None:
             self.weatherlog = None

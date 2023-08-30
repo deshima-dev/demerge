@@ -122,7 +122,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
         return
 
     def test_retrieve_skychop_states(self):
-        dd.retrieve_skychop_states('hoge')
+        datetimes, states = dd.retrieve_skychop_states('data/deshima2.0/cosmos_20171110114116/20171110114116.skychop')
         return
 
     def test_MergeToDfits(self):

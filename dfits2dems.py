@@ -198,5 +198,13 @@ def retrieve_skychop_states(filename):
     ======
     tuple (timestames, states)
       tupleの各要素はnumpy.array。要素数は同じ。
+
+    時刻について
+    ============
+    skychopファイルに記録されている時刻はUNIX時間。
     """
-    return
+    table = ascii.read(filename, guess=False, format='basic', delimiter=' ', names=['datetime', 'state'])
+
+    datetimes = np.array(table['datetime']).astype(np.float64)
+    states    = np.array(table['state']).astype(np.int8)
+    return (datetimes, states)

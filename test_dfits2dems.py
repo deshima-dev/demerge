@@ -12,6 +12,8 @@ import math
 from astropy.io import fits
 from dems.d2    import MS
 
+import merge_function as fc
+
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
@@ -101,16 +103,30 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(ms.exposure, self.obsinfo['integtime'][0], 'MS::exposure')
         self.assertEqual(ms.interval, self.obsinfo['interval'][0],  'MS::interval')
 
-        print('total: {}'.format(len(ms.scan)))
-        print('GRAD : {}'.format(len(np.where(ms.scan == 'GRAD')[0])))
-        print('OFF  : {}'.format(len(np.where(ms.scan == 'OFF')[0])))
-        print('SCAN : {}'.format(len(np.where(ms.scan == 'SCAN')[0])))
-        print('JUNK : {}'.format(len(np.where(ms.scan == 'JUNK')[0])))
-        print(ms.lon)
+        # print('total: {}'.format(len(ms.scan)))
+        # print('GRAD : {}'.format(len(np.where(ms.scan == 'GRAD')[0])))
+        # print('OFF  : {}'.format(len(np.where(ms.scan == 'OFF')[0])))
+        # print('SCAN : {}'.format(len(np.where(ms.scan == 'SCAN')[0])))
+        # print('JUNK : {}'.format(len(np.where(ms.scan == 'JUNK')[0])))
+        # print(ms.lon)
         # for scan in np.array(ms.scan):
         #     print(scan, end=' ')
-        print(np.array(ms.chan))
-        return 
+        # print(np.array(ms.chan))
+        return
+
+    def test_retrieve_cabin_temps(self):
+        """cabinの温度をロードする"""
+        datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171110114116/20171110114116.cabin')
+        print(lower[0])
+        return
+
+    # def test_get_Troom(self):
+    #     hdul          = fits.open('cache/20171110114116/reduced_20171110114116.fits')
+    #     cabin_db      = fc.CabinTempDB('cabin.db')
+    #     Troom, db_ret = fc.get_Troom(hdul, cabin_db)
+    #     #print(Troom)
+    #     hdul.close()
+    #     return
 
 if __name__=='__main__':
     unittest.main()

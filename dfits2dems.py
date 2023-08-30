@@ -6,8 +6,9 @@ Python 3.9
 """
 
 import numpy as np
+#import ascii
 
-from astropy.io        import fits
+from astropy.io        import fits, ascii
 from dems.d2           import MS
 from scipy.interpolate import interp1d
 
@@ -115,7 +116,7 @@ def convert_dfits_to_dems(filename, **kwargs):
 
     # shuttle観測のマスクを設定する
     if shuttle_min_lon_off != None:
-        print(shuttle_min_lon_on < lon)
+        #print(shuttle_min_lon_on < lon)
         off_mask = (shuttle_min_lon_off < lon) & (lon < shuttle_max_lon_off)
         on_mask  = (shuttle_min_lon_on  < lon) & (lon < shuttle_max_lon_on)
         scan[off_mask]                 = 'OFF'
@@ -160,3 +161,29 @@ def convert_dfits_to_dems(filename, **kwargs):
         telescope_name=obsheader['TELESCOP'],
     )
     return ms
+
+def retrieve_cabin_temps(filename):
+    """キャビン内温度を取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, upperCabinTemps, lowerCabinTemps)
+      tupleの各要素はnumpy.array。要素数は同じ。
+    """
+    table = ascii.read(filename)
+
+    # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
+    # テーブルの1列目と2列目がそれぞれ日付と時刻
+    datetimes = []
+    for date, time in zip(table['col1'], table['col2']):
+        s = '{}T{}'.format(date, time)
+        s = s.replace('/', '-')
+        datetimes.append(s)
+    datetimes       = np.array(datetimes).astype(np.datetime64)
+    upper_cabin_temps = np.array(table['col3']).astype(np.float64)
+    lower_cabin_temps = np.array(table['col4']).astype(np.float64)
+
+    return (datetimes, upper_cabin_temps, lower_cabin_temps)

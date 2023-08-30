@@ -133,7 +133,7 @@ python mergetofits.py \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea" \
        "DDB_20180619.fits.gz" \
        "dfits_dict.yaml" \
-       "cabin.db"
+       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"
 if [ $? -ne 0 ]; then
     echo "失敗:mergetofits.py"
     exit 1

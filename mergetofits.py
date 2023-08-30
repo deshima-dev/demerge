@@ -45,17 +45,17 @@ if __name__=='__main__':
     args[5] string weaファイルへの相対パス
     args[6] string caldb fitsファイルへの相対パス
     args[7] string yamlファイルへの相対パス
-    args[8] string cabin.dbファイルへの相対パス
+    args[8] string cabinファイルへの相対パス
     """
-    args = sys.argv
+    args            = sys.argv
     reducedfitsfile = args[1]
-    dfitsfile = args[2]
-    obsinst = args[3]
-    antennalog = args[4]
-    weatherlog = args[5]
-    ddb_fits = args[6]
-    dfitsdict = args[7]
-    cabinlog = args[8]
+    dfitsfile       = args[2]
+    obsinst         = args[3]
+    antennalog      = args[4]
+    weatherlog      = args[5]
+    ddb_fits        = args[6]
+    dfitsdict       = args[7]
+    cabinlog        = args[8]
 
     if os.path.exists(dfitsfile):
         os.remove(dfitsfile)

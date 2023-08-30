@@ -17,6 +17,7 @@ from astropy.io import ascii
 from astropy import coordinates
 from astropy import units
 import merge_function as fc
+import dfits2dems
 
 #-------------------------------- CONSTANTS
 TELESCOP        = 'ASTE'
@@ -99,7 +100,9 @@ class MergeToDfits:
             self.cabinlog = None
         else:
             self.cabinlog = os.path.expanduser(cabinlog)
-        
+            self.cabin_datetimes, upper_cabin_temps, lower_cabin_temps = dfits2dems.retrieve_cabin_temps(self.cabinlog)
+            self.upper_cabin_temps = upper_cabin_temps + 273.15
+            self.lower_cabin_temps = lower_cabin_temps + 273.15
         self.pixelid = 0
         self.db_ret = 0
         #-------- DFITS Dictionary
@@ -111,10 +114,10 @@ class MergeToDfits:
         self.ant_time = fc.convert_asciitime(antlog_data['time'], FORM_FITSTIME_P)
 
         #-------- Prepare class for cabin temperature
-        if cabinlog is not None:
-            self.cabin_db = fc.CabinTempDB(self.cabinlog)
-        else:
-            self.cabin_db = None
+        # if cabinlog is not None:
+        #     self.cabin_db = fc.CabinTempDB(self.cabinlog)
+        # else:
+        #     self.cabin_db = None
 
     @property
     def dfits(self):
@@ -204,15 +207,15 @@ class MergeToDfits:
         ddb   = fits.open(self.ddbfits)
         rhdus = fits.open(self.rout_data)
         #-------- Define Troom
-        if self.cabin_db:
-            Troom, db_ret = fc.get_Troom(rhdus, self.cabin_db)
-            dTroom = np.zeros( len(Troom) )
-            self.db_ret = db_ret
-        else:
-            print('Cabin Temperature DB is not specified.', file=sys.stderr)
-            print('Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
-            Troom = DEFAULT_ROOM_T
-            dTroom = 0.
+        # if self.cabin_db:
+        #     Troom, db_ret = fc.get_Troom(rhdus, self.cabin_db)
+        #     dTroom = np.zeros( len(Troom) ) # 使ってない
+        #     self.db_ret = db_ret
+        # else:
+        #     print('Cabin Temperature DB is not specified.', file=sys.stderr)
+        #     print('Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
+        #     Troom = DEFAULT_ROOM_T
+        #     dTroom = 0.  # 使ってない
         #-------- Define Tamb
         if self.weatherlog:
             wlog_data = ascii.read(self.weatherlog)
@@ -231,7 +234,8 @@ class MergeToDfits:
         rd['col_vals']['lin_phase'] = reduce_data[:, 2]
 
         #(Comment for dfits 20180703: Troom is fixed to Troom[0], because we should not change Troom from base temperature (but Tamb should be in future...)
-        Tsignal = fc.calibrate_to_power(self.pixelid, Troom[0], Tamb, rhdus, ddb)
+        #Tsignal = fc.calibrate_to_power(self.pixelid, Troom[0], Tamb, rhdus, ddb)
+        Tsignal = fc.calibrate_to_power(self.pixelid, self.lower_cabin_temps[0], Tamb, rhdus, ddb)
         rd['col_vals']['Tsignal'] = Tsignal
         ddb.close()
         rhdus.close()
@@ -272,9 +276,9 @@ class MergeToDfits:
         #-------- Get the Dicitinary of 'CABIN_T': 'cabin_t_dict'
         cabin_t_dict = self.dfits_dict['cabin_t_dict']
         #-------- Set Data to the Dictinary 'cabin_t_dict'
-        cabin_t_dict['hdr_vals']['FILENAME'] = self.cabin_db.db_path
-        cabin_t_dict['col_vals']['time'] = [d[0] for d in self.db_ret]
-        cabin_t_dict['col_vals']['upper_cabin'] = [d[1] for d in self.db_ret]
-        cabin_t_dict['col_vals']['main_cabin'] = [d[2] for d in self.db_ret]
+        cabin_t_dict['hdr_vals']['FILENAME']    = os.path.basename(self.cabinlog)
+        cabin_t_dict['col_vals']['time']        = self.cabin_datetimes
+        cabin_t_dict['col_vals']['upper_cabin'] = self.upper_cabin_temps
+        cabin_t_dict['col_vals']['main_cabin']  = self.lower_cabin_temps
         return fc.create_bintablehdu(cabin_t_dict)
 

@@ -32,6 +32,7 @@ import scipy.interpolate
 from astropy.io import fits
 import sqlite3
 import sys
+import dfits2dems
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -168,40 +169,40 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
         Tsignal.append(Tlos_model(fshift[i], p0[i], etaf[i], T0[i], Troom, Tamb))
     return np.array(Tsignal).T
 
-def get_Troom(rhdus, cabin_db):
-    """Get Troom from cabin temperature database"""
-    starttime = convert_timestamp(rhdus['READOUT'].data['timestamp'])
-    margin = timedelta(seconds=CABIN_Q_MARGIN)
-    db_start = datetime.strptime(starttime[0], FORM_FITSTIME_P)
-    db_start_mod = db_start - timedelta(microseconds=db_start.microsecond) - margin
-    db_end = datetime.strptime(starttime[-1], FORM_FITSTIME_P)
-    db_end_mod = db_end - timedelta(microseconds=db_end.microsecond) + margin        
-    db_ret = cabin_db.get_between(db_start_mod.isoformat(), db_end_mod.isoformat())
-    if len(db_ret)==0:
-        print('Cannot find cabin temperature data in', cabin_db.db_path, file=sys.stderr)
-        print('Instead, Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
-        Troom = DEFAULT_ROOM_T
-    else:
-        # Check whether the database covers the measurement 
-        db_dts = [datetime.strptime(entry[0], FORM_FITSTIME) for entry in db_ret]
-        main_t = [entry[2] for entry in db_ret]
-        if (db_start < db_dts[0]) or (db_dts[-1] < db_end):
-            print('DB data does not cover the measurement span', file=sys.stderr)
-            print('Temperature at the edge(s) will be used to cover the range', file=sys.stderr)
-            # Expand
-            if (db_start < db_dts[0]):
-                db_dts = [db_start] + db_dts
-                main_t = [main_t[0]] + main_t
-            if (db_dts[-1] < db_end):
-                db_dts = db_dts + [db_end]
-                main_t = main_t + [main_t[-1]]
+# def get_Troom(rhdus, cabin_db):
+#     """Get Troom from cabin temperature database"""
+#     starttime = convert_timestamp(rhdus['READOUT'].data['timestamp'])
+#     margin = timedelta(seconds=CABIN_Q_MARGIN)
+#     db_start = datetime.strptime(starttime[0], FORM_FITSTIME_P)
+#     db_start_mod = db_start - timedelta(microseconds=db_start.microsecond) - margin
+#     db_end = datetime.strptime(starttime[-1], FORM_FITSTIME_P)
+#     db_end_mod = db_end - timedelta(microseconds=db_end.microsecond) + margin        
+#     db_ret = cabin_db.get_between(db_start_mod.isoformat(), db_end_mod.isoformat())
+#     if len(db_ret)==0:
+#         print('Cannot find cabin temperature data in', cabin_db.db_path, file=sys.stderr)
+#         print('Instead, Troom', DEFAULT_ROOM_T, 'K will be used', file=sys.stderr)
+#         Troom = DEFAULT_ROOM_T
+#     else:
+#         # Check whether the database covers the measurement 
+#         db_dts = [datetime.strptime(entry[0], FORM_FITSTIME) for entry in db_ret]
+#         main_t = [entry[2] for entry in db_ret]
+#         if (db_start < db_dts[0]) or (db_dts[-1] < db_end):
+#             print('DB data does not cover the measurement span', file=sys.stderr)
+#             print('Temperature at the edge(s) will be used to cover the range', file=sys.stderr)
+#             # Expand
+#             if (db_start < db_dts[0]):
+#                 db_dts = [db_start] + db_dts
+#                 main_t = [main_t[0]] + main_t
+#             if (db_dts[-1] < db_end):
+#                 db_dts = db_dts + [db_end]
+#                 main_t = main_t + [main_t[-1]]
 
-        starttime_ut = rhdus['READOUT'].data['timestamp']
-        db_uts = [timegm(dt.timetuple()) for dt in db_dts]
-        ## linear interpolate 
-        int_func = scipy.interpolate.interp1d(db_uts, main_t)
-        Troom = int_func(starttime_ut) + 273.15
-    return Troom, db_ret
+#         starttime_ut = rhdus['READOUT'].data['timestamp']
+#         db_uts = [timegm(dt.timetuple()) for dt in db_dts]
+#         ## linear interpolate 
+#         int_func = scipy.interpolate.interp1d(db_uts, main_t)
+#         Troom = int_func(starttime_ut) + 273.15
+#     return Troom, db_ret
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""

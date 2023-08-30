@@ -202,6 +202,12 @@ def retrieve_skychop_states(filename):
     時刻について
     ============
     skychopファイルに記録されている時刻はUNIX時間。
+
+    ファイル形式
+    ============
+    1列目 UNIX時刻
+    2列目 0/1による状態
+    "#"から始まるコメントがファイル冒頭に数行ある。
     """
     table = ascii.read(filename, guess=False, format='basic', delimiter=' ', names=['datetime', 'state'])
 

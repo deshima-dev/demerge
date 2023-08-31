@@ -8,10 +8,12 @@ import unittest
 import dfits2dems as dd
 import numpy      as np
 import math
+import os
 
 from astropy.io     import fits
 from dems.d2        import MS
 from merge_to_dfits import MergeToDfits
+from datetime       import datetime
 
 import merge_function as fc
 
@@ -19,13 +21,32 @@ import merge_function as fc
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
+        testdata = 'dfits_testdata.fits.gz'
+        if not os.path.exists(testdata):
+            obsid = '20171110114116'
+            path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
+            mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
+                               dfitsdict  = 'dfits_dict.yaml',
+                               obsinst    = '{}/{}.obs'.format(path, obsid),
+                               antennalog = '{}/{}.ant'.format(path, obsid),
+                               weatherlog = '{}/{}.wea'.format(path, obsid),
+                               cabinlog   = '{}/{}.cabin'.format(path, obsid),
+                               skychoplog = 'skychop_testdata2.skychop',
+                               rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
+            
+            dfits_hdus = mtd.dfits
+            dfits_hdus.writeto(testdata, overwrite=True)
+            mtd.kidsinfo_hdus.close()
+
         self.filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
+        #self.filename = 'dfits_testdata.fits.gz'
         with fits.open(self.filename) as hdul:
             self.readout = hdul['READOUT'].data
             self.obsinfo = hdul['OBSINFO'].data
             self.antenna = hdul['ANTENNA'].data
             self.weather = hdul['WEATHER'].data
             self.cabin   = hdul['CABIN_T'].data
+            self.skychop = hdul['SKYCHOP'].data
         
         return
 
@@ -105,6 +126,10 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(ms.exposure, self.obsinfo['integtime'][0], 'MS::exposure')
         self.assertEqual(ms.interval, self.obsinfo['interval'][0],  'MS::interval')
 
+        #print(np.where(np.array(ms.d2_skychopper_isblocking).all()))
+        #print(ms.d2_skychopper_isblocking)
+        print(ms.time)
+
         # print('total: {}'.format(len(ms.scan)))
         # print('GRAD : {}'.format(len(np.where(ms.scan == 'GRAD')[0])))
         # print('OFF  : {}'.format(len(np.where(ms.scan == 'OFF')[0])))
@@ -125,9 +150,14 @@ class Dfits2demsTestDrive(unittest.TestCase):
         return
 
     def test_retrieve_skychop_states(self):
-        datetimes, states = dd.retrieve_skychop_states('data/deshima2.0/cosmos_20171110114116/20171110114116.skychop')
-        self.assertEqual(428200, len(datetimes))
-        self.assertEqual(428200, len(states))
+        datetimes, states = dd.retrieve_skychop_states('skychop_testdata3.skychop')
+        self.assertEqual(991, len(datetimes))
+        self.assertEqual(991, len(states))
+        self.assertEqual(2, states[0])
+        self.assertEqual(1, states[1])
+        self.assertEqual(0, states[2])
+        self.assertEqual(1, states[3])
+        #print(np.array([datetime.fromtimestamp(t) for t in datetimes]).astype(np.datetime64))
         return
 
     def test_MergeToDfits(self):
@@ -142,7 +172,8 @@ class Dfits2demsTestDrive(unittest.TestCase):
                            antennalog = '{}/{}.ant'.format(path, obsid),
                            weatherlog = '{}/{}.wea'.format(path, obsid),
                            cabinlog   = '{}/{}.cabin'.format(path, obsid),
-                           skychoplog = '{}/{}.skychop'.format(path, obsid),
+                           #skychoplog = '{}/{}.skychop'.format(path, obsid),
+                           skychoplog = 'skychop_testdata.skychop',
                            rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
         
         dfits_hdus = mtd.dfits
@@ -154,10 +185,16 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(len(dfits_hdus['cabin_t'].data['main_cabin']),  8)
 
         self.assertTrue('skychop' in dfits_hdus)
-        self.assertEqual(len(dfits_hdus['skychop'].data['time']), 428200)
-        self.assertEqual(len(dfits_hdus['skychop'].data['state']), 428200)
-
+        #self.assertEqual(len(dfits_hdus['skychop'].data['time']), 428201)
+        #self.assertEqual(len(dfits_hdus['skychop'].data['state']), 428201)
+        self.assertEqual(len(dfits_hdus['skychop'].data['time']), 146)
+        self.assertEqual(len(dfits_hdus['skychop'].data['state']), 146)
+        self.assertEqual(2, dfits_hdus['skychop'].data['state'][0])
+        self.assertEqual(1, dfits_hdus['skychop'].data['state'][1])
+        self.assertEqual(0, dfits_hdus['skychop'].data['state'][2])
+        self.assertEqual(1, dfits_hdus['skychop'].data['state'][3])
         return
+
         
 if __name__=='__main__':
     unittest.main()

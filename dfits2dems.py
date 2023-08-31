@@ -11,6 +11,7 @@ import numpy as np
 from astropy.io        import fits, ascii
 from dems.d2           import MS
 from scipy.interpolate import interp1d
+from datetime          import datetime
 
 def convert_dfits_to_dems(filename, **kwargs):
     # Optionalな引数の処理
@@ -48,17 +49,20 @@ def convert_dfits_to_dems(filename, **kwargs):
         antenna   = hdul['ANTENNA'].data
         weather   = hdul['WEATHER'].data
         cabin     = hdul['CABIN_T'].data
+        skychop   = hdul['SKYCHOP'].data
 
     time         = np.array(readout['starttime']).astype(np.datetime64)
     time_antenna = np.array(antenna['time']).astype(np.datetime64)
     time_weather = np.array(weather['time']).astype(np.datetime64)
     time_cabin   = np.array(cabin['time']).astype(np.datetime64)
+    time_skychop = np.array([datetime.fromtimestamp(t) for t in skychop['time']]).astype(np.datetime64)
 
     # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
     seconds         = (time         - time[0])/np.timedelta64(1, 's')
     seconds_antenna = (time_antenna - time[0])/np.timedelta64(1, 's')
     seconds_weather = (time_weather - time[0])/np.timedelta64(1, 's')
     seconds_cabin   = (time_cabin   - time[0])/np.timedelta64(1, 's')
+    seconds_skychop = (time_skychop - time[0])/np.timedelta64(1, 's')
 
     # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
     if coodinate == 'azel':
@@ -97,15 +101,21 @@ def convert_dfits_to_dems(filename, **kwargs):
         scan[scan == i] = scantype
 
     # 座標、気象情報、キャビン情報もREADOUTの時間に合わせて補間する
-    lon                    = np.interp(seconds, seconds_antenna, lon)
-    lat                    = np.interp(seconds, seconds_antenna, lat)
-    temperature            = np.interp(seconds, seconds_weather, weather['temperature'])
-    pressure               = np.interp(seconds, seconds_weather, weather['pressure'])
-    humidity               = np.interp(seconds, seconds_weather, weather['vapor-pressure'])
-    wind_speed             = np.interp(seconds, seconds_weather, weather['windspd'])
-    wind_direction         = np.interp(seconds, seconds_weather, weather['winddir'])
-    aste_cabin_temperature = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
+    lon                      = np.interp(seconds, seconds_antenna, lon)
+    lat                      = np.interp(seconds, seconds_antenna, lat)
+    temperature              = np.interp(seconds, seconds_weather, weather['temperature'])
+    pressure                 = np.interp(seconds, seconds_weather, weather['pressure'])
+    humidity                 = np.interp(seconds, seconds_weather, weather['vapor-pressure'])
+    wind_speed               = np.interp(seconds, seconds_weather, weather['windspd'])
+    wind_direction           = np.interp(seconds, seconds_weather, weather['winddir'])
+    aste_cabin_temperature   = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
 
+    # nearestを利用するためにskychopの補間にはscipyのinterp1dを使う。skychopの0,1は離散的な真理値のため。
+    f_skychop = interp1d(seconds_skychop, skychop['state'], kind='nearest', bounds_error=False, fill_value=(skychop['state'][0], skychop['state'][-1]))
+    d2_skychopper_isblocking = f_skychop(seconds)
+    
+    #d2_skychopper_isblocking[2] = 0 # for debug
+    
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still_period != None:
         for i in range(int(seconds[-1]) // still_period + 1):
@@ -116,7 +126,6 @@ def convert_dfits_to_dems(filename, **kwargs):
 
     # shuttle観測のマスクを設定する
     if shuttle_min_lon_off != None:
-        #print(shuttle_min_lon_on < lon)
         off_mask = (shuttle_min_lon_off < lon) & (lon < shuttle_max_lon_off)
         on_mask  = (shuttle_min_lon_on  < lon) & (lon < shuttle_max_lon_on)
         scan[off_mask]                 = 'OFF'
@@ -145,6 +154,7 @@ def convert_dfits_to_dems(filename, **kwargs):
         wind_speed=wind_speed,
         wind_direction=wind_direction,
         aste_cabin_temperature=aste_cabin_temperature,
+        d2_skychopper_isblocking=d2_skychopper_isblocking,
 
         d2_mkid_id=obsinfo['kidids'][0].astype(np.int64),
         d2_mkid_type=obsinfo['kidtypes'][0],
@@ -209,7 +219,7 @@ def retrieve_skychop_states(filename):
     2列目 0/1による状態
     "#"から始まるコメントがファイル冒頭に数行ある。
     """
-    table = ascii.read(filename, guess=False, format='basic', delimiter=' ', names=['datetime', 'state'])
+    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
 
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)

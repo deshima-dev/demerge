@@ -50,7 +50,7 @@ if __name__ == '__main__':
     # 時刻を生成する
     n = 10
     now = datetime.now()
-    timestamps = [datetime.strftime(now + timedelta(minutes=i), '%Y%m%d%H%M%S.%f') for i in range(n)] # 10分間
+    timestamps = [(now + timedelta(minutes=i)).isoformat() for i in range(n)] # 10分間
     
     ad['hdr_vals']['FILENAME']  = 'antenna_log'
     ad['col_vals']['time']      = np.array(timestamps)
@@ -62,7 +62,7 @@ if __name__ == '__main__':
     ad['col_vals']['az_center'] = np.array([0.5*i for i in range(n)])
     ad['col_vals']['el_center'] = np.array([0.6*i for i in range(n)])
 
-    antenna = mf.create_bintablehdu(od)
+    antenna = mf.create_bintablehdu(ad)
 
     rd = dfits_dict['readout_dict']
 
@@ -144,5 +144,7 @@ if __name__ == '__main__':
     hdul.append(readout)
     hdul.append(weather)
     hdul.append(skychop)
+    hdul.append(cabin_t)
     hdul.append(kidsinfo)
 
+    hdul.writeto('dfits_dummy.fits.gz', overwrite=True)

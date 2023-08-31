@@ -195,6 +195,10 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(1, dfits_hdus['skychop'].data['state'][3])
         return
 
+    def test_dfits2dems_dummy_dfits(self):
+        """dummy_dfitsを使ったdfits2dems関数のテスト"""
+        ms = dd.convert_dfits_to_dems('dfits_dummy.fits.gz', still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
+        print(ms.d2_skychopper_isblocking)
         
 if __name__=='__main__':
     unittest.main()

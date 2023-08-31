@@ -126,19 +126,17 @@ if __name__ == '__main__':
     header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
 
     columns = [
-        fits.Column(name='pixelid', format='I', array=[99, 99, 99]),
-        fits.Column(name='kidid', format='I', array=[1, 2, 3]),
-        fits.Column(name='Pread', format='E', array=[1.1, 2.2, 3.3], unit='dBm'),
-        fits.Column(name='fc', format='E', array=[1.1, 2.2, 3.3], unit='GHz'),
-        fits.Column(name='yfc, linyfc', format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
+        fits.Column(name='pixelid',        format='I',  array=[99, 99, 99]),
+        fits.Column(name='kidid',          format='I',  array=[1, 2, 3]),
+        fits.Column(name='Pread',          format='E',  array=[1.1, 2.2, 3.3], unit='dBm'),
+        fits.Column(name='fc',             format='E',  array=[1.1, 2.2, 3.3], unit='GHz'),
+        fits.Column(name='yfc, linyfc',    format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
         fits.Column(name='fr, dfr (300K)', format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
         fits.Column(name='Qr, dQr (300K)', format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
         fits.Column(name='Qc, dQc (300K)', format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
         fits.Column(name='Qi, dQi (300K)', format='2E', array=[[1.0, 1.1], [2.0, 2.2], [3.0, 3.3]]),
     ]
     kidsinfo = fits.BinTableHDU.from_columns(columns, header)
-
-
 
     hdul.append(fits.PrimaryHDU())
     hdul.append(obsinfo)

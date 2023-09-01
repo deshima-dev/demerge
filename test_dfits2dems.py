@@ -138,7 +138,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
         change_time2 = ms.time[indexes[0][0]].values
 
         e = 100 # ns
-        self.assertTrue(e > change_time2 - change_time1, 'skychopの状態が変化した時刻がdfitsとdemsで同じことを確認する')
+        self.assertTrue(e > change_time2 - change_time1, 'skychopの状態が変化した時刻がdfitsとdemsでだいたい同じであることを確認する')
         
         return
 

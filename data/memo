@@ -1,6 +1,6 @@
 # DESHIMA 1.0 raw data
 ## pointing
-- cosmos_20171110114116 (mars_azel_raster_1cosmos_20_d6_t4)
+- cosmos_20171115052750 (uranus_daisy_60_v60) 
 ## subref z scan
 - cosmos_20171103184436 (saturn_zscan_cont)
 ## beammap/fluxcal
@@ -11,7 +11,7 @@
 - cosmos_20171113070539 (orikl_radec_raster_240_d6_t4)
 
 # .fits のgzip
-- githubの制限のため、cosmos_*/2017*.fitsはgzipした。データ容量が半分になるので、SRON読み出しの出力時に自動でしてもらうとよい
+- githubの制限のため、cosmos_*/2017*.fitsはgzipした。データ容量が半分になるので、SRON読み出しの出力時に自動でしてもらう
 
 # D2 testデータの生成
 > cp -r deshima1.0 deshima2.0

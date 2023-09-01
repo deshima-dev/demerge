@@ -7,6 +7,7 @@ Python 3.9
 import unittest
 import dfits2dems as dd
 import numpy      as np
+import pandas     as pd
 import math
 import os
 
@@ -21,25 +22,25 @@ import merge_function as fc
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
-        testdata = 'dfits_testdata.fits.gz'
-        if not os.path.exists(testdata):
-            obsid = '20171110114116'
-            path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
-            mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
-                               dfitsdict  = 'dfits_dict.yaml',
-                               obsinst    = '{}/{}.obs'.format(path, obsid),
-                               antennalog = '{}/{}.ant'.format(path, obsid),
-                               weatherlog = '{}/{}.wea'.format(path, obsid),
-                               cabinlog   = '{}/{}.cabin'.format(path, obsid),
-                               skychoplog = 'skychop_testdata2.skychop',
-                               rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
+        # testdata = 'dfits_testdata.fits.gz'
+        # if not os.path.exists(testdata):
+        #     obsid = '20171110114116'
+        #     path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
+        #     mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
+        #                        dfitsdict  = 'dfits_dict.yaml',
+        #                        obsinst    = '{}/{}.obs'.format(path, obsid),
+        #                        antennalog = '{}/{}.ant'.format(path, obsid),
+        #                        weatherlog = '{}/{}.wea'.format(path, obsid),
+        #                        cabinlog   = '{}/{}.cabin'.format(path, obsid),
+        #                        skychoplog = 'skychop_testdata2.skychop',
+        #                        rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
             
-            dfits_hdus = mtd.dfits
-            dfits_hdus.writeto(testdata, overwrite=True)
-            mtd.kidsinfo_hdus.close()
+        #     dfits_hdus = mtd.dfits
+        #     dfits_hdus.writeto(testdata, overwrite=True)
+        #     mtd.kidsinfo_hdus.close()
 
-        self.filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
-        #self.filename = 'dfits_testdata.fits.gz'
+        #self.filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
+        self.filename = 'dfits_dummy.fits.gz'
         with fits.open(self.filename) as hdul:
             self.readout = hdul['READOUT'].data
             self.obsinfo = hdul['OBSINFO'].data
@@ -110,35 +111,35 @@ class Dfits2demsTestDrive(unittest.TestCase):
         result = np.array(np.where(ms.beam_pa > 0.0))
         self.assertTrue(result.any(), 'MS::beam_paに規定値以外がセットされたことを確認する')
 
-        result = np.array(np.where(ms.lon > 0.0))
+        result = np.array(np.where(ms.lon != 0.0))
         self.assertTrue(result.any(), 'MS::lonに規定値以外がセットされたことを確認する')
 
-        result = np.array(np.where(ms.lat > 0.0))
+        result = np.array(np.where(ms.lat != 0.0))
         self.assertTrue(result.any(), 'MS::latに規定値以外がセットされたことを確認する')
 
         self.assertTrue(ms.lon_origin > 0.0, 'MS::lon_originに規定値以外がセットされたことを確認する')
         self.assertTrue(ms.lat_origin > 0.0, 'MS::lat_originに規定値以外がセットされたことを確認する')
         
-        self.assertEqual(ms.observer,       'clumsy', 'MS::observer')
-        self.assertEqual(ms.object,         'MARS',   'MS::object')
-        self.assertEqual(ms.telescope_name, 'ASTE',   'MS::telescope_name')
+        self.assertEqual(ms.observer,       'dummy_observer',  'MS::observer')
+        self.assertEqual(ms.object,         'dummy_object',    'MS::object')
+        self.assertEqual(ms.telescope_name, 'dummy_telescope', 'MS::telescope_name')
 
         self.assertEqual(ms.exposure, self.obsinfo['integtime'][0], 'MS::exposure')
         self.assertEqual(ms.interval, self.obsinfo['interval'][0],  'MS::interval')
 
-        #print(np.where(np.array(ms.d2_skychopper_isblocking).all()))
-        #print(ms.d2_skychopper_isblocking)
-        print(ms.time)
+        # skychopの状態が変化する時点を検索
+        indexes = np.where(self.skychop['state'] == 1)
+        # そこインデックスに対する時刻を調べる
+        change_time1 = datetime.fromtimestamp(self.skychop['time'][indexes[0][0]])
+        change_time1 = np.datetime64(change_time1)
 
-        # print('total: {}'.format(len(ms.scan)))
-        # print('GRAD : {}'.format(len(np.where(ms.scan == 'GRAD')[0])))
-        # print('OFF  : {}'.format(len(np.where(ms.scan == 'OFF')[0])))
-        # print('SCAN : {}'.format(len(np.where(ms.scan == 'SCAN')[0])))
-        # print('JUNK : {}'.format(len(np.where(ms.scan == 'JUNK')[0])))
-        # print(ms.lon)
-        # for scan in np.array(ms.scan):
-        #     print(scan, end=' ')
-        # print(np.array(ms.chan))
+        # 同じことをms.d2_skychopper_isblockingにも行う
+        indexes = np.where(ms.d2_skychopper_isblocking == 1)
+        change_time2 = ms.time[indexes[0][0]].values
+
+        e = 100 # ns
+        self.assertTrue(e > change_time2 - change_time1, 'skychopの状態が変化した時刻がdfitsとdemsで同じことを確認する')
+        
         return
 
     def test_retrieve_cabin_temps(self):
@@ -198,7 +199,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
     def test_dfits2dems_dummy_dfits(self):
         """dummy_dfitsを使ったdfits2dems関数のテスト"""
         ms = dd.convert_dfits_to_dems('dfits_dummy.fits.gz', still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
-        print(ms.d2_skychopper_isblocking)
+        #print(ms.d2_skychopper_isblocking)
         
 if __name__=='__main__':
     unittest.main()

@@ -1,18 +1,17 @@
-"""テスト用のダミーデータを含むdfits.gzファイルを生成する"""
+"""テスト用のダミーデータからなるdfits.gzファイルを生成する"""
 
 from astropy.io import fits
 from datetime   import datetime, timedelta
 
 import math
 import yaml
-import numpy as np
+import numpy          as np
 import merge_function as mf
 
 if __name__ == '__main__':
     with open('dfits_dict.yaml', 'r') as f:
         dfits_dict = yaml.load(f, Loader=yaml.Loader)
 
-    hdul = fits.HDUList()
 
     od = dfits_dict['obsinfo_dict']
     
@@ -31,28 +30,27 @@ if __name__ == '__main__':
     od['col_vals']['interval']  = np.array([0.1])
     od['col_vals']['integtime'] = np.array([0.2])
     od['col_vals']['beamsize']  = np.array([0.005]) # 18 arcsec
-
     od['col_vals']['pixelid']   = np.array([99])
     od['col_vals']['offsetaz']  = np.array([1.1, 1.2, 1.3])
     od['col_vals']['offsetel']  = np.array([2.1, 2.2, 2.3])
     od['col_vals']['gain']      = np.array([3.1, 3.2, 3.3])
-
-    od['col_vals']['masterids'] = np.array([1, 2, 3])
-    od['col_vals']['kidids']    = np.array([10, 20, 30])
-    od['col_vals']['kidtypes']  = np.array([0, 1, 2])
-    od['col_vals']['kidfreqs']  = np.array([300.1, 300.2, 300.3])
-    od['col_vals']['kidQs']     = np.array([100.1, 200.1, 300.1])
+    od['col_vals']['masterids'] = np.array([[1, 2, 3]])
+    od['col_vals']['kidids']    = np.array([[10, 20, 30]])
+    od['col_vals']['kidtypes']  = np.array([[0, 1, 2]])
+    od['col_vals']['kidfreqs']  = np.array([[300.1, 300.2, 300.3]])
+    od['col_vals']['kidQs']     = np.array([[100.1, 200.1, 300.1]])
 
     obsinfo = mf.create_bintablehdu(od)
 
-    ad = dfits_dict['antenna_dict']
-
     # 時刻を生成する
-    n = 10
     now = datetime.now()
+
+    n = 10
     timestamps = [(now + timedelta(minutes=i)).isoformat() for i in range(n)] # 10分間
     
-    ad['hdr_vals']['FILENAME']  = 'antenna_log'
+    ad = dfits_dict['antenna_dict']
+
+    ad['hdr_vals']['FILENAME']  = 'antenna.log'
     ad['col_vals']['time']      = np.array(timestamps)
     ad['col_vals']['scantype']  = np.array(['GRAD']*n)
     ad['col_vals']['az']        = np.array([0.1*i for i in range(n)])
@@ -77,12 +75,11 @@ if __name__ == '__main__':
 
     readout = mf.create_bintablehdu(rd)
 
-    n = 10*6 # 10秒間隔
-    now = datetime.now()
+    n = 10*6 # 10秒間隔で10分間
     timestamps = [datetime.strftime(now + timedelta(seconds=i*10), '%Y%m%d%H%M%S') for i in range(n)] # 10分間
 
     wd = dfits_dict['weather_dict']
-    wd['hdr_vals']['FILENAME']       = 'weatherlog'
+    wd['hdr_vals']['FILENAME']       = 'weather.log'
     wd['col_vals']['time']           = np.array(timestamps)
     wd['col_vals']['temperature']    = np.array([6.5]*n).astype(np.float64)
     wd['col_vals']['pressure']       = np.array([570.5]*n).astype(np.float64)
@@ -92,22 +89,21 @@ if __name__ == '__main__':
 
     weather = mf.create_bintablehdu(wd)
 
-    cabin_t_dict = dfits_dict['cabin_t_dict']
 
-    n = 10
+    n = 10 # 1分間隔で10分間
     timestamps = [(now + timedelta(minutes=i)).isoformat() for i in range(n)] # 10分間
     
-    cabin_t_dict['hdr_vals']['FILENAME']    = 'cabin_t'
-    cabin_t_dict['col_vals']['time']        = np.array(timestamps)
-    cabin_t_dict['col_vals']['upper_cabin'] = np.array([6.5]*n).astype(np.float64)
-    cabin_t_dict['col_vals']['main_cabin']  = np.array([16.5]*n).astype(np.float64)
-    cabin_t = mf.create_bintablehdu(cabin_t_dict)
+    cd = dfits_dict['cabin_t_dict']
+    cd['hdr_vals']['FILENAME']    = 'cabin.log'
+    cd['col_vals']['time']        = np.array(timestamps)
+    cd['col_vals']['upper_cabin'] = np.array([6.5]*n).astype(np.float64)
+    cd['col_vals']['main_cabin']  = np.array([16.5]*n).astype(np.float64)
+    cabin_t = mf.create_bintablehdu(cd)
 
-    skychop_dict = dfits_dict['skychop_dict']
-
-    n = math.floor(10*60/0.001) # 10分間の点
+    n = math.floor(10*60/0.001) # 1ミリ秒間隔で10分間の点
     datetimes = [(now + timedelta(milliseconds=(i))).timestamp() for i in range(n)] # 10分間
 
+    # 半分の時間がたったら状態が変化するようにstatesを生成する
     states = []
     for i in range(n):
         if i < (n/2):
@@ -115,12 +111,15 @@ if __name__ == '__main__':
         else:
             states.append(1)
 
-    skychop_dict['hdr_vals']['FILENAME'] = 'skychop.log'
-    skychop_dict['col_vals']['time']     = np.array(datetimes).astype(np.float64)
-    skychop_dict['col_vals']['state']    = np.array(states).astype(np.int8)
-    skychop = mf.create_bintablehdu(skychop_dict)
+    sd = dfits_dict['skychop_dict']
+
+    sd['hdr_vals']['FILENAME'] = 'skychop.log'
+    sd['col_vals']['time']     = np.array(datetimes).astype(np.float64)
+    sd['col_vals']['state']    = np.array(states).astype(np.int8)
+
+    skychop = mf.create_bintablehdu(sd)
     
-    # KIDSINFO
+    # KIDSINFO(dfits_dictにKIDSINFOの定義はないので最初から作る)
     header = fits.Header()
     header['EXTNAME']  = 'KIDSINFO', 'name of binary data'
     header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
@@ -138,6 +137,7 @@ if __name__ == '__main__':
     ]
     kidsinfo = fits.BinTableHDU.from_columns(columns, header)
 
+    hdul = fits.HDUList()
     hdul.append(fits.PrimaryHDU())
     hdul.append(obsinfo)
     hdul.append(antenna)
@@ -146,5 +146,4 @@ if __name__ == '__main__':
     hdul.append(skychop)
     hdul.append(cabin_t)
     hdul.append(kidsinfo)
-
     hdul.writeto('dfits_dummy.fits.gz', overwrite=True)

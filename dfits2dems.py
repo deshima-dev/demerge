@@ -50,12 +50,14 @@ def convert_dfits_to_dems(filename, **kwargs):
         weather   = hdul['WEATHER'].data
         cabin     = hdul['CABIN_T'].data
         skychop   = hdul['SKYCHOP'].data
+        misti     = hdul['MISTI'].data
 
     time         = np.array(readout['starttime']).astype(np.datetime64)
     time_antenna = np.array(antenna['time']).astype(np.datetime64)
     time_weather = np.array(weather['time']).astype(np.datetime64)
     time_cabin   = np.array(cabin['time']).astype(np.datetime64)
     time_skychop = np.array([datetime.fromtimestamp(t) for t in skychop['time']]).astype(np.datetime64)
+    time_misti   = np.array(misti['time']).astype(np.datetime64)
 
     # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
     seconds         = (time         - time[0])/np.timedelta64(1, 's')
@@ -63,6 +65,7 @@ def convert_dfits_to_dems(filename, **kwargs):
     seconds_weather = (time_weather - time[0])/np.timedelta64(1, 's')
     seconds_cabin   = (time_cabin   - time[0])/np.timedelta64(1, 's')
     seconds_skychop = (time_skychop - time[0])/np.timedelta64(1, 's')
+    seconds_misti   = (time_misti   - time[0])/np.timedelta64(1, 's')
 
     # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
     if coodinate == 'azel':
@@ -109,6 +112,8 @@ def convert_dfits_to_dems(filename, **kwargs):
     wind_speed               = np.interp(seconds, seconds_weather, weather['windspd'])
     wind_direction           = np.interp(seconds, seconds_weather, weather['winddir'])
     aste_cabin_temperature   = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
+    aste_misti_lon           = np.interp(seconds, seconds_misti,   misti['lon'])
+    aste_misti_lat           = np.interp(seconds, seconds_misti,   misti['lat'])
 
     # nearestを利用するためにskychopの補間にはscipyのinterp1dを使う。skychopの0,1は離散的な真理値のため。
     f_skychop = interp1d(seconds_skychop, skychop['state'], kind='nearest', bounds_error=False, fill_value=(skychop['state'][0], skychop['state'][-1]))
@@ -159,6 +164,9 @@ def convert_dfits_to_dems(filename, **kwargs):
         d2_mkid_id=obsinfo['kidids'][0].astype(np.int64),
         d2_mkid_type=obsinfo['kidtypes'][0],
         d2_mkid_frequency=obsinfo['kidfreqs'][0].astype(np.float64),
+
+        aste_misti_lon=aste_misti_lon,
+        aste_misti_lat=aste_misti_lat,
 
         exposure=obsinfo['integtime'][0],
         interval=obsinfo['interval'][0],

@@ -139,15 +139,23 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
         e = 100 # ns
         self.assertTrue(e > change_time2 - change_time1, 'skychopの状態が変化した時刻がdfitsとdemsでだいたい同じであることを確認する')
-        
+
+        #self.assertTrue(np.array(np.where(np.array(ms.aste_misti_lon) == 0)).all(), 'aste_misti_lonに規定値以外が格納されたことを確認')
+        #self.assertTrue(ms.aste_misti_lon.values[0] == 0)
+        #print(ms.aste_misti_lon.values[0])
+        # self.assertTrue(np.array(np.where(ms.aste_misti_lat != 0.0)).all(), 'aste_misti_lonに規定値以外が格納されたことを確認')
+        # self.assertTrue(np.array(np.where(ms.aste_misti_frame == 'altaz')).all(), 'aste_misti_frameに規定値が格納されたことを確認')
+        self.assertEqual('altaz', ms.aste_misti_frame.values)
+        self.assertTrue((ms.aste_misti_lon.values != 0).all())
+        self.assertTrue((ms.aste_misti_lat.values != 0).all())
         return
 
     def test_retrieve_cabin_temps(self):
         """cabinの温度をロードする"""
-        datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171110114116/20171110114116.cabin')
-        self.assertEqual(8, len(datetimes))
-        self.assertEqual(8, len(upper))
-        self.assertEqual(8, len(lower))
+        datetimes, upper, lower = dd.retrieve_cabin_temps('data/deshima2.0/cosmos_20171103184436/20171103184436.cabin')
+        self.assertEqual(4, len(datetimes))
+        self.assertEqual(4, len(upper))
+        self.assertEqual(4, len(lower))
         return
 
     def test_retrieve_skychop_states(self):
@@ -165,7 +173,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
         """MergeToDfitsクラスのテスト
         このテストを行うにはreduced_XXX.fitsがあらかじめ作成されている必要がある。
         """
-        obsid = '20171110114116'
+        obsid = '20171103184436'
         path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
         mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
                            dfitsdict  = 'dfits_dict.yaml',
@@ -181,9 +189,9 @@ class Dfits2demsTestDrive(unittest.TestCase):
         mtd.kidsinfo_hdus.close()
 
         # 20171110114116.cabinには8行のデータがある
-        self.assertEqual(len(dfits_hdus['cabin_t'].data['time']),        8)
-        self.assertEqual(len(dfits_hdus['cabin_t'].data['upper_cabin']), 8)
-        self.assertEqual(len(dfits_hdus['cabin_t'].data['main_cabin']),  8)
+        self.assertEqual(4, len(dfits_hdus['cabin_t'].data['time']))
+        self.assertEqual(4, len(dfits_hdus['cabin_t'].data['upper_cabin']))
+        self.assertEqual(4, len(dfits_hdus['cabin_t'].data['main_cabin']))
 
         self.assertTrue('skychop' in dfits_hdus)
         #self.assertEqual(len(dfits_hdus['skychop'].data['time']), 428201)

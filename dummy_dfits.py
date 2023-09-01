@@ -137,6 +137,22 @@ if __name__ == '__main__':
     ]
     kidsinfo = fits.BinTableHDU.from_columns(columns, header)
 
+
+    n = math.floor(10*60/0.1) # 0.1秒間隔で10分間
+    timestamps = [(now + timedelta(milliseconds=i*100)).isoformat() for i in range(n)] # 10分間
+
+    # MISTI
+    header = fits.Header()
+    header['EXTNAME']  = 'MISTI', 'name of binary data'
+    header['FILENAME'] = 'mistilog.misti', 'aste misti filename'
+
+    columns = [
+        fits.Column(name='time', format='26A', array=timestamps),
+        fits.Column(name='az',   format='D',   array=[i*0.1  for i in range(n)]),
+        fits.Column(name='el',   format='D',   array=[i*0.15 for i in range(n)]),
+    ]
+    misti = fits.BinTableHDU.from_columns(columns, header)
+    
     hdul = fits.HDUList()
     hdul.append(fits.PrimaryHDU())
     hdul.append(obsinfo)
@@ -146,4 +162,7 @@ if __name__ == '__main__':
     hdul.append(skychop)
     hdul.append(cabin_t)
     hdul.append(kidsinfo)
+    hdul.append(misti)
     hdul.writeto('dfits_dummy.fits.gz', overwrite=True)
+
+    print(hdul['MISTI'].data)

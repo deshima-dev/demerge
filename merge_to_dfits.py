@@ -38,10 +38,12 @@ class MergeToDfits:
         obsinst    (str): File name of the Observation Instruction.
         antennalog (str): File name of the Antennalogging.
         rout_data  (str): File name of the Readout Data (FITS).
+        skychoplog (str): File name of the Skychoplogging.
         weatherlog (str): File name of the Weatherlogging.
                           Default is None.
         cabinlog   (str): File name of the cabin temperature log database.
                           Default is None.
+
 
     Example:
         "ddbfits"   : DDB_20180208.fits
@@ -49,8 +51,9 @@ class MergeToDfits:
         "obsinst"   : 20171024012916.obs
         "antennalog": 20171024012916.ant
         "rout_data" : reduced_20171024012916.fits
+        "skychoplog": 20171024012916.sky
         "weatherlog": 20171024012916.wea
-        "cabinlog"  : cabin.db
+        "cabinlog"  : 20171024012916.cabin
 
         Get HDUList of DFITS:
         >>> mtd = MergeToDfits(
@@ -58,7 +61,8 @@ class MergeToDfits:
                 dfitsdict=dfitsdict,
                 obsinst=obsinst,
                 antennalog=antennalog,
-                rout_data=rout_data
+                rout_data=rout_data,
+                skychoplog=skychoplog
             )
         >>> dfits = mtd.dfits
         >>> dfits.indo()
@@ -77,6 +81,7 @@ class MergeToDfits:
                 obsinst=obsinst,
                 antennalog=antennalog,
                 rout_data=rout_data,
+                skychoplog=skychoplog,
                 weatherlog=weatherlog,
                 cabinlog=cabindb
             )

@@ -18,7 +18,6 @@ from datetime       import datetime
 
 import merge_function as fc
 
-
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
@@ -48,6 +47,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
             self.weather = hdul['WEATHER'].data
             self.cabin   = hdul['CABIN_T'].data
             self.skychop = hdul['SKYCHOP'].data
+            self.misti   = hdul['MISTI'].data
         
         return
 

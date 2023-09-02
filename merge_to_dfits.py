@@ -39,6 +39,7 @@ class MergeToDfits:
         antennalog (str): File name of the Antennalogging.
         rout_data  (str): File name of the Readout Data (FITS).
         skychoplog (str): File name of the Skychoplogging.
+        mistilog   (str): File name of the Mistilogging.
         weatherlog (str): File name of the Weatherlogging.
                           Default is None.
         cabinlog   (str): File name of the cabin temperature log database.
@@ -52,6 +53,7 @@ class MergeToDfits:
         "antennalog": 20171024012916.ant
         "rout_data" : reduced_20171024012916.fits
         "skychoplog": 20171024012916.sky
+        "mistilog"  : 20171024012916.misti
         "weatherlog": 20171024012916.wea
         "cabinlog"  : 20171024012916.cabin
 
@@ -63,6 +65,7 @@ class MergeToDfits:
                 antennalog=antennalog,
                 rout_data=rout_data,
                 skychoplog=skychoplog
+                mistilog=mistilog
             )
         >>> dfits = mtd.dfits
         >>> dfits.indo()
@@ -90,13 +93,14 @@ class MergeToDfits:
         >>> readout = mtd.readout
         >>> weather = mtd.weather
     """
-    def __init__(self, ddbfits, dfitsdict, obsinst, antennalog, rout_data, skychoplog, weatherlog=None, cabinlog=None):
+    def __init__(self, ddbfits, dfitsdict, obsinst, antennalog, rout_data, skychoplog, mistilog, weatherlog=None, cabinlog=None):
         #-------- Path
         self.ddbfits    = os.path.expanduser(ddbfits)
         self.dfitsdict  = os.path.expanduser(dfitsdict)
         self.obsinst    = os.path.expanduser(obsinst)
         self.antennalog = os.path.expanduser(antennalog)
         self.skychoplog = os.path.expanduser(skychoplog)
+        self.mistilog   = os.path.expanduser(mistilog)
         self.rout_data  = os.path.expanduser(rout_data)
         if weatherlog is None:
             self.weatherlog = None
@@ -130,6 +134,7 @@ class MergeToDfits:
         hdus.append(self.kidsinfo)     # KIDSINFO
         hdus.append(self.readout)      # READOUT: must be before CABIN_T
         hdus.append(self.skychop)
+        hdus.append(self.misti)
         if not self.weatherlog is None:
             hdus.append(self.weather)  # WEATHER
         if not self.cabinlog is None:
@@ -285,4 +290,15 @@ class MergeToDfits:
         skychop_dict['col_vals']['time']     = datetimes
         skychop_dict['col_vals']['state']    = states
         return fc.create_bintablehdu(skychop_dict)
+
+    @property
+    def misti(self):
+        md = self.dfits_dict['misti_dict']
+        datetimes, az, el = dfits2dems.retrieve_misti_log(self.mistilog)
+        #-------- Set Data to the Dictinary 'cabin_t_dict'
+        md['hdr_vals']['FILENAME'] = os.path.basename(self.mistilog)
+        md['col_vals']['time']     = datetimes
+        md['col_vals']['az']       = az
+        md['col_vals']['el']       = el
+        return fc.create_bintablehdu(md)
 

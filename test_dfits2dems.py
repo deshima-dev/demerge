@@ -172,6 +172,8 @@ class Dfits2demsTestDrive(unittest.TestCase):
     def test_retrieve_misti_log(self):
         datetimes, az, el = dd.retrieve_misti_log('data/deshima2.0/cosmos_20171103184436/20171103184436.misti')
         self.assertEqual(1848, len(datetimes))
+        self.assertEqual(1848, len(az))
+        self.assertEqual(1848, len(el))
         return
 
     def test_MergeToDfits(self):
@@ -208,6 +210,8 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
         self.assertTrue('misti' in dfits_hdus)
         self.assertEqual(1848, len(dfits_hdus['misti'].data['time']))
+        self.assertEqual(1848, len(dfits_hdus['misti'].data['az']))
+        self.assertEqual(1848, len(dfits_hdus['misti'].data['el']))
         return
 
     # def test_dfits2dems_dummy_dfits(self):

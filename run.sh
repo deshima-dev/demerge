@@ -123,7 +123,9 @@ fi
 # weaファイルへの相対パス
 # caldb fitsファイルへの相対パス
 # yamlファイルへの相対パス
-# cabin.dbファイルへの相対パス
+# cabinファイルへの相対パス
+# skychopファイルへの相対パス
+# mistiファイルへの相対パス
 #
 python mergetofits.py \
        "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits" \
@@ -134,7 +136,8 @@ python mergetofits.py \
        "DDB_20180619.fits.gz" \
        "dfits_dict.yaml" \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop"
+       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
+       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"
 if [ $? -ne 0 ]; then
     echo "失敗:mergetofits.py"
     exit 1

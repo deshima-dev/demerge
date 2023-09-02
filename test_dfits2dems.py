@@ -169,6 +169,11 @@ class Dfits2demsTestDrive(unittest.TestCase):
         #print(np.array([datetime.fromtimestamp(t) for t in datetimes]).astype(np.datetime64))
         return
 
+    def test_retrieve_misti_log(self):
+        datetimes, az, el = dd.retrieve_misti_log('data/deshima2.0/cosmos_20171103184436/20171103184436.misti')
+        self.assertEqual(1848, len(datetimes))
+        return
+
     def test_MergeToDfits(self):
         """MergeToDfitsクラスのテスト
         このテストを行うにはreduced_XXX.fitsがあらかじめ作成されている必要がある。
@@ -181,33 +186,34 @@ class Dfits2demsTestDrive(unittest.TestCase):
                            antennalog = '{}/{}.ant'.format(path, obsid),
                            weatherlog = '{}/{}.wea'.format(path, obsid),
                            cabinlog   = '{}/{}.cabin'.format(path, obsid),
-                           #skychoplog = '{}/{}.skychop'.format(path, obsid),
+                           mistilog   = '{}/{}.misti'.format(path, obsid),
                            skychoplog = 'skychop_testdata.skychop',
                            rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
         
         dfits_hdus = mtd.dfits
         mtd.kidsinfo_hdus.close()
 
-        # 20171110114116.cabinには8行のデータがある
+        # 20171103184436.cabinには8行のデータがある
         self.assertEqual(4, len(dfits_hdus['cabin_t'].data['time']))
         self.assertEqual(4, len(dfits_hdus['cabin_t'].data['upper_cabin']))
         self.assertEqual(4, len(dfits_hdus['cabin_t'].data['main_cabin']))
 
         self.assertTrue('skychop' in dfits_hdus)
-        #self.assertEqual(len(dfits_hdus['skychop'].data['time']), 428201)
-        #self.assertEqual(len(dfits_hdus['skychop'].data['state']), 428201)
         self.assertEqual(len(dfits_hdus['skychop'].data['time']), 146)
         self.assertEqual(len(dfits_hdus['skychop'].data['state']), 146)
         self.assertEqual(2, dfits_hdus['skychop'].data['state'][0])
         self.assertEqual(1, dfits_hdus['skychop'].data['state'][1])
         self.assertEqual(0, dfits_hdus['skychop'].data['state'][2])
         self.assertEqual(1, dfits_hdus['skychop'].data['state'][3])
+
+        self.assertTrue('misti' in dfits_hdus)
+        self.assertEqual(1848, len(dfits_hdus['misti'].data['time']))
         return
 
-    def test_dfits2dems_dummy_dfits(self):
-        """dummy_dfitsを使ったdfits2dems関数のテスト"""
-        ms = dd.convert_dfits_to_dems('dfits_dummy.fits.gz', still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
-        #print(ms.d2_skychopper_isblocking)
+    # def test_dfits2dems_dummy_dfits(self):
+    #     """dummy_dfitsを使ったdfits2dems関数のテスト"""
+    #     ms = dd.convert_dfits_to_dems('dfits_dummy.fits.gz', still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
+    #     print(ms.d2_skychopper_isblocking)
         
 if __name__=='__main__':
     unittest.main()

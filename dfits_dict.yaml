@@ -418,3 +418,133 @@ skychop_dict:
       - SKYCHOP
     - - FILENAME
       - null
+misti_dict:
+  col_form: !!python/object/apply:collections.OrderedDict
+  - - - 26A
+      - D
+    - - year
+      - I
+    - - month
+      - I
+    - - day
+      - I
+    - - hour
+      - I
+    - - minute
+      - I
+    - - second
+      - D
+    - - az
+      - D
+    - - el
+      - D
+    - - power
+      - D
+    - - hot_load_temp
+      - D
+    - - receiver_room_temp
+      - D
+    - - primary_mirror_room_temp
+      - D
+    - - chopper_mirror_status
+      - D
+  col_unit: !!python/object/apply:collections.OrderedDict
+  - - - time
+      - null
+    - - year
+      - null
+    - - month
+      - null
+    - - day
+      - null
+    - - hour
+      - null
+    - - minute
+      - null
+    - - second
+      - null
+    - - az
+      - deg
+    - - el
+      - deg
+    - - power
+      - dBm
+    - - hot_load_temp
+      - deg
+    - - receiver_room_temp
+      - deg
+    - - primary_mirror_room_temp
+      - deg
+    - - chopper_mirror_status
+      - null
+  col_vals: !!python/object/apply:collections.OrderedDict
+  - - - time
+      - null
+    - - year
+      - null
+    - - month
+      - null
+    - - day
+      - null
+    - - hour
+      - null
+    - - minute
+      - null
+    - - second
+      - null
+    - - az
+      - null
+    - - el
+      - null
+    - - power
+      - null
+    - - hot_load_temp
+      - null
+    - - receiver_room_temp
+      - null
+    - - primary_mirror_room_temp
+      - null
+    - - chopper_mirror_status
+      - null
+  hdr_coms:
+    EXTNAME: name of binary table
+    FILENAME: filename of "misti Log"
+    TFORM1: data format of field 1
+    TFORM2: data format of field 2
+    TFORM3: data format of field 3
+    TFORM4: data format of field 4
+    TFORM5: data format of field 5
+    TFORM6: data format of field 6
+    TFORM7: data format of field 7
+    TFORM8: data format of field 8
+    TFORM9: data format of field 9
+    TFORM10: data format of field 10
+    TFORM11: data format of field 11
+    TFORM12: data format of field 12
+    TFORM13: data format of field 13
+    TFORM14: data format of field 14
+    TTYPE1: label for field 1
+    TTYPE2: label for field 2
+    TTYPE3: label for field 3
+    TTYPE4: label for field 4
+    TTYPE5: label for field 5
+    TTYPE6: label for field 6
+    TTYPE7: label for field 7
+    TTYPE8: label for field 8
+    TTYPE9: label for field 9
+    TTYPE10: label for field 10
+    TTYPE11: label for field 11
+    TTYPE12: label for field 12
+    TTYPE13: label for field 13
+    TTYPE14: label for field 14
+    TUNIT8: label for field 8
+    TUNIT9: label for field 9
+    TUNIT10: label for field 10
+    TUNIT11: label for field 11
+    TUNIT12: label for field 12
+    TUNIT13: label for field 13
+  hdr_vals: !!python/object/apply:collections.OrderedDict
+  - - - EXTNAME
+      - MISTI
+    - - FILENAME
+      - null

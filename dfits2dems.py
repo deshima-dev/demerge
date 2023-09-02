@@ -6,6 +6,7 @@ Python 3.9
 """
 
 import numpy as np
+import math
 #import ascii
 
 from astropy.io        import fits, ascii
@@ -232,3 +233,55 @@ def retrieve_skychop_states(filename):
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)
     return (datetimes, states)
+
+def retrieve_misti_log(filename):
+    """mistiファイルからの時系列データを取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, az, el)
+      tupleの各要素はnumpy.array。要素数は同じ。
+
+    ファイル形式
+    ============
+    1列目 年
+    2列目 月
+    3列目 日
+    4列目 時
+    5列目 分
+    6列目 秒(小数点以下も含む)
+    7列目 az(deg)
+    8列目 el(deg)
+    9列目 power(dBm)
+    10列目 hot load temperature
+    11列目 receiver room temperature
+    12列目 primary mirror room temperature
+    13列目 chopper mirro status
+    "#"から始まるコメントがファイル冒頭に数行ある。
+    """
+    column_names = [
+        'year', 'month', 'day', 'hour', 'minute', 'second',
+        'az',
+        'el',
+        'power',
+        'hot_load_temp',
+        'reveiver_room_temp',
+        'primary_mirror_temp',
+        'chopper_mirror_temp'
+    ]
+    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=column_names)
+
+    az = np.array(table['az']).astype(np.float64)
+    el = np.array(table['el']).astype(np.float64)
+
+    # 時刻はISO形式に変換する
+    datetimes = []
+    for row in table:
+        second = math.floor(row['second'])
+        microsecond = math.floor((row['second'] - second)*1e6)
+        datetimes.append(datetime(row['year'], row['month'], row['day'], hour=row['hour'], minute=row['minute'], second=second, microsecond=microsecond))
+
+    return (np.array(datetimes).astype(np.datetime64), az, el)

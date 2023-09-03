@@ -21,24 +21,6 @@ import merge_function as fc
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
     def setUp(self):
-        # testdata = 'dfits_testdata.fits.gz'
-        # if not os.path.exists(testdata):
-        #     obsid = '20171110114116'
-        #     path  = 'data/deshima2.0/cosmos_{}'.format(obsid)
-        #     mtd = MergeToDfits(ddbfits    = 'DDB_20180619.fits.gz',
-        #                        dfitsdict  = 'dfits_dict.yaml',
-        #                        obsinst    = '{}/{}.obs'.format(path, obsid),
-        #                        antennalog = '{}/{}.ant'.format(path, obsid),
-        #                        weatherlog = '{}/{}.wea'.format(path, obsid),
-        #                        cabinlog   = '{}/{}.cabin'.format(path, obsid),
-        #                        skychoplog = 'skychop_testdata2.skychop',
-        #                        rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
-            
-        #     dfits_hdus = mtd.dfits
-        #     dfits_hdus.writeto(testdata, overwrite=True)
-        #     mtd.kidsinfo_hdus.close()
-
-        #self.filename = '../dmerge/cache/20171110114116/dfits_20171110114116.fits.gz'
         self.filename = 'dfits_dummy.fits.gz'
         with fits.open(self.filename) as hdul:
             self.readout = hdul['READOUT'].data
@@ -148,6 +130,11 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual('altaz', ms.aste_misti_frame.values)
         self.assertTrue((ms.aste_misti_lon.values != 0).all())
         self.assertTrue((ms.aste_misti_lat.values != 0).all())
+
+        # findR (dummy_dfits.pyによって意図的にRthを超える値が設定されている)
+        self.assertEqual(1, len(np.where(ms.scan == 'R')))
+        self.assertEqual('R', ms.scan[22])
+        
         return
 
     def test_retrieve_cabin_temps(self):
@@ -214,10 +201,5 @@ class Dfits2demsTestDrive(unittest.TestCase):
         self.assertEqual(1848, len(dfits_hdus['misti'].data['el']))
         return
 
-    # def test_dfits2dems_dummy_dfits(self):
-    #     """dummy_dfitsを使ったdfits2dems関数のテスト"""
-    #     ms = dd.convert_dfits_to_dems('dfits_dummy.fits.gz', still_period=2, shuttle_min_lon_on=-0.0001, shuttle_max_lon_on=0.1)
-    #     print(ms.d2_skychopper_isblocking)
-        
 if __name__=='__main__':
     unittest.main()

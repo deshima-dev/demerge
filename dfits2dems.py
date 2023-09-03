@@ -26,9 +26,9 @@ def convert_dfits_to_dems(filename, **kwargs):
     shuttle_min_lon_on  = kwargs.pop('shuttle_min_lon_on', None)
     shuttle_max_lon_on  = kwargs.pop('shuttle_max_lon_on', None)
     # find R
-    ch                  = kwargs.pop('ch', 0)      # チャネル
-    Rth                 = kwargs.pop('Rth', 280)   # R閾値
-    skyth               = kwargs.pop('skyth', 150) # sky閾値
+    R_ch                = kwargs.pop('ch', 0)      # チャネル
+    R_th                = kwargs.pop('Rth', 280)   # R閾値
+    sky_th              = kwargs.pop('skyth', 150) # sky閾値
     cutnum              = kwargs.pop('cutnum', 1)  # カット番号
 
     # shuttle観測に関する引数が1つでも与えられたら与えられなかった変数に規定値(0.0)を設定する。
@@ -105,22 +105,20 @@ def convert_dfits_to_dems(filename, **kwargs):
         scan[scan == i] = scantype
 
     # 座標、気象情報、キャビン情報もREADOUTの時間に合わせて補間する
-    lon                      = np.interp(seconds, seconds_antenna, lon)
-    lat                      = np.interp(seconds, seconds_antenna, lat)
-    temperature              = np.interp(seconds, seconds_weather, weather['temperature'])
-    pressure                 = np.interp(seconds, seconds_weather, weather['pressure'])
-    humidity                 = np.interp(seconds, seconds_weather, weather['vapor-pressure'])
-    wind_speed               = np.interp(seconds, seconds_weather, weather['windspd'])
-    wind_direction           = np.interp(seconds, seconds_weather, weather['winddir'])
-    aste_cabin_temperature   = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
-    aste_misti_lon           = np.interp(seconds, seconds_misti,   misti['lon'])
-    aste_misti_lat           = np.interp(seconds, seconds_misti,   misti['lat'])
+    lon                    = np.interp(seconds, seconds_antenna, lon)
+    lat                    = np.interp(seconds, seconds_antenna, lat)
+    temperature            = np.interp(seconds, seconds_weather, weather['temperature'])
+    pressure               = np.interp(seconds, seconds_weather, weather['pressure'])
+    humidity               = np.interp(seconds, seconds_weather, weather['vapor-pressure'])
+    wind_speed             = np.interp(seconds, seconds_weather, weather['windspd'])
+    wind_direction         = np.interp(seconds, seconds_weather, weather['winddir'])
+    aste_cabin_temperature = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
+    aste_misti_lon         = np.interp(seconds, seconds_misti,   misti['lon'])
+    aste_misti_lat         = np.interp(seconds, seconds_misti,   misti['lat'])
 
     # nearestを利用するためにskychopの補間にはscipyのinterp1dを使う。skychopの0,1は離散的な真理値のため。
     f_skychop = interp1d(seconds_skychop, skychop['state'], kind='nearest', bounds_error=False, fill_value=(skychop['state'][0], skychop['state'][-1]))
     d2_skychopper_isblocking = f_skychop(seconds)
-    
-    #d2_skychopper_isblocking[2] = 0 # for debug
     
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still_period != None:
@@ -142,7 +140,7 @@ def convert_dfits_to_dems(filename, **kwargs):
         
     # findR
     if True:
-        mask = np.where(response[:, ch] >= Rth)
+        mask = np.where(response[:, R_ch] >= R_th)
         scan[mask] = 'R'
             
     ms = MS.new(

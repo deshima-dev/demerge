@@ -71,7 +71,11 @@ if __name__ == '__main__':
     rd['col_vals']['starttime'] = np.array(starttimes).astype(np.datetime64)
     rd['col_vals']['pixelid']   = np.array([99])
     rd['col_vals']['lin_phase'] = np.array([[1.1, 1.2, 1.3]]*n).astype(np.float64)
-    rd['col_vals']['Tsignal']   = np.array([[2.1, 2.2, 2.3]]*n).astype(np.float64)
+
+    response = np.array([[2.1, 2.2, 2.3]]*n).astype(np.float64)
+    # findRの効果を確かめるため特定の場所だけRthを超える値にする
+    response[22][0] = 290
+    rd['col_vals']['Tsignal']   = response
 
     readout = mf.create_bintablehdu(rd)
 

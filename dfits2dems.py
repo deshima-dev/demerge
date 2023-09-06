@@ -113,8 +113,8 @@ def convert_dfits_to_dems(filename, **kwargs):
     wind_speed             = np.interp(seconds, seconds_weather, weather['windspd'])
     wind_direction         = np.interp(seconds, seconds_weather, weather['winddir'])
     aste_cabin_temperature = np.interp(seconds, seconds_cabin,   cabin['main_cabin'])
-    aste_misti_lon         = np.interp(seconds, seconds_misti,   misti['lon'])
-    aste_misti_lat         = np.interp(seconds, seconds_misti,   misti['lat'])
+    aste_misti_lon         = np.interp(seconds, seconds_misti,   misti['az'])
+    aste_misti_lat         = np.interp(seconds, seconds_misti,   misti['el'])
 
     # nearestを利用するためにskychopの補間にはscipyのinterp1dを使う。skychopの0,1は離散的な真理値のため。
     f_skychop = interp1d(seconds_skychop, skychop['state'], kind='nearest', bounds_error=False, fill_value=(skychop['state'][0], skychop['state'][-1]))

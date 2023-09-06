@@ -152,8 +152,8 @@ if __name__ == '__main__':
 
     columns = [
         fits.Column(name='time',  format='26A', array=timestamps),
-        fits.Column(name='lon',   format='D',   array=[(i + 1)*0.1  for i in range(n)]),
-        fits.Column(name='lat',   format='D',   array=[(i + 1)*0.15 for i in range(n)]),
+        fits.Column(name='az',   format='D',   array=[(i + 1)*0.1  for i in range(n)]),
+        fits.Column(name='el',   format='D',   array=[(i + 1)*0.15 for i in range(n)]),
         fits.Column(name='frame', format='10A', array=['altaz']*n),
     ]
     misti = fits.BinTableHDU.from_columns(columns, header)

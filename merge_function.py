@@ -75,13 +75,19 @@ def load_obsinst(obsinst):
                 equinox = line.split()[-1].strip('\'JB')
             elif 'SET DES OBS_USER' in line:
                 observer = line.split()[-1].strip('\'')
+            elif 'SET DES PROJECT' in line:
+                project = line.split()[-1].strip('\'')
+            elif 'SET DES PROJECT' in line:
+                project = line.split()[-1].strip('\'')
+            elif '% OBS=' in line:
+                observation = line.split('=')[-1].strip()
     if trktype == 'RADEC':
         ra  = srcpos[0]
         dec = srcpos[1]
     else:
         ra  = 0
         dec = 0
-    return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox}
+    return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
 
 def get_maskid_corresp(pixelid, ddb):
     """Get Correspondance of 'master' and 'kid'"""

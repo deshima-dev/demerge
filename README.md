@@ -30,5 +30,5 @@ $ pip install -q "dems==0.2.0"
 # 実行例
 
 ```
-$ ./run.sh -d data/deshima1.0 20171110114116
+$ ./run.sh -d data/deshima2.0 20171103184436
 ```

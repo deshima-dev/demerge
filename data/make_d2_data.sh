@@ -14,7 +14,7 @@ for d in $data_d2; do
     NR=`echo -e "$ant_time_data" | wc -l `
     echo -e "$obsid $t_max $t_min $NR"
     echo -e "# MiSTi tsky test data" > $obsid.tsky
-    echo -e "# [0] YYYY \n# [1] MM\n# [2] DD" >> $obsid.tsky
+    echo -e "# [0] (UTC) YYYY \n# [1] MM\n# [2] DD" >> $obsid.tsky
     echo -e "# [3] hh\n# [4] mm\n# [5] ss.ss" >> $obsid.tsky
     echo -e "# [6] az (deg)\n# [7] el (deg)" >> $obsid.tsky
     echo -e "# [8] ??? power (dBm)" >> $obsid.tsky
@@ -24,9 +24,9 @@ for d in $data_d2; do
     echo -e "# [12] ??? Chopper mirror status, 0: Sky, 1: Room, 2: Hot" >> $obsid.tsky
     echo -e "# [13] ???" >> $obsid.tsky
     echo -e "# [14] ???" >> $obsid.tsky
-    # make .pwv
-    echo -e "# MiSTi pwv test data" > $obsid.pwv
-    echo -e "# [0] (UTC) YYYY/MM/DD \n# [1] (UTC) hh:mm:ss.ss \n# [2] unixtime\n# [3] Az (deg)\n# [4] El (deg)\n# [5] PWV(um)\n# [6] Tground(K)" >> $obsid.pwv
+    # make .misti (.pwv?)
+    echo -e "# MiSTi pwv test data" > $obsid.misti
+    echo -e "# [0] (UTC) YYYY/MM/DD \n# [1] (UTC) hh:mm:ss.ss \n# [3] Az (deg)\n# [4] El (deg)\n# [5] PWV(um)\n# [6] Tground(K)" >> $obsid.misti
 
     # make Skychop
     echo -e '#set velocity (rpm): 87.000000\n#set smapling rate (Hz): 1000.000000\n#ts state' > ${obsid}.skychop
@@ -41,7 +41,7 @@ for d in $data_d2; do
         ut=`date -u -d "$(echo -e $t | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%2N`
 	
 	echo -e $t | awk '{printf("%s %s %s %s %s %05.2f 180.000 90.000  69.360 -11.952 -12.047  4.3210e+03 0.0000e+00  4.3679e+01 0.0000e+00\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.tsky
-	echo -e $t | awk '{printf("%s/%s/%s %s:%s:%05.2f  180.000 90.000   610.0 258.0\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.pwv
+	echo -e $t | awk '{printf("%s/%s/%s %s:%s:%05.2f  180.000 90.000   610.0 258.0\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.misti
 	
 	cabin_data=`echo -e $t | awk '{printf("%s/%s/%s %s:%s  13.2   16.6 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), $0)}'`
         if [ "$cabin_data" != "$cabin_data2" ]; then

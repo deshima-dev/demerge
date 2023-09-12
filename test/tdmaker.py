@@ -1,4 +1,4 @@
-"""テストデータを作成するクラス
+"""単純なテストデータを作成するクラス
 
 (C) 内藤システムズ
 """
@@ -64,24 +64,24 @@ class TestDataMaker():
         # ANTENNA時刻は秒が少数第一桁まで。そのため下2桁から6桁までを[:-5]を用いて文字列として削除している。
         antenna_table['time'] = [(self.begin_time + timedelta(milliseconds=self.T_antenna*1e3*i)).strftime('%Y%m%d%H%M%S.%f')[:-5] for i in range(self.n_antenna)]
         bias = 2.1
-        tmp = np.array([1.1 for i in range(self.n_antenna)])
-        antenna_table['ra-prg']          = tmp
-        antenna_table['dec-prg']         = tmp
-        antenna_table['az-prg']          = tmp + bias
-        antenna_table['el-prg']          = tmp + bias
-        antenna_table['az-real']         = tmp
-        antenna_table['el-real']         = tmp
-        antenna_table['x']               = tmp
-        antenna_table['y']               = tmp
-        antenna_table['z']               = tmp
-        antenna_table['xt']              = tmp
-        antenna_table['yt']              = tmp
-        antenna_table['zt']              = tmp
-        antenna_table['lst']             = tmp
-        antenna_table['az-prg(no-col)']  = tmp
-        antenna_table['el-prog(no-col)'] = tmp
-        antenna_table['az-prog(center)'] = tmp
-        antenna_table['el-prog(center)'] = tmp
+        dummy = np.array([1.1 for i in range(self.n_antenna)])
+        antenna_table['ra-prg']          = dummy
+        antenna_table['dec-prg']         = dummy
+        antenna_table['az-prg']          = dummy + bias
+        antenna_table['el-prg']          = dummy + bias
+        antenna_table['az-real']         = dummy
+        antenna_table['el-real']         = dummy
+        antenna_table['x']               = dummy
+        antenna_table['y']               = dummy
+        antenna_table['z']               = dummy
+        antenna_table['xt']              = dummy
+        antenna_table['yt']              = dummy
+        antenna_table['zt']              = dummy
+        antenna_table['lst']             = dummy
+        antenna_table['az-prg(no-col)']  = dummy
+        antenna_table['el-prog(no-col)'] = dummy
+        antenna_table['az-prog(center)'] = dummy
+        antenna_table['el-prog(center)'] = dummy
         antenna_table['type']            = ['GRAD']*self.n_antenna
         antenna_table['type'][math.floor(self.n_antenna/2):] = 'ON'
         return antenna_table
@@ -98,22 +98,22 @@ class TestDataMaker():
     def weather(self):
         weather_table = Table()
 
-        tmp = [15.0 for i in range(self.n_weather)]
+        dummy = [15.0 for i in range(self.n_weather)]
 
         weather_table['time'] = [(self.begin_time + timedelta(seconds=self.T_weather*i)).strftime('%Y%m%d%H%M%S') for i in range(self.n_weather)]
-        weather_table['tmperature']     = tmp # 実データのtypoをそのまま再現する
-        weather_table['presure']        = tmp
-        weather_table['vapor-pressure'] = tmp
-        weather_table['aux1']           = tmp
-        weather_table['aux2']           = tmp
-        weather_table['aux3']           = tmp
+        weather_table['dummyerature']   = dummy # 実データのtypoをそのまま再現する
+        weather_table['presure']        = dummy
+        weather_table['vapor-pressure'] = dummy
+        weather_table['aux1']           = dummy
+        weather_table['aux2']           = dummy
+        weather_table['aux3']           = dummy
         return weather_table
 
     @property
     def misti(self):
         misti_table = Table()
 
-        tmp = [1.1 for i in range(self.n_misti)]
+        dummy = [1.1 for i in range(self.n_misti)]
 
         misti_table['YYYY']  = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%Y') for i in range(self.n_misti)]
         misti_table['mm']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%m') for i in range(self.n_misti)]
@@ -121,12 +121,12 @@ class TestDataMaker():
         misti_table['HH']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%H') for i in range(self.n_misti)]
         misti_table['MM']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%M') for i in range(self.n_misti)]
         misti_table['SS.SS'] = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%S.%f')[:-4] for i in range(self.n_misti)]
-        misti_table['az']                       = tmp
-        misti_table['el']                       = tmp
-        misti_table['power']                    = tmp
-        misti_table['hot_load_temp']            = tmp
-        misti_table['receiver_room_temp']       = tmp
-        misti_table['primary_mirror_room_temp'] = tmp
+        misti_table['az']                       = dummy
+        misti_table['el']                       = dummy
+        misti_table['power']                    = dummy
+        misti_table['hot_load_temp']            = dummy
+        misti_table['receiver_room_temp']       = dummy
+        misti_table['primary_mirror_room_temp'] = dummy
         misti_table['chopper_mirror_status']    = [1]*self.n_misti
         return misti_table
 
@@ -134,30 +134,30 @@ class TestDataMaker():
     def cabin(self):
         cabin_table = Table()
 
-        tmp = [15.0 for i in range(self.n_cabin)]
+        dummy = [15.0 for i in range(self.n_cabin)]
 
         cabin_table['date']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%Y/%m/%d') for i in range(self.n_cabin)]
         cabin_table['time']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%H:%M') for i in range(self.n_cabin)]
-        cabin_table['col3']  = tmp
-        cabin_table['col4']  = tmp
-        cabin_table['col5']  = tmp
-        cabin_table['col6']  = tmp
-        cabin_table['col7']  = tmp
-        cabin_table['col8']  = tmp
-        cabin_table['col9']  = tmp
-        cabin_table['col10'] = tmp
-        cabin_table['col11'] = tmp
-        cabin_table['col12'] = tmp
-        cabin_table['col13'] = tmp
-        cabin_table['col14'] = tmp
-        cabin_table['col15'] = tmp
-        cabin_table['col16'] = tmp
-        cabin_table['col17'] = tmp
-        cabin_table['col18'] = tmp
-        cabin_table['col19'] = tmp
-        cabin_table['col20'] = tmp
-        cabin_table['col21'] = tmp
-        cabin_table['col22'] = tmp
+        cabin_table['col3']  = dummy
+        cabin_table['col4']  = dummy
+        cabin_table['col5']  = dummy
+        cabin_table['col6']  = dummy
+        cabin_table['col7']  = dummy
+        cabin_table['col8']  = dummy
+        cabin_table['col9']  = dummy
+        cabin_table['col10'] = dummy
+        cabin_table['col11'] = dummy
+        cabin_table['col12'] = dummy
+        cabin_table['col13'] = dummy
+        cabin_table['col14'] = dummy
+        cabin_table['col15'] = dummy
+        cabin_table['col16'] = dummy
+        cabin_table['col17'] = dummy
+        cabin_table['col18'] = dummy
+        cabin_table['col19'] = dummy
+        cabin_table['col20'] = dummy
+        cabin_table['col21'] = dummy
+        cabin_table['col22'] = dummy
         return cabin_table
 
     @property
@@ -183,12 +183,13 @@ class TestDataMaker():
         header['FILENAME'] = 'filter_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
+        dummy = (1.1, 1.2)
         columns = [
             fits.Column(name='pixelid',  format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',    format='I',  array=[i for i in range(self.n_kid)]),
             fits.Column(name='masterid', format='I',  array=[1 for i in range(self.n_kid)]),
-            fits.Column(name='F_filter, dF_filter', format='2E', array=[(1.1, 1.2)]*self.n_kid),
-            fits.Column(name='Q_filter, dQ_filter', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='F_filter, dF_filter', format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='Q_filter, dQ_filter', format='2E', array=[dummy]*self.n_kid),
         ]
         kidfilt = fits.BinTableHDU.from_columns(columns, header)
 
@@ -196,10 +197,11 @@ class TestDataMaker():
         header['EXTNAME']  = 'KIDRESP', 'name of binary data'
         header['FILENAME'] = 'responsibity_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
+        dummy = (1.0, 1.0, 1.0) # p0, etaf, T0
         columns = [
             fits.Column(name='pixelid',    format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',      format='I',  array=[i for i in range(self.n_kid)]),
-            fits.Column(name='cal params', format='3E', array=[(1.0, 1.0, 1.0)]*self.n_kid),
+            fits.Column(name='cal params', format='3E', array=[dummy]*self.n_kid),
         ]
         kidresp = fits.BinTableHDU.from_columns(columns, header)
 
@@ -216,14 +218,15 @@ class TestDataMaker():
         header['EXTNAME']  = 'KIDSINFO', 'name of binary data'
         header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
+        dummy = (1.1, 1.2)
         columns = [
             fits.Column(name='kidid',          format='I',  array=[i for i in range(self.n_kid)]),
             fits.Column(name='pixelid',        format='I',  array=[0]*self.n_kid),
-            fits.Column(name='yfc, linyfc',    format='2E', array=[(1.1, 1.2)]*self.n_kid),
-            fits.Column(name='fr, dfr (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
-            fits.Column(name='Qr, dQr (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
-            fits.Column(name='Qc, dQc (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
-            fits.Column(name='Qi, dQi (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='yfc, linyfc',    format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='fr, dfr (300K)', format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='Qr, dQr (300K)', format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='Qc, dQc (300K)', format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='Qi, dQi (300K)', format='2E', array=[dummy]*self.n_kid),
         ]
         kidsinfo = fits.BinTableHDU.from_columns(columns, header)
 
@@ -237,9 +240,10 @@ class TestDataMaker():
             fits.Column(name='pixelid',   format='I', array=[0]*self.n_readout),
         ]
 
+        dummy = (1.0, 1.0, 1.0)
         for i in range(self.n_kid):
             name   = 'Amp, Ph, linPh {}'.format(i)
-            column = fits.Column(name=name, format='3E', array=[(1.0, 1.0, 1.0)]*self.n_readout)
+            column = fits.Column(name=name, format='3E', array=[dummy]*self.n_readout)
             columns.append(column)
 
         readout = fits.BinTableHDU.from_columns(columns, header)

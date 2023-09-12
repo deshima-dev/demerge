@@ -59,8 +59,8 @@ def merge_to_dems(
             if loadmode == 0:
                 lon *= np.cos(np.deg2rad(lat))
     elif coordinate == 'radec':
-        lon        = antenna_table['ra']
-        lat        = antenna_table['dec']
+        lon        = antenna_table['ra-prg']
+        lat        = antenna_table['dec-prg']
         lon_origin = obsinst_params['ra'] # 観測スクリプトに設定されているRA,DEC
         lat_origin = obsinst_params['dec']
     else:
@@ -70,6 +70,7 @@ def merge_to_dems(
     times_antenna = np.array(times_antenna).astype(np.datetime64)
 
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
+    print(times)
     times = np.array(times).astype(np.datetime64)
 
     # 補間のために時刻(年月日時分秒)を時間(秒)に変更する。READOUTの最初の時刻を基準とする。
@@ -78,6 +79,9 @@ def merge_to_dems(
     seconds_antenna = (times_antenna - times[0])/np.timedelta64(1, 's')
     seconds_weather = (times_weather - times[0])/np.timedelta64(1, 's')
     seconds_misti   = (times_misti   - times[0])/np.timedelta64(1, 's')
+
+    print(times_antenna)
+    print(times)
 
     lon                    = np.interp(seconds, seconds_antenna, lon)
     lat                    = np.interp(seconds, seconds_antenna, lat)
@@ -91,6 +95,10 @@ def merge_to_dems(
     aste_misti_lat         = np.interp(seconds, seconds_misti,   el_misti)
 
     scan = np.array(antenna_table['type'])
+    print(len(scan))
+    print(len(scan[scan == 'GRAD']))
+    print(len(scan[scan == 'ON']))
+    print(scan == 'ON')
 
     # 補間関数で扱うためにSCANTYPE(文字列)を整数に置き換える
     scan_types = {scantype:i for i, scantype in enumerate(np.unique(scan))}
@@ -98,14 +106,23 @@ def merge_to_dems(
     for scantype, i in scan_types.items():
         scan_type_numbers[scan == scantype] = i
 
+    print(scan_type_numbers)
     # READOUTの時間に合わせるためにSCANTYPEを補間する
     f_scantype = interp1d(seconds_antenna, scan_type_numbers, kind='nearest', bounds_error=False, fill_value=(scan_type_numbers[0], scan_type_numbers[-1]))
     scan_type_numbers = f_scantype(seconds)
+    print(len(scan_type_numbers))
 
     # 補間後のSCANTYPEを文字列に戻す
     scan = np.full_like(scan_type_numbers, 'GRAD', dtype='<U8')
+    print(scan_types.items())
     for scantype, i in scan_types.items():
-        scan[scan == i] = scantype
+        print(i)
+        scan[scan_type_numbers == i] = scantype
+        print(scan_type_numbers == i)
+        #scan[scan == i] = scantype
+        None
+
+    print(scan)
 
     T_amb     = np.nanmean(weather_table['tmperature']) + 273.15
     n_kid     = readout_hdul['KIDSINFO'].header['NKID{}'.format(pixel_id)]

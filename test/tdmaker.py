@@ -22,9 +22,9 @@ class TestDataMaker():
         ======
         なし
         """
-        measure_time = timedelta(minutes=time)
-        self.begin_time   = datetime.now()
-        self.end_time     = self.begin_time + measure_time
+        measure_time    = timedelta(minutes=time)
+        self.begin_time = datetime.utcnow()
+        self.end_time   = self.begin_time + measure_time
 
         # 搭載されているMKIDの数
         self.n_kid = 63
@@ -53,7 +53,7 @@ class TestDataMaker():
         self.skychop.write('{}.skychop'.format(prefix), format='ascii.commented_header', overwrite=True)
         self.weather.write('{}.wea'.format(prefix),     format='ascii.commented_header', overwrite=True)
         self.cabin.write('{}.cabin'.format(prefix),     format='ascii.commented_header', overwrite=True)
-        self.misti.write('{}.misti'.format(prefix),     format='ascii.no_header', overwrite=True)
+        self.misti.write('{}.misti'.format(prefix),     format='ascii.no_header',        overwrite=True)
         self.ddb.writeto('{}_DDB.fits.gz'.format(prefix),              overwrite=True)
         self.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
         return
@@ -62,12 +62,13 @@ class TestDataMaker():
     def antenna(self):
         antenna_table = Table()
         # ANTENNA時刻は秒が少数第一桁まで。そのため下2桁から6桁までを[:-5]を用いて文字列として削除している。
-        antenna_table['time'] = [(self.begin_time + timedelta(seconds=self.T_antenna*i)).strftime('%Y%m%d%H%M%S.%f')[:-5] for i in range(self.n_antenna)]
-        tmp = [0.0 for i in range(self.n_antenna)]
+        antenna_table['time'] = [(self.begin_time + timedelta(milliseconds=self.T_antenna*1e3*i)).strftime('%Y%m%d%H%M%S.%f')[:-5] for i in range(self.n_antenna)]
+        bias = 2.1
+        tmp = np.array([1.1 for i in range(self.n_antenna)])
         antenna_table['ra-prg']          = tmp
         antenna_table['dec-prg']         = tmp
-        antenna_table['az-prg']          = tmp
-        antenna_table['el-prg']          = tmp
+        antenna_table['az-prg']          = tmp + bias
+        antenna_table['el-prg']          = tmp + bias
         antenna_table['az-real']         = tmp
         antenna_table['el-real']         = tmp
         antenna_table['x']               = tmp
@@ -82,6 +83,7 @@ class TestDataMaker():
         antenna_table['az-prog(center)'] = tmp
         antenna_table['el-prog(center)'] = tmp
         antenna_table['type']            = ['GRAD']*self.n_antenna
+        antenna_table['type'][math.floor(self.n_antenna/2):] = 'ON'
         return antenna_table
 
     @property
@@ -96,10 +98,10 @@ class TestDataMaker():
     def weather(self):
         weather_table = Table()
 
-        tmp = [0.0 for i in range(self.n_weather)]
+        tmp = [15.0 for i in range(self.n_weather)]
 
         weather_table['time'] = [(self.begin_time + timedelta(seconds=self.T_weather*i)).strftime('%Y%m%d%H%M%S') for i in range(self.n_weather)]
-        weather_table['temperature']    = tmp
+        weather_table['tmperature']     = tmp # 実データのtypoをそのまま再現する
         weather_table['presure']        = tmp
         weather_table['vapor-pressure'] = tmp
         weather_table['aux1']           = tmp
@@ -111,7 +113,7 @@ class TestDataMaker():
     def misti(self):
         misti_table = Table()
 
-        tmp = [0.0 for i in range(self.n_misti)]
+        tmp = [1.1 for i in range(self.n_misti)]
 
         misti_table['YYYY']  = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%Y') for i in range(self.n_misti)]
         misti_table['mm']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%m') for i in range(self.n_misti)]
@@ -132,7 +134,7 @@ class TestDataMaker():
     def cabin(self):
         cabin_table = Table()
 
-        tmp = [0.0 for i in range(self.n_cabin)]
+        tmp = [15.0 for i in range(self.n_cabin)]
 
         cabin_table['date']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%Y/%m/%d') for i in range(self.n_cabin)]
         cabin_table['time']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%H:%M') for i in range(self.n_cabin)]
@@ -161,15 +163,32 @@ class TestDataMaker():
     @property
     def ddb(self):
         n_data = 31944
+        n_kid  = 66
+
+        header = fits.Header()
+        header['EXTNAME']  = 'KIDDES', 'name of binary data'
+        header['FILENAME'] = 'LT119_FB2.2G_49ch.csv', 'input filename'
+        header['PIXEL0']   = 'LT119_FB2.2G_49ch', 'name of pixel 0'
+        header['NKID0']    = n_kid, 'number of KIDs (pixel 0)'
+        columns = [
+            fits.Column(name='pixelid',   format='I',  array=[0]*n_kid),
+            fits.Column(name='kidid',     format='I',  array=[i for i in range(n_kid)]),
+            fits.Column(name='masterid',  format='I',  array=[1 for i in range(n_kid)]),
+            fits.Column(name='attribute', format='8A', array=['filter']*n_kid),
+        ]
+        kiddes = fits.BinTableHDU.from_columns(columns, header)
 
         header = fits.Header()
         header['EXTNAME']  = 'KIDFILT', 'name of binary data'
         header['FILENAME'] = 'filter_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
+        header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
         columns = [
             fits.Column(name='pixelid',  format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',    format='I',  array=[i for i in range(self.n_kid)]),
             fits.Column(name='masterid', format='I',  array=[1 for i in range(self.n_kid)]),
+            fits.Column(name='F_filter, dF_filter', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='Q_filter, dQ_filter', format='2E', array=[(1.1, 1.2)]*self.n_kid),
         ]
         kidfilt = fits.BinTableHDU.from_columns(columns, header)
 
@@ -186,6 +205,7 @@ class TestDataMaker():
 
         hdul = fits.HDUList()
         hdul.append(fits.PrimaryHDU())
+        hdul.append(kiddes)
         hdul.append(kidfilt)
         hdul.append(kidresp)
         return hdul
@@ -193,11 +213,28 @@ class TestDataMaker():
     @property
     def readout(self):
         header = fits.Header()
+        header['EXTNAME']  = 'KIDSINFO', 'name of binary data'
+        header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
+        header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
+        columns = [
+            fits.Column(name='kidid',          format='I',  array=[i for i in range(self.n_kid)]),
+            fits.Column(name='pixelid',        format='I',  array=[0]*self.n_kid),
+            fits.Column(name='yfc, linyfc',    format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='fr, dfr (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='Qr, dQr (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='Qc, dQc (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+            fits.Column(name='Qi, dQi (300K)', format='2E', array=[(1.1, 1.2)]*self.n_kid),
+        ]
+        kidsinfo = fits.BinTableHDU.from_columns(columns, header)
+
+        header = fits.Header()
         header['EXTNAME']  = 'READOUT', 'name of binary data'
         header['FILENAME'] = 'fuga', 'localsweep filename'
+        header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
+        now = datetime.now() # READOUTだけは現地時刻
         columns = [
-            fits.Column(name='timestamp', format='D',  array=[(self.begin_time + timedelta(seconds=self.T_readout*i)).timestamp() for i in range(self.n_readout)]),
-            fits.Column(name='pixelid',   format='I',  array=[0]*self.n_readout),
+            fits.Column(name='timestamp', format='D', array=[(now + timedelta(microseconds=self.T_readout*1e6*i)).timestamp() for i in range(self.n_readout)]),
+            fits.Column(name='pixelid',   format='I', array=[0]*self.n_readout),
         ]
 
         for i in range(self.n_kid):
@@ -209,6 +246,7 @@ class TestDataMaker():
 
         hdul = fits.HDUList()
         hdul.append(fits.PrimaryHDU())
+        hdul.append(kidsinfo)
         hdul.append(readout)
         return hdul
 
@@ -227,26 +265,27 @@ if __name__ == '__main__':
 
     if (len(args) > 1):
         data_name = args[1]
+        prefix    = 'testdata'
         if (data_name == 'antenna'):
-            tdm.antenna.write('testdata.ant', format='ascii.commented_header', overwrite=True)
+            tdm.antenna.write('{}.ant'.format(prefix), format='ascii.commented_header', overwrite=True)
             sys.exit(0)
         if (data_name == 'skychop'):
-            tdm.skychop.write('testdata.skychop', format='ascii.commented_header', overwrite=True)
+            tdm.skychop.write('{}.skychop'.format(prefix), format='ascii.commented_header', overwrite=True)
             sys.exit(0)
         if (data_name == 'weather'):
-            tdm.weather.write('testdata.wea', format='ascii.commented_header', overwrite=True)
+            tdm.weather.write('{}.wea'.format(prefix), format='ascii.commented_header', overwrite=True)
             sys.exit(0)
         if (data_name == 'misti'):
-            tdm.misti.write('testdata.misti', format='ascii.no_header', overwrite=True)
+            tdm.misti.write('{}.misti'.format(prefix), format='ascii.no_header', overwrite=True)
             sys.exit(0)
         if (data_name == 'cabin'):
-            tdm.cabin.write('testdata.cabin', format='ascii.commented_header', overwrite=True)
+            tdm.cabin.write('{}.cabin'.format(prefix), format='ascii.commented_header', overwrite=True)
             sys.exit(0)
         if (data_name == 'ddb'):
-            tdm.ddb.writeto('testdata_DDB.fits.gz', overwrite=True)
+            tdm.ddb.writeto('{}_DDB.fits.gz'.format(prefix), overwrite=True)
             sys.exit(0)
         if (data_name == 'readout'):
-            tdm.readout.writeto('testdata_reduced.fits', overwrite=True)
+            tdm.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
             sys.exit(0)
         
 

@@ -8,17 +8,25 @@ for d in $data_d2; do
     cd $dir_d2/$d
     obsid=`echo -e $d | awk '{sub(/cosmos_/, "")}1' `
     ant_time_data=`less ${obsid}.ant | awk '!/^#/ && !/^2090/ {print $1}'`
-    # make .misti
+    # make .tsky
     t_max=`echo -e "$ant_time_data" | sort -nr | head -n 1`
     t_min=`echo -e "$ant_time_data" | sort -n | head -n 1`
     NR=`echo -e "$ant_time_data" | wc -l `
     echo -e "$obsid $t_max $t_min $NR"
-    echo -e "# MiSTI test data" > $obsid.misti
-    echo -e "# [0] YYYY \n# [1] MM\n# [2] DD\n# [3] hh\n# [4] mm\n# [5] ss.ss\n# [6] az (deg)\n# [7] el (deg)\n# [8] power (dBm)" >> $obsid.misti
-    echo -e "# [9] Hot load tempearture (deg): heated TK-RAM" >> $obsid.misti
-    echo -e "# [10] Receiver room temperature (deg): Room absorber" >> $obsid.misti
-    echo -e "# [11] Primary mirror room temperature (deg): Inside GORE-TEX membrane housing" >> $obsid.misti
-    echo -e "# [12] Chopper mirror status, 0: Sky, 1: Room, 2: Hot" >> $obsid.misti
+    echo -e "# MiSTi tsky test data" > $obsid.tsky
+    echo -e "# [0] YYYY \n# [1] MM\n# [2] DD" >> $obsid.tsky
+    echo -e "# [3] hh\n# [4] mm\n# [5] ss.ss" >> $obsid.tsky
+    echo -e "# [6] az (deg)\n# [7] el (deg)" >> $obsid.tsky
+    echo -e "# [8] ??? power (dBm)" >> $obsid.tsky
+    echo -e "# [9]  ??? Hot load tempearture (deg): heated TK-RAM" >> $obsid.tsky
+    echo -e "# [10] ??? Receiver room temperature (deg): Room absorber" >> $obsid.tsky
+    echo -e "# [11] ??? Primary mirror room temperature (deg): Inside GORE-TEX membrane housing" >> $obsid.tsky
+    echo -e "# [12] ??? Chopper mirror status, 0: Sky, 1: Room, 2: Hot" >> $obsid.tsky
+    echo -e "# [13] ???" >> $obsid.tsky
+    echo -e "# [14] ???" >> $obsid.tsky
+    # make .pwv
+    echo -e "# MiSTi pwv test data" > $obsid.pwv
+    echo -e "# [0] (UTC) YYYY/MM/DD \n# [1] (UTC) hh:mm:ss.ss \n# [2] unixtime\n# [3] Az (deg)\n# [4] El (deg)\n# [5] PWV(um)\n# [6] Tground(K)" >> $obsid.pwv
 
     # make Skychop
     echo -e '#set velocity (rpm): 87.000000\n#set smapling rate (Hz): 1000.000000\n#ts state' > ${obsid}.skychop
@@ -26,13 +34,14 @@ for d in $data_d2; do
     echo -e '# cabin temperature' > ${obsid}.cabin
     echo -e '# YYYY/mm/dd HH:MM UpperCabinTemperature MainCabinTemperature' > ${obsid}.cabin
 
-    ut_start=`date -d "$(echo -e $t_min | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
-    ut_end=`date -d "$(echo -e $t_max | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
+    ut_start=`date -u -d "$(echo -e $t_min | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
+    ut_end=`date -u -d "$(echo -e $t_max | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%6N`
 	
     for t in ${ant_time_data}; do
-        ut=`date -d "$(echo -e $t | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%2N`
+        ut=`date -u -d "$(echo -e $t | sed 's/\(....\)\(..\)\(..\)\(..\)\(..\)\(..\)\(.*\)/\1-\2-\3 \4:\5:\6\7/')" +%s.%2N`
 	
-	echo -e $t | awk '{printf("%s %s %s %s %s %05.2f  73.886400 25.740000 -24.491380  87.137089   7.452227   6.156458 1\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.misti
+	echo -e $t | awk '{printf("%s %s %s %s %s %05.2f 180.000 90.000  69.360 -11.952 -12.047  4.3210e+03 0.0000e+00  4.3679e+01 0.0000e+00\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.tsky
+	echo -e $t | awk '{printf("%s/%s/%s %s:%s:%05.2f  180.000 90.000   610.0 258.0\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), substr($0,13,5), $0)}' >> $obsid.pwv
 	
 	cabin_data=`echo -e $t | awk '{printf("%s/%s/%s %s:%s  13.2   16.6 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0 9999.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0    0.0\n", substr($0,1,4), substr($0,5,2), substr($0,7,2), substr($0,9,2), substr($0,11,2), $0)}'`
         if [ "$cabin_data" != "$cabin_data2" ]; then

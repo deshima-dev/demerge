@@ -101,7 +101,7 @@ class TestDataMaker():
         dummy = [15.0 for i in range(self.n_weather)]
 
         weather_table['time'] = [(self.begin_time + timedelta(seconds=self.T_weather*i)).strftime('%Y%m%d%H%M%S') for i in range(self.n_weather)]
-        weather_table['dummyerature']   = dummy # 実データのtypoをそのまま再現する
+        weather_table['tmperature']     = dummy # 実データのtypoをそのまま再現する
         weather_table['presure']        = dummy
         weather_table['vapor-pressure'] = dummy
         weather_table['aux1']           = dummy
@@ -218,7 +218,7 @@ class TestDataMaker():
         header['EXTNAME']  = 'KIDSINFO', 'name of binary data'
         header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
-        dummy = (1.1, 1.2)
+        dummy = (1.1, 0.2)
         columns = [
             fits.Column(name='kidid',          format='I',  array=[i for i in range(self.n_kid)]),
             fits.Column(name='pixelid',        format='I',  array=[0]*self.n_kid),

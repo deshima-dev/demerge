@@ -135,10 +135,11 @@ class TestDataMaker():
         cabin_table = Table()
 
         dummy = [15.0 for i in range(self.n_cabin)]
+        bias  = 2.0
 
         cabin_table['date']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%Y/%m/%d') for i in range(self.n_cabin)]
         cabin_table['time']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%H:%M') for i in range(self.n_cabin)]
-        cabin_table['col3']  = dummy
+        cabin_table['col3']  = dummy + bias
         cabin_table['col4']  = dummy
         cabin_table['col5']  = dummy
         cabin_table['col6']  = dummy

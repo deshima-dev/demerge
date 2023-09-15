@@ -82,7 +82,6 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # この結果をfloat32表現するとdataの値に一致する。
         #
         expected = np.array([((2/11 + np.sqrt(289.15))**2)/0.5 - 2 - 288.15]).astype(np.float32) # 注意 float32
-        #expected = np.array([(2/11 + np.sqrt(289.15))**2 - 1]).astype(np.float32) # 注意 float32
         self.assertEqual(round(expected[0], 4), round(dems.data[0][0], 4), 'MS::dataの計算値が正しいことを確認')
         self.assertEqual(n_time, len(dems.data),       'dems.dataの打刻数の確認')
         self.assertEqual(n_kid,  len(dems.data[0]),    'dems.dataのチャネル数の確認')
@@ -119,11 +118,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(n_time, len(dems.scan),         'MS::scanの打点数が打刻数に一致することを確認')
         self.assertTrue(np.array(dems.scan == '').all(), 'MS::scanに既定値が格納されていることを確認')
 
-        # MS::state (既定値)
+        # MS::state
         #
         # stateはTestDataMaker()によって前半にGRAD、後半にONが格納されるようになっている。
         #
-        self.assertEqual(n_time, len(dems.state),         'MS::stateの打点数が打刻数に一致することを確認')
+        self.assertEqual(n_time, len(dems.state), 'MS::stateの打点数が打刻数に一致することを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.state == 'GRAD')/n_time, 1), 'MS::stateのおよそ半数がGRADであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.state == 'ON')/n_time, 1),   'MS::stateのおよそ半数がONであることを確認')
         self.assertEqual('GRAD', dems.state[0],  'MS::stateの最初の要素がGRADであることを確認')
@@ -138,39 +137,74 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #     prev = state
         # self.assertEqual(1, n_state_change, 'MS::stateの切り替えが1回だけ発生していることを確認')
 
-        self.assertTrue(np.array(dems.aste_cabin_temperature.values > 0).all())
+        # MS::lon
+        #
+        # coordinate = azel, loadmode = 0 の場合
+        #
+        # lon = -2.1*cos(deg2rad(lat))
+        # lat = -2.1
+        #
+        self.assertTrue(np.array(dems.lon != 0).all(), 'MS::lonが既定値ではないことを確認')
+        self.assertEqual(-2.1*np.cos(np.deg2rad(-2.1)), dems.lon.values[0], 'MS::lonの計算値が正しいことを確認')
 
-        self.assertTrue(np.array(dems.lon != 0).all())
-        self.assertTrue(np.array(dems.lat != 0).all())
-        self.assertTrue(np.array(dems.lon_origin > 0).all())
-        self.assertTrue(np.array(dems.lat_origin > 0).all())
+        # MS::lat
+        self.assertTrue(np.array(dems.lat != 0).all(), 'MS::latが既定値ではないことを確認')
+        self.assertEqual(-2.1, dems.lat.values[0],     'MS::latの計算値が正しいことを確認')
 
-        self.assertTrue(np.array(dems.temperature != 0).all())
-        self.assertTrue(np.array(dems.pressure != 0).all())
-        self.assertTrue(np.array(dems.humidity != 0).all())
-        self.assertTrue(np.array(dems.wind_speed != 0).all())
-        self.assertTrue(np.array(dems.wind_direction != 0).all())
+        # MS::lon_origin
+        self.assertTrue(dems.lon_origin != 0,  'MS::lon_originが既定値ではないことを確認')
+        self.assertEqual(1.1, dems.lon_origin, 'MS::lon_originの計算値が正しいことを確認')
+
+        # MS::lat_origin
+        self.assertTrue(dems.lat_origin != 0,  'MS::lat_originが既定値ではないことを確認')
+        self.assertEqual(1.1, dems.lat_origin, 'MS::lat_originの計算値が正しいことを確認')
+
+        # MS::frame
+        self.assertEqual('altaz', dems.frame, 'MS::frameが既定値であることを確認')
+
+        # Weather Informations
+        self.assertTrue(np.array(dems.temperature    == 15.0).all(), 'MS::temperatureが既定値でないことを確認')
+        self.assertTrue(np.array(dems.pressure       == 15.0).all(), 'MS::pressureが既定値でないことを確認')
+        self.assertTrue(np.array(dems.humidity       == 15.0).all(), 'MS::humidityが既定値でないことを確認')
+        self.assertTrue(np.array(dems.wind_speed     == 15.0).all(), 'MS::wind_speedが既定値でないことを確認')
+        self.assertTrue(np.array(dems.wind_direction == 15.0).all(), 'MS::wind_directionが既定値でないことを確認')
+
+        # Data Informations
+        #
+        # 注意
+        # beam_major, beam_minor, beam_pa, exposure, intervalは固定値。
+        # MergeToDfits()クラスでも固定値が指定されていた。
+        #
+        self.assertTrue(np.array(dems.bandwidth  == 0.0).all(),   'MS::bandwidthが既定値であることを確認')
+        self.assertTrue(np.array(dems.frequency  == 0.0).all(),   'MS::frequencyが既定値であることを確認')
+        self.assertTrue(np.array(dems.beam_major == 0.005).all(), 'MS::beam_majorが既定値で無いことを確認')
+        self.assertTrue(np.array(dems.beam_minor == 0.005).all(), 'MS::beam_minorが既定値で無いことを確認')
+        self.assertTrue(np.array(dems.beam_pa    == 0.005).all(), 'MS::beam_paが既定値で無いことを確認')
+        self.assertTrue(np.array(dems.exposure   == 1/196).all(), 'MS::exposureが既定値で無いことを確認')
+        self.assertTrue(np.array(dems.interval   == 1/196).all(), 'MS::intervalが既定値で無いことを確認')
+
+        # Observation Informations
+        self.assertEqual(dems.observation,    'saturn_zscan_v05_2_rtn_pattern6', 'MS::observer')
+        self.assertEqual(dems.observer,       'clumsy', 'MS::observer')
+        self.assertEqual(dems.object,         'SATURN', 'MS::object')
+        self.assertEqual(dems.telescope_name, 'ASTE',   'MS::telescope_name')
+        self.assertEqual(dems.telescope_diameter, 10.0, 'MS::telescope_diameterが既定値であることを確認')
+
+        expected = (+2230817.2140945992, -5440188.022176585, -2475718.801708271)
+        self.assertEqual(dems.telescope_coordinates, expected, 'MS::telescope_coordinatesが既定値であることを確認')
+
+        # ASTE Specific
+        self.assertTrue(np.array(dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
+        self.assertTrue((dems.aste_misti_lon.values != 0).all())
+        self.assertTrue((dems.aste_misti_lat.values != 0).all())
+        self.assertEqual('altaz', dems.aste_misti_frame.values)
+
         self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
         self.assertTrue(np.array(dems.d2_mkid_type != '').all())
 
         result = np.where(dems.d2_mkid_frequency > 0, dems.d2_mkid_frequency, 1) # NaNを一時的に1に置き換える
         self.assertTrue(np.array(result).all())
 
-        self.assertTrue(np.array(dems.beam_major > 0).all())
-        self.assertTrue(np.array(dems.beam_minor > 0).all())
-        self.assertTrue(np.array(dems.beam_pa > 0).all())
-
-        self.assertEqual(dems.observation,  'saturn_zscan_v05_2_rtn_pattern6', 'MS::observer')
-        self.assertEqual(dems.observer,     'clumsy', 'MS::observer')
-        self.assertEqual(dems.object,       'SATURN', 'MS::object')
-        self.assertEqual(dems.telescope_name, 'ASTE',   'MS::telescope_name')
-        
-        self.assertEqual(1./196, float(dems.exposure), 'MS::exposure')
-        self.assertEqual(1./196, float(dems.interval), 'MS::interval')
-
-        self.assertEqual('altaz', dems.aste_misti_frame.values)
-        self.assertTrue((dems.aste_misti_lon.values != 0).all())
-        self.assertTrue((dems.aste_misti_lat.values != 0).all())
 
         #self.assertTrue((dems.scan != '').all())
 

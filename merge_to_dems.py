@@ -136,12 +136,12 @@ def merge_to_dems(
         d2_mkid_id=kid_id,
         d2_mkid_type=kid_type,
         d2_mkid_frequency=kid_freq,
-        beam_major=0.005, # 18 arcsec
-        beam_minor=0.005, # 18 arcsec
-        beam_pa=0.005, # 18 arcsec
+        beam_major=0.005, # 18 arcsec MergeToDfits()でも固定値が指定されていた
+        beam_minor=0.005, # 18 arcsec MergeToDfits()でも固定値が指定されていた
+        beam_pa=0.005,    # 18 arcsec MergeToDfits()でも固定値が指定されていた
+        exposure=1./196,  #           MergeToDfits()でも固定値が指定されていた
+        interval=1./196,  #           MergeToDfits()でも固定値が指定されていた
         observation=obsinst_params['observation'],
         observer=obsinst_params['observer'],
         object=obsinst_params['obs_object'],
-        exposure=1./196,
-        interval=1./196,
     )

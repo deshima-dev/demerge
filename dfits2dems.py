@@ -190,7 +190,7 @@ def retrieve_cabin_temps(filename):
     tuple (timestames, upperCabinTemps, lowerCabinTemps)
       tupleの各要素はnumpy.array。要素数は同じ。
     """
-    table = ascii.read(filename)
+    table = ascii.read(filename, format='no_header')
 
     # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
     # テーブルの1列目と2列目がそれぞれ日付と時刻

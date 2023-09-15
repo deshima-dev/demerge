@@ -2,8 +2,7 @@
 DFITSをASTE生データからマージするスクリプト
 
 # 動作環境
- - Linux Kernel 5.4.0-153-generic
- - python 3.8.10
+ - python 3.9.10
 
 | モジュール   | バージョン|
 |--------------|-----------|
@@ -14,7 +13,6 @@ DFITSをASTE生データからマージするスクリプト
 | matplotlib   | 3.7.2     |
 | scipy        | 1.10.1    |
 | lmfit        | 1.2.1     |
-| ad           | 1.3.2     |
 | sympy        | 1.12      |
 | pyyaml       | 6.0       |
 | dems         | 0.2.0     |
@@ -30,5 +28,16 @@ $ pip install -q "dems==0.2.0"
 # 実行例
 
 ```
+$ pwd
+/home/hoge/dmerge
 $ ./run.sh -d data/deshima2.0 20171103184436
+```
+
+# テストの実行方法
+
+```
+$ pwd
+/home/hoge/dmerge
+$ cd test
+$ python test_merge_to_dems.py
 ```

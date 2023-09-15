@@ -197,7 +197,7 @@ class TestDataMaker():
         header['EXTNAME']  = 'KIDRESP', 'name of binary data'
         header['FILENAME'] = 'responsibity_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
-        dummy = (1.0, 1.0, 1.0) # p0, etaf, T0
+        dummy = (1.0, 0.5, 1.0) # p0, etaf, T0
         columns = [
             fits.Column(name='pixelid',    format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',      format='I',  array=[i for i in range(self.n_kid)]),

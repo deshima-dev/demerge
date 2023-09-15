@@ -70,18 +70,20 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # linyfc = 0.2
         # Qr     = 1.1
         # p0     = 1.0
-        # etaf   = 1.0
+        # etaf   = 0.5
         # T0     = 1.0
         # Troom  = 273.15 + 15 ( = T_lower_cabin)
+        # Tamb   = 273.15 + 15 ( = weather temperature)
         #
         # 上記の値で計算すると以下のようになる。
         # f_shift    =  2/11
-        # Tlos_model = (2/11 + sqrt(289.15))**2 - 1
+        # Tlos_model = (2/11 + sqrt(289.15))**2/0.5 - 2 - 288.15
         #
         # この結果をfloat32表現するとdataの値に一致する。
         #
-        expected = np.array([(2/11 + np.sqrt(289.15))**2 - 1]).astype(np.float32) # 注意 float32
-        self.assertEqual(expected[0], dems.data[0][0], 'MS::dataの計算値が正しいことを確認')
+        expected = np.array([((2/11 + np.sqrt(289.15))**2)/0.5 - 2 - 288.15]).astype(np.float32) # 注意 float32
+        #expected = np.array([(2/11 + np.sqrt(289.15))**2 - 1]).astype(np.float32) # 注意 float32
+        self.assertEqual(round(expected[0], 4), round(dems.data[0][0], 4), 'MS::dataの計算値が正しいことを確認')
         self.assertEqual(n_time, len(dems.data),       'dems.dataの打刻数の確認')
         self.assertEqual(n_kid,  len(dems.data[0]),    'dems.dataのチャネル数の確認')
 

@@ -245,41 +245,30 @@ def retrieve_misti_log(filename):
 
     ファイル形式
     ============
-    1列目 年
-    2列目 月
-    3列目 日
-    4列目 時
-    5列目 分
-    6列目 秒(小数点以下も含む)
-    7列目 az(deg)
-    8列目 el(deg)
-    9列目 power(dBm)
-    10列目 hot load temperature
-    11列目 receiver room temperature
-    12列目 primary mirror room temperature
-    13列目 chopper mirro status
+    1列目 年/月/日
+    2列目 時:分:6列目 秒(小数点以下2桁も含む)
+    3列目 az(deg)
+    4列目 el(deg)
+    5列目 pwv(um)
+    6列目 Tground(K)
     "#"から始まるコメントがファイル冒頭に数行ある。
     """
     column_names = [
-        'year', 'month', 'day', 'hour', 'minute', 'second',
+        'date',
+        'time',
         'az',
         'el',
-        'power',
-        'hot_load_temp',
-        'reveiver_room_temp',
-        'primary_mirror_temp',
-        'chopper_mirror_temp'
+        'pwv',
+        'Tround',
     ]
     table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=column_names)
 
-    az = np.array(table['az']).astype(np.float64)
-    el = np.array(table['el']).astype(np.float64)
+    az  = np.array(table['az']).astype(np.float64)
+    el  = np.array(table['el']).astype(np.float64)
+    pwv = np.array(table['pwv']).astype(np.float64)/1000.0 # mmへ変換
 
-    # 時刻はISO形式に変換する
     datetimes = []
     for row in table:
-        second = math.floor(row['second'])
-        microsecond = math.floor((row['second'] - second)*1e6)
-        datetimes.append(datetime(row['year'], row['month'], row['day'], hour=row['hour'], minute=row['minute'], second=second, microsecond=microsecond))
+        datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
 
-    return (np.array(datetimes).astype(np.datetime64), az, el)
+    return (np.array(datetimes).astype(np.datetime64), az, el, pwv)

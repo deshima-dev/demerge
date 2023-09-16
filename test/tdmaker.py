@@ -113,28 +113,19 @@ class TestDataMaker():
     def misti(self):
         misti_table = Table()
 
-        dummy = [1.1 for i in range(self.n_misti)]
-
-        misti_table['YYYY']  = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%Y') for i in range(self.n_misti)]
-        misti_table['mm']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%m') for i in range(self.n_misti)]
-        misti_table['dd']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%d') for i in range(self.n_misti)]
-        misti_table['HH']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%H') for i in range(self.n_misti)]
-        misti_table['MM']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%M') for i in range(self.n_misti)]
-        misti_table['SS.SS'] = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%S.%f')[:-4] for i in range(self.n_misti)]
-        misti_table['az']                       = dummy
-        misti_table['el']                       = dummy
-        misti_table['power']                    = dummy
-        misti_table['hot_load_temp']            = dummy
-        misti_table['receiver_room_temp']       = dummy
-        misti_table['primary_mirror_room_temp'] = dummy
-        misti_table['chopper_mirror_status']    = [1]*self.n_misti
+        misti_table['date']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%Y/%m/%d') for i in range(self.n_misti)]
+        misti_table['time']    = [(self.begin_time + timedelta(seconds=self.T_misti*i)).strftime('%H:%M:%S.%f') for i in range(self.n_misti)]
+        misti_table['az']      = [180.0]*self.n_misti
+        misti_table['el']      = [90.0]*self.n_misti
+        misti_table['pwv']     = [610.0]*self.n_misti
+        misti_table['Tground'] = [250.0]*self.n_misti
         return misti_table
 
     @property
     def cabin(self):
         cabin_table = Table()
 
-        dummy = [15.0 for i in range(self.n_cabin)]
+        dummy = np.array([15.0 for i in range(self.n_cabin)])
         bias  = 2.0
 
         cabin_table['date']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%Y/%m/%d') for i in range(self.n_cabin)]
@@ -235,9 +226,9 @@ class TestDataMaker():
         header['EXTNAME']  = 'READOUT', 'name of binary data'
         header['FILENAME'] = 'fuga', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
-        now = datetime.now() # READOUTだけは現地時刻
+
         columns = [
-            fits.Column(name='timestamp', format='D', array=[(now + timedelta(microseconds=self.T_readout*1e6*i)).timestamp() for i in range(self.n_readout)]),
+            fits.Column(name='timestamp', format='D', array=[(self.begin_time + timedelta(microseconds=self.T_readout*1e6*i)).timestamp() for i in range(self.n_readout)]),
             fits.Column(name='pixelid',   format='I', array=[0]*self.n_readout),
         ]
 

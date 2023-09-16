@@ -29,7 +29,7 @@ def merge_to_dems(
     weather_table  = ascii.read(weather_path)
     antenna_table  = ascii.read(antenna_path)[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
     obsinst_params = mf.load_obsinst(obsinst_path) # 観測スクリプトに含まれているパラメタを抽出する
-    times_misti, az_misti, el_misti = dfits2dems.retrieve_misti_log(misti_path)
+    times_misti, az_misti, el_misti, pwv_misti = dfits2dems.retrieve_misti_log(misti_path)
 
     times_cabin, upper_cabin_temp, lower_cabin_temp = dfits2dems.retrieve_cabin_temps(cabin_path)
     lower_cabin_temp = lower_cabin_temp + 273.15 # 度CからKへ変換

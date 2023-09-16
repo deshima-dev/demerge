@@ -49,7 +49,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
-            skychop_path='{}.skychop',
+            skychop_path='{}.skychop'.format(prefix),
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
@@ -195,19 +195,22 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # ASTE Specific
         self.assertTrue(np.array(dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
-        self.assertTrue((dems.aste_misti_lon.values != 0).all())
-        self.assertTrue((dems.aste_misti_lat.values != 0).all())
-        self.assertEqual('altaz', dems.aste_misti_frame.values)
+        self.assertTrue((dems.aste_misti_lon.values == 180).all(),  'MS::aste_misti_lonが既定値で無いことを確認')
+        self.assertTrue((dems.aste_misti_lat.values == 90).all(),   'MS::aste_misti_latが既定値で無いことを確認')
+        self.assertTrue((dems.aste_misti_pwv.values == 0.61).all(), 'MS::aste_misti_pwvが既定値で無いことを確認')
+        self.assertEqual('altaz', dems.aste_misti_frame,     'MS::aste_misti_frameが既定値であることを確認')
 
+        # DESHIMA 2.0 specific
         self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
         self.assertTrue(np.array(dems.d2_mkid_type != '').all())
-
-        result = np.where(dems.d2_mkid_frequency > 0, dems.d2_mkid_frequency, 1) # NaNを一時的に1に置き換える
-        self.assertTrue(np.array(result).all())
-
-
-        #self.assertTrue((dems.scan != '').all())
-
+        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5).all(), 'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
+        self.assertTrue(np.array(dems.d2_roomchopper_isblocking == False).all(), 'd2_roomchopper_isblockingの値が既定値であることを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
+        self.assertEqual('v0.2.0', dems.d2_dems_version)
+        self.assertEqual('v1.0.0', dems.d2_dmerge_version)
         return
 
 if __name__=='__main__':

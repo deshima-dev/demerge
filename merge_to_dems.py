@@ -36,7 +36,10 @@ def merge_to_dems(
 
     times_weather = mf.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_weather = np.array(times_weather).astype(np.datetime64)
-    
+
+    times_skychop, states_skychop = dfits2dems.retrieve_skychop_states(skychop_path)
+    times_skychop = mf.convert_timestamp(times_skychop)
+    times_skychop = np.array(times_skychop).astype(np.datetime64)
 
     # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
     if coordinate == 'azel':
@@ -78,6 +81,7 @@ def merge_to_dems(
     seconds_antenna = (times_antenna - times[0])/np.timedelta64(1, 's')
     seconds_weather = (times_weather - times[0])/np.timedelta64(1, 's')
     seconds_misti   = (times_misti   - times[0])/np.timedelta64(1, 's')
+    seconds_skychop = (times_skychop - times[0])/np.timedelta64(1, 's')
 
     lon                    = np.interp(seconds, seconds_antenna, lon)
     lat                    = np.interp(seconds, seconds_antenna, lat)
@@ -86,9 +90,11 @@ def merge_to_dems(
     pressure               = np.interp(seconds, seconds_weather, weather_table['presure'])
     wind_speed             = np.interp(seconds, seconds_weather, weather_table['aux1'])
     wind_direction         = np.interp(seconds, seconds_weather, weather_table['aux2'])
+    skychop_state          = np.interp(seconds, seconds_skychop, states_skychop)
     aste_cabin_temperature = np.interp(seconds, seconds_cabin,   lower_cabin_temp)
     aste_misti_lon         = np.interp(seconds, seconds_misti,   az_misti)
     aste_misti_lat         = np.interp(seconds, seconds_misti,   el_misti)
+    aste_misti_pwv         = np.interp(seconds, seconds_misti,   pwv_misti)
 
     states = np.array(antenna_table['type'])
 
@@ -133,9 +139,11 @@ def merge_to_dems(
         aste_cabin_temperature=aste_cabin_temperature,
         aste_misti_lon=aste_misti_lon,
         aste_misti_lat=aste_misti_lat,
+        aste_misti_pwv=aste_misti_pwv,
         d2_mkid_id=kid_id,
         d2_mkid_type=kid_type,
         d2_mkid_frequency=kid_freq,
+        d2_skychopper_isblocking=skychop_state,
         beam_major=0.005, # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_minor=0.005, # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_pa=0.005,    # 18 arcsec MergeToDfits()でも固定値が指定されていた

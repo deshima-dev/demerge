@@ -26,8 +26,6 @@ class TestDataMaker():
         self.begin_time = datetime.now(tz=timezone.utc)
         self.end_time   = self.begin_time + measure_time
 
-        print(self.begin_time.tzname())
-        
         # 搭載されているMKIDの数
         self.n_kid = 63
 
@@ -92,9 +90,9 @@ class TestDataMaker():
     def skychop(self):
         skychop_table = Table()
 
-        print((self.begin_time + timedelta(seconds=self.T_skychop)).timestamp())
         skychop_table['ts']    = [(self.begin_time + timedelta(seconds=self.T_skychop*i)).timestamp() for i in range(self.n_skychop)]
         skychop_table['state'] = [1]*self.n_skychop
+        skychop_table['state'][math.floor(self.n_skychop/2):] = 0
         return skychop_table
 
     @property
@@ -178,7 +176,7 @@ class TestDataMaker():
         header['FILENAME'] = 'filter_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
-        dummy = (1.1, 1.2)
+        dummy = (1.5, 0.5)
         columns = [
             fits.Column(name='pixelid',  format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',    format='I',  array=[i for i in range(self.n_kid)]),
@@ -230,7 +228,6 @@ class TestDataMaker():
         header['FILENAME'] = 'fuga', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
 
-        print((self.begin_time + timedelta(microseconds=self.T_readout*1e6)).timestamp())
         columns = [
             fits.Column(name='timestamp', format='D', array=[(self.begin_time + timedelta(microseconds=self.T_readout*1e6*i)).timestamp() for i in range(self.n_readout)]),
             fits.Column(name='pixelid',   format='I', array=[0]*self.n_readout),

@@ -199,7 +199,7 @@ def retrieve_cabin_temps(filename):
         s = '{}T{}'.format(date, time)
         s = s.replace('/', '-')
         datetimes.append(s)
-    datetimes       = np.array(datetimes).astype(np.datetime64)
+    datetimes       = np.array(datetimes).astype('datetime64[ns]')
     upper_cabin_temps = np.array(table['col3']).astype(np.float64)
     lower_cabin_temps = np.array(table['col4']).astype(np.float64)
 
@@ -271,4 +271,4 @@ def retrieve_misti_log(filename):
     for row in table:
         datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
 
-    return (np.array(datetimes).astype(np.datetime64), az, el, pwv)
+    return (np.array(datetimes).astype('datetime64[ns]'), az, el, pwv)

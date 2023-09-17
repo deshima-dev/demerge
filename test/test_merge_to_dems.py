@@ -84,8 +84,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #
         expected = np.array([((2/11 + np.sqrt(289.15))**2)/0.5 - 2 - 288.15]).astype(np.float32) # 注意 float32
         self.assertEqual(round(expected[0], 4), round(dems.data[0][0], 4), 'MS::dataの計算値が正しいことを確認')
-        self.assertEqual(n_time, len(dems.data),       'dems.dataの打刻数の確認')
-        self.assertEqual(n_kid,  len(dems.data[0]),    'dems.dataのチャネル数の確認')
+        self.assertEqual(n_time, len(dems.data),    'dems.dataの打刻数の確認')
+        self.assertEqual(n_kid,  len(dems.data[0]), 'dems.dataのチャネル数の確認')
 
         # MS::mask (既定値)
         self.assertFalse(dems.mask[0 ][0 ], 'maskに既定値が格納されていることを確認[ 0, 0]')

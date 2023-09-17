@@ -1,5 +1,8 @@
 """demsオブジェクトを生成する
 
+python 3.9
+dems   0.4.0
+
 (C) 2023 内藤システムズ
 """
 import numpy          as np

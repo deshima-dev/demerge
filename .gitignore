@@ -3,3 +3,5 @@ graph
 *~
 __pycache__
 dfits_dummy.fits.gz
+test/testdata*
+

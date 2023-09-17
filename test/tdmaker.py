@@ -1,5 +1,7 @@
 """単純なテストデータを作成するクラス
 
+python 3.9
+
 (C) 内藤システムズ
 """
 from datetime      import datetime, timedelta, timezone
@@ -253,7 +255,7 @@ if __name__ == '__main__':
     ====
     並列処理を行ってデータを生成する時はコマンドラインの第一引数にデータ名を指定する。
     """
-    tdm = TestDataMaker(10) # 10分間の測定データを生成する
+    tdm = TestDataMaker(3) # 3分間の測定データを生成する
 
     args = sys.argv
     if (len(args) == 1):

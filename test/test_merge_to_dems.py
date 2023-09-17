@@ -1,6 +1,7 @@
 """merge_to_dems()関数をテストする
 
 Python 3.9
+dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
@@ -152,12 +153,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(-2.1, dems.lat.values[0],     'MS::latの計算値が正しいことを確認')
 
         # MS::lon_origin
-        self.assertTrue(dems.lon_origin != 0,  'MS::lon_originが既定値ではないことを確認')
-        self.assertEqual(1.1, dems.lon_origin, 'MS::lon_originの計算値が正しいことを確認')
+        self.assertTrue(np.array(dems.lon_origin != 0).all(),    'MS::lon_originが既定値ではないことを確認')
+        self.assertTrue(np.array(dems.lon_origin == 1.1).all() , 'MS::lon_originの計算値が正しいことを確認')
 
         # MS::lat_origin
-        self.assertTrue(dems.lat_origin != 0,  'MS::lat_originが既定値ではないことを確認')
-        self.assertEqual(1.1, dems.lat_origin, 'MS::lat_originの計算値が正しいことを確認')
+        self.assertTrue(np.array(dems.lat_origin != 0).all(),   'MS::lat_originが既定値ではないことを確認')
+        self.assertTrue(np.array(dems.lat_origin == 1.1).all(), 'MS::lat_originの計算値が正しいことを確認')
 
         # MS::frame
         self.assertEqual('altaz', dems.frame, 'MS::frameが既定値であることを確認')
@@ -209,8 +210,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
-        self.assertEqual('v0.2.0', dems.d2_dems_version)
-        self.assertEqual('v1.0.0', dems.d2_dmerge_version)
+        self.assertEqual('0.4.0', dems.d2_dems_version)
+        self.assertEqual('1.0.0', dems.d2_dmerge_version)
         return
 
 if __name__=='__main__':

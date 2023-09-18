@@ -153,10 +153,45 @@ def merge_to_dems(
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
 
-    # find R
-    findR = False
+    # Rとskyの部分を探し、その変化点も含めてJUNKな部分を調べる。
     if findR:
-        None
+        indices = np.where(response[:, ch] >= Rth)
+        state[indices] = 'R'
+
+        # cutnum個だけ左右を切り取った配列を作り、互いに異なる部分を探す。そこはおおよそ変化が起きている部分と考えられる。
+        state_cut = state[cutnum:] != state[:-cutnum]
+
+        state_right_shift = np.hstack( [[False]*cutnum, state_cut] )
+        state_left_shift  = np.hstack( [state_cut, [False]*cutnum] )
+        state_R           =          ( state == 'R' )
+
+        mask_moving = state_R & state_left_shift | state_right_shift
+
+        state[mask_moving] = 'JUNK'
+
+
+        indices = (response[:, ch] >  skyth) & (state != 'R')
+        state[indices] = 'JUNK'
+
+        indices = (response[:, ch] <= skyth) & (state == 'R')
+        state[indices] = 'JUNK'
+
+        
+        indices      = np.where(response[:, ch] <= skyth)
+        tmp          = state.copy()
+        tmp[indices] = 'SKY' # 一時的にSKYをマークするが、最終的にJUNKになる。
+        
+        tmp_cut = tmp[cutnum:] != tmp[:-cutnum] # cutnum個だけ左右にずらした配列を作り、変化を探す。
+
+        tmp_right_shift = np.hstack( [[False]*cutnum, tmp_cut] )
+        tmp_left_shift  = np.hstack( [tmp_cut, [False]*cutnum] )
+        tmp_sky         =          ( tmp == 'SKY' )
+
+        mask_moving = tmp_R & tmp_left_shift | tmp_right_shift
+
+        state[mask_moving] = 'JUNK' # SKYと変化の部分はすべてJUNKに置き換える
+        
+        pass
 
     return MS.new(
         data                    =response,

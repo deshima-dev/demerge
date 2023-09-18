@@ -8,7 +8,6 @@ dems   0.4.0
 import numpy          as np
 import xarray         as xr
 import merge_function as mf
-import dfits2dems
 
 from astropy.io import fits, ascii
 from dems.d2    import MS
@@ -24,7 +23,10 @@ def merge_to_dems(
         cabin_path='',
         pixel_id=0,
         coordinate='azel',
-        loadmode=0):
+        loadmode=0,
+        **kwargs
+        ):
+    # kwargsの処理と既定値の設定
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -36,15 +38,15 @@ def merge_to_dems(
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
 
-    times_misti, az_misti, el_misti, pwv_misti = dfits2dems.retrieve_misti_log(misti_path)
+    times_misti, az_misti, el_misti, pwv_misti = mf.retrieve_misti_log(misti_path)
 
-    times_cabin, upper_cabin_temp, lower_cabin_temp = dfits2dems.retrieve_cabin_temps(cabin_path)
+    times_cabin, upper_cabin_temp, lower_cabin_temp = mf.retrieve_cabin_temps(cabin_path)
     lower_cabin_temp = lower_cabin_temp + 273.15 # 度CからKへ変換
 
     times_weather = mf.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_weather = np.array(times_weather).astype('datetime64[ns]')
 
-    times_skychop, states_skychop = dfits2dems.retrieve_skychop_states(skychop_path)
+    times_skychop, states_skychop = mf.retrieve_skychop_states(skychop_path)
     times_skychop = mf.convert_timestamp(times_skychop)
     times_skychop = np.array(times_skychop).astype('datetime64[ns]')
 
@@ -53,7 +55,7 @@ def merge_to_dems(
 
     # T_signalsを計算する
     master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
-    T_amb     = np.nanmean(weather_table['tmperature']) + 273.15
+    T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
     T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
 
     ddbfits_hdul.close()
@@ -87,7 +89,7 @@ def merge_to_dems(
     else:
         raise KeyError('Invalid coodinate type: {}'.format(coodinate))
 
-    # 補間関数で扱うためにSCANTYPE(文字列)を整数に置き換える
+    # 補間関数で扱うためにSCANTYPE(文字列)を適当な整数に対応させる
     states = np.array(antenna_table['type'])
     state_types = {state_type:i for i, state_type in enumerate(np.unique(states))}
     state_type_numbers = np.zeros(states.shape[0], dtype=int)
@@ -129,6 +131,11 @@ def merge_to_dems(
     state = np.full_like(state_type_numbers, 'GRAD', dtype='<U8')
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
+
+    # find R
+    findR = False
+    if findR:
+        None
 
     return MS.new(
         data                    =T_signals,

@@ -214,5 +214,41 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual('1.0.0', dems.d2_dmerge_version)
         return
 
+    def test_retrieve_cabin_temps(self):
+        """cabinの温度をロードする"""
+        datetimes, upper, lower = mf.retrieve_cabin_temps('../data/deshima2.0/cosmos_20171103184436/20171103184436.cabin')
+        self.assertEqual(4, len(datetimes), '時刻の行数を確認')
+        self.assertEqual(4, len(upper), 'upper_cabin_tempの行数を確認')
+        self.assertEqual(4, len(lower), 'lower_cabin_tempの行数を確認')
+        expected = np.array([datetime(2017, 11, 3, hour=18, minute=44)]).astype('datetime64[ns]')
+        self.assertEqual(expected[0], datetimes[0])
+        self.assertEqual(13.2,        upper[0])
+        self.assertEqual(16.6,        lower[0])
+        expected = np.array([datetime(2017, 11, 3, hour=18, minute=47)]).astype('datetime64[ns]')
+        self.assertEqual(expected[0], datetimes[3])
+        self.assertEqual(13.2,        upper[3])
+        self.assertEqual(16.6,        lower[3])
+        return
+
+    def test_retrieve_skychop_states(self):
+        datetimes, states = mf.retrieve_skychop_states('../data/deshima2.0/cosmos_20171103184436/20171103184436.skychop')
+        self.assertEqual(192201,            len(datetimes))
+        self.assertEqual(192201,            len(states))
+        self.assertEqual(1509734678.900000, datetimes[0])
+        self.assertEqual(1,                 states[0])
+        self.assertEqual(1,                 states[1])
+        self.assertEqual(1,                 states[2])
+        return
+
+    def test_retrieve_misti_log(self):
+        time, az, el, pwv = mf.retrieve_misti_log('../data/deshima2.0/cosmos_20171103184436/20171103184436.misti')
+        self.assertEqual(1848, len(time), 'mistiファイルの行数を確認')
+        expected = np.array([datetime(2017, 11, 3, hour=18, minute=44, second=38, microsecond=900000)]).astype('datetime64[ns]')
+        self.assertEqual(expected[0], time[0], '時刻が正しいことを確認')
+        self.assertEqual(180.0,       az[0],   'azが正しいことを確認')
+        self.assertEqual(90.0,        el[0],   'elが正しいことを確認')
+        self.assertEqual(0.610,       pwv[0],  'pwvが正しいことを確認')
+        return
+
 if __name__=='__main__':
     unittest.main()

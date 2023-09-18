@@ -6,6 +6,7 @@
      2018/02/08 - KK - rewrite using class.
      2018/06/08 - TT - apply new calibration method.
      2021         NAITO systems modfied.
+     2023         NAITO systems modfied.
 """
 from __future__ import print_function
 
@@ -25,11 +26,10 @@ __all__ = [
 from datetime import datetime
 from datetime import timedelta
 from calendar import timegm
+from astropy.io import fits, ascii
 import numpy as np
 import scipy.interpolate
-from astropy.io import fits
 import sys
-import dfits2dems
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -37,7 +37,7 @@ FORM_FITSTIME_P = '%Y-%m-%dT%H:%M:%S.%f'                       # YYYY-mm-ddTHH:M
 
 CABIN_Q_MARGIN  = 5*60 # seconds. Margin for cabin data query.
 DEFAULT_ROOM_T  = 17. + 273. # Kelvin
-DEFAULT_AMB_T  = 0. + 273. # Kelvin
+DEFAULT_AMB_T   = 0.  + 273. # Kelvin
 
 def create_bintablehdu(hd):
     """Create Binary Table HDU from 'hdu_dict'"""
@@ -163,3 +163,97 @@ def convert_timestamp(timestamp):
     timestamp = [datetime.utcfromtimestamp(t) for t in timestamp]
     timestamp = [datetime.strftime(t, FORM_FITSTIME_P) for t in timestamp]
     return np.array(timestamp)
+
+def retrieve_cabin_temps(filename):
+    """キャビン内温度を取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, upperCabinTemps, lowerCabinTemps)
+      tupleの各要素はnumpy.array。要素数は同じ。
+    """
+    table = ascii.read(filename, format='no_header')
+
+    # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
+    # テーブルの1列目と2列目がそれぞれ日付と時刻
+    datetimes = []
+    for date, time in zip(table['col1'], table['col2']):
+        s = '{}T{}'.format(date, time)
+        s = s.replace('/', '-')
+        datetimes.append(s)
+    datetimes       = np.array(datetimes).astype('datetime64[ns]')
+    upper_cabin_temps = np.array(table['col3']).astype(np.float64)
+    lower_cabin_temps = np.array(table['col4']).astype(np.float64)
+
+    return (datetimes, upper_cabin_temps, lower_cabin_temps)
+
+def retrieve_skychop_states(filename):
+    """skychopファイルからskychopの時系列状態を取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, states)
+      tupleの各要素はnumpy.array。要素数は同じ。
+
+    時刻について
+    ============
+    skychopファイルに記録されている時刻はUNIX時間。
+
+    ファイル形式
+    ============
+    1列目 UNIX時刻
+    2列目 0/1による状態
+    "#"から始まるコメントがファイル冒頭に数行ある。
+    """
+    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
+
+    datetimes = np.array(table['datetime']).astype(np.float64)
+    states    = np.array(table['state']).astype(np.int8)
+    return (datetimes, states)
+
+def retrieve_misti_log(filename):
+    """mistiファイルからの時系列データを取得する
+    引数
+    ====
+    str ファイル名
+
+    戻り値
+    ======
+    tuple (timestames, az, el, pwv)
+      tupleの各要素はnumpy.array。要素数は同じ。
+
+    ファイル形式
+    ============
+    1列目 年/月/日
+    2列目 時:分:6列目 秒(小数点以下2桁も含む)
+    3列目 az(deg)
+    4列目 el(deg)
+    5列目 pwv(um)
+    6列目 Tground(K)
+    "#"から始まるコメントがファイル冒頭に数行ある。
+    """
+    column_names = [
+        'date',
+        'time',
+        'az',
+        'el',
+        'pwv',
+        'Tround',
+    ]
+    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=column_names)
+
+    az  = np.array(table['az']).astype(np.float64)
+    el  = np.array(table['el']).astype(np.float64)
+    pwv = np.array(table['pwv']).astype(np.float64)/1000.0 # umからmmへ変換
+
+    datetimes = []
+    for row in table:
+        datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
+
+    return (np.array(datetimes).astype('datetime64[ns]'), az, el, pwv)

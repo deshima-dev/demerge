@@ -23,25 +23,26 @@ def merge_to_dems(
         cabin_path='',
         **kwargs
         ):
-    # kwargsの処理と既定値の設定
-    pixel_id   = kwargs.pop('pixel_id', 0)
+    # その他の引数の処理と既定値の設定
+    pixel_id   = kwargs.pop('pixel_id',   0)
     coordinate = kwargs.pop('coordinate', 'azel')
-    loadmode   = kwargs.pop('loadmode', 0)
+    loadmode   = kwargs.pop('loadmode',   0)
+    loadtype   = kwargs.pop('loadtype',   'Tsignal')
     # find R
-    findR     = kwargs.pop("findR", False)
-    ch        = kwargs.pop("ch", 0)
-    Rth       = kwargs.pop("Rth", 280)
-    skyth     = kwargs.pop("skyth", 150)
+    findR     = kwargs.pop("findR",  False)
+    ch        = kwargs.pop("ch",     0)
+    Rth       = kwargs.pop("Rth",    280)
+    skyth     = kwargs.pop("skyth",  150)
     cutnum    = kwargs.pop("cutnum", 1)
     # still
-    still     = kwargs.pop("still", False)
+    still     = kwargs.pop("still",  False)
     period    = kwargs.pop("period", 2)
     # shuttle
-    shuttle   = kwargs.pop("shuttle", False)
+    shuttle   = kwargs.pop("shuttle",  False)
     xmin_off  = kwargs.pop("xmin_off", 0)
     xmax_off  = kwargs.pop("xmax_off", 0)
-    xmin_on   = kwargs.pop("xmin_on", 0)
-    xmax_on   = kwargs.pop("xmax_on", 0)
+    xmin_on   = kwargs.pop("xmin_on",  0)
+    xmax_on   = kwargs.pop("xmax_on",  0)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -68,10 +69,15 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]')
 
-    # T_signalsを計算する
-    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
-    T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-    T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
+    response = None
+    if loadtype == 'Tsignal':
+        # T_signalsを計算する
+        master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
+        T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
+        T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
+        response  = T_signals
+    else:
+        raise KeyError('Invalid loadtype: {}'.format(loadtype))
 
     ddbfits_hdul.close()
     readout_hdul.close()
@@ -112,7 +118,7 @@ def merge_to_dems(
         state_type_numbers[states == state_type] = i
 
     # 補間のためにDataArrayへ格納する
-    T_signals_xr              = xr.DataArray(data=T_signals, dims=['time', 'chan'], coords=[times, kid_id])
+    response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, kid_id])
     lon_xr                    = xr.DataArray(data=lon,                              coords={'time': times_antenna})
     lat_xr                    = xr.DataArray(data=lat,                              coords={'time': times_antenna})
     temperature_xr            = xr.DataArray(data=weather_table['tmperature'],      coords={'time': times_weather})
@@ -128,19 +134,19 @@ def merge_to_dems(
     state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,               coords={'time': times_antenna})
 
     # Tsignalsの時刻に合わせて補間する
-    lon                    =                    lon_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    lat                    =                    lat_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    temperature            =            temperature_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    humidity               =               humidity_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    pressure               =               pressure_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    wind_speed             =             wind_speed_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    wind_direction         =         wind_direction_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    skychop_state          =          skychop_state_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    aste_misti_lon         =         aste_misti_lon_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    aste_misti_lat         =         aste_misti_lat_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'})
-    state_type_numbers     =     state_type_numbers_xr.interp_like(T_signals_xr, kwargs={'fill_value': 'extrapolate'}, method='nearest')
+    lon                    =                    lon_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    lat                    =                    lat_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    temperature            =            temperature_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    humidity               =               humidity_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    pressure               =               pressure_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    wind_speed             =             wind_speed_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    wind_direction         =         wind_direction_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    skychop_state          =          skychop_state_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    aste_misti_lon         =         aste_misti_lon_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    aste_misti_lat         =         aste_misti_lat_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
+    state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'}, method='nearest')
 
     # 補間後のSTATETYPEを文字列に戻す
     state = np.full_like(state_type_numbers, 'GRAD', dtype='<U8')
@@ -153,7 +159,7 @@ def merge_to_dems(
         None
 
     return MS.new(
-        data                    =T_signals,
+        data                    =response,
         time                    =times,
         chan                    =kid_id,
         state                   =state,

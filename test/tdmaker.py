@@ -14,7 +14,7 @@ import sys
 
 class TestDataMaker():
     def __init__(self, time):
-        """コンストラクタ
+        """データ取得周期や打点数の計算
 
         引数
         ====

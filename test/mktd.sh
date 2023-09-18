@@ -4,7 +4,7 @@
 #
 CMD="python tdmaker.py"
 
-DATA_NAMES="readout ddb antenna skychop weather misti cabin"
+DATA_NAMES="readout ddb dfits antenna skychop weather misti cabin"
 
 date
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`

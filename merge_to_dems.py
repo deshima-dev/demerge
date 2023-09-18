@@ -21,12 +21,27 @@ def merge_to_dems(
         weather_path='',
         misti_path='',
         cabin_path='',
-        pixel_id=0,
-        coordinate='azel',
-        loadmode=0,
         **kwargs
         ):
     # kwargsの処理と既定値の設定
+    pixel_id   = kwargs.pop('pixel_id', 0)
+    coordinate = kwargs.pop('coordinate', 'azel')
+    loadmode   = kwargs.pop('loadmode', 0)
+    # find R
+    findR     = kwargs.pop("findR", False)
+    ch        = kwargs.pop("ch", 0)
+    Rth       = kwargs.pop("Rth", 280)
+    skyth     = kwargs.pop("skyth", 150)
+    cutnum    = kwargs.pop("cutnum", 1)
+    # still
+    still     = kwargs.pop("still", False)
+    period    = kwargs.pop("period", 2)
+    # shuttle
+    shuttle   = kwargs.pop("shuttle", False)
+    xmin_off  = kwargs.pop("xmin_off", 0)
+    xmax_off  = kwargs.pop("xmax_off", 0)
+    xmin_on   = kwargs.pop("xmin_on", 0)
+    xmax_on   = kwargs.pop("xmax_on", 0)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)

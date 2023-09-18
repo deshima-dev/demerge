@@ -24,7 +24,10 @@ class TestDataMaker():
         ======
         なし
         """
-        measure_time    = timedelta(minutes=time)
+        self.time       = time
+        self.over       = 1 # READOUTより少し多めの観測時間(分)
+        measure_time    = timedelta(minutes=self.time + self.over) # READOUTの時間より環境測定の時間の方が長くなるように設定
+        readout_time    = timedelta(minutes=self.time)
         self.begin_time = datetime.now(tz=timezone.utc)
         self.end_time   = self.begin_time + measure_time
 
@@ -41,12 +44,15 @@ class TestDataMaker():
 
         # データ点数
         measure_time = measure_time.total_seconds()
+        readout_time = readout_time.total_seconds()
+        self.n_readout = math.floor(readout_time/self.T_readout)
         self.n_antenna = math.floor(measure_time/self.T_antenna)
-        self.n_readout = math.floor(measure_time/self.T_readout)
         self.n_skychop = math.floor(measure_time/self.T_skychop)
         self.n_weather = math.floor(measure_time/self.T_weather)
         self.n_misti   = math.floor(measure_time/self.T_misti)
         self.n_cabin   = math.floor(measure_time/self.T_cabin)
+        print('n_readout: {}'.format(self.n_readout))
+        print('n_skychop: {}'.format(self.n_skychop))
         return
 
     def generate_all(self):
@@ -58,6 +64,7 @@ class TestDataMaker():
         self.misti.write('{}.misti'.format(prefix),     format='ascii.no_header',        overwrite=True)
         self.ddb.writeto('{}_DDB.fits.gz'.format(prefix),              overwrite=True)
         self.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
+        self.dfits.writeto('{}_dfits.fits.gz'.format(prefix),          overwrite=True)
         return
 
     @property
@@ -85,7 +92,19 @@ class TestDataMaker():
         antenna_table['az-prog(center)'] = dummy
         antenna_table['el-prog(center)'] = dummy
         antenna_table['type']            = ['GRAD']*self.n_antenna
-        antenna_table['type'][math.floor(self.n_antenna/2):] = 'ON'
+
+        # READOUTの時間で丁度半分の時刻でONに切り替えるためにantennaの打刻数を比を使って補正
+        #
+        #                     self.time                             self.over
+        # |------------------------------------------------|-------------------------|
+        # start                                            end of readout            end of antenna
+        #
+        # 全打点数をNとするreadoutが終わるまでの時刻の打点数nは
+        #           n = N * (time / (time + over))
+        # で表せる。
+        #
+        n = math.floor(self.n_antenna*(self.time/(self.time + self.over)))
+        antenna_table['type'][math.floor(n/2):] = 'ON'
         return antenna_table
 
     @property
@@ -94,7 +113,10 @@ class TestDataMaker():
 
         skychop_table['ts']    = [(self.begin_time + timedelta(seconds=self.T_skychop*i)).timestamp() for i in range(self.n_skychop)]
         skychop_table['state'] = [1]*self.n_skychop
-        skychop_table['state'][math.floor(self.n_skychop/2):] = 0
+
+        # READOUTの時間で丁度半分の時刻で0に切り替えるためにskychopの打刻数を比を使って補正(理屈はantennaの補正と同じ)
+        n = math.floor(self.n_skychop*(self.time/(self.time + self.over)))
+        skychop_table['state'][math.floor(n/2):] = 0
         return skychop_table
 
     @property
@@ -249,6 +271,69 @@ class TestDataMaker():
         hdul.append(readout)
         return hdul
 
+    @property
+    def dfits(self):
+        header = fits.Header()
+        header['EXTNAME'] = 'OBSINFO', 'name of binary data'
+        header['RA']      = 1.2, 'right ascension of the object in units of dec'
+        header['DEC']     = 2.3, 'declination of the object in units of deg'
+        dummy = 1.1
+        columns = [
+            fits.Column(name='masterids', format='63K', array=[i for i in range(self.n_kid)]),
+            fits.Column(name='kidids',    format='63K', array=[i for i in range(self.n_kid)]),
+            fits.Column(name='kidtypes',  format='63K', array=[1]*self.n_kid),
+            fits.Column(name='kidfreqs',  format='63D', array=[dummy]*self.n_kid),
+        ]
+        obsinfo = fits.BinTableHDU.from_columns(columns, header)
+
+        header = fits.Header()
+        header['EXTNAME'] = 'READOUT', 'name of binary data'
+        rmin = 100
+        rmax = 300
+        dr   = (rmax - rmin)/self.n_readout
+        dummy = (1.1)*self.n_kid
+        columns = [
+            fits.Column(name='starttime', format='26A', array=[(self.begin_time + timedelta(microseconds=self.T_readout*1e6*i)).isoformat() for i in range(self.n_readout)]),
+            fits.Column(name='Tsignal',   format='63D', array=[rmin + dr*i for i in range(self.n_readout)]),
+        ]
+        readout = fits.BinTableHDU.from_columns(columns, header)
+
+        header = fits.Header()
+        header['EXTNAME'] = 'ANTENNA', 'name of binary data'
+        dummy = 1.1
+        columns = [
+            fits.Column(name='time',      format='26A', array=[(self.begin_time + timedelta(milliseconds=self.T_antenna*1e3*i)).isoformat() for i in range(self.n_antenna)]),
+            fits.Column(name='az',        format='D',   array=[1.5 ]*self.n_antenna),
+            fits.Column(name='el',        format='D',   array=[1.25]*self.n_antenna),
+            fits.Column(name='az_center', format='D',   array=[0.5 ]*self.n_antenna),
+            fits.Column(name='el_center', format='D',   array=[0.25]*self.n_antenna),
+            fits.Column(name='ra',        format='D',   array=[2.5 ]*self.n_antenna),
+            fits.Column(name='dec',       format='D',   array=[2.25]*self.n_antenna),
+            fits.Column(name='scantype',  format='4A',  array=['GRAD']*self.n_antenna),
+        ]
+        antenna = fits.BinTableHDU.from_columns(columns, header)
+
+        header = fits.Header()
+        header['EXTNAME'] = 'WEATHER', 'name of binary data'
+        dummy = 1.1
+        columns = [
+            fits.Column(name='time',           format='26A', array=[(self.begin_time + timedelta(seconds=self.T_weather*i)).isoformat() for i in range(self.n_weather)]),
+            fits.Column(name='temperature',    format='D',   array=[1.5 ]*self.n_weather),
+            fits.Column(name='pressure',       format='D',   array=[1.25]*self.n_weather),
+            fits.Column(name='vapor-pressure', format='D',   array=[0.5 ]*self.n_weather),
+            fits.Column(name='windspd',        format='D',   array=[0.25]*self.n_weather),
+            fits.Column(name='winddir',        format='D',   array=[2.5 ]*self.n_weather),
+        ]
+        weather = fits.BinTableHDU.from_columns(columns, header)
+
+        hdul = fits.HDUList()
+        hdul.append(fits.PrimaryHDU())
+        hdul.append(obsinfo)
+        hdul.append(readout)
+        hdul.append(antenna)
+        hdul.append(weather)
+        return hdul
+    
 if __name__ == '__main__':
     """
     説明
@@ -285,6 +370,9 @@ if __name__ == '__main__':
             sys.exit(0)
         if (data_name == 'readout'):
             tdm.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
+            sys.exit(0)
+        if (data_name == 'dfits'):
+            tdm.dfits.writeto('{}_dfits.fits.gz'.format(prefix), overwrite=True)
             sys.exit(0)
         
 

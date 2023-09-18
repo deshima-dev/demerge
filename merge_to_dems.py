@@ -119,19 +119,19 @@ def merge_to_dems(
 
     # 補間のためにDataArrayへ格納する
     response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, kid_id])
-    lon_xr                    = xr.DataArray(data=lon,                              coords={'time': times_antenna})
-    lat_xr                    = xr.DataArray(data=lat,                              coords={'time': times_antenna})
-    temperature_xr            = xr.DataArray(data=weather_table['tmperature'],      coords={'time': times_weather})
-    humidity_xr               = xr.DataArray(data=weather_table['vapor-pressure'],  coords={'time': times_weather})
-    pressure_xr               = xr.DataArray(data=weather_table['presure'],         coords={'time': times_weather})
-    wind_speed_xr             = xr.DataArray(data=weather_table['aux1'],            coords={'time': times_weather})
-    wind_direction_xr         = xr.DataArray(data=weather_table['aux2'],            coords={'time': times_weather})
-    skychop_state_xr          = xr.DataArray(data=states_skychop,                   coords={'time': times_skychop})
-    aste_cabin_temperature_xr = xr.DataArray(data=lower_cabin_temp,                 coords={'time': times_cabin})
-    aste_misti_lon_xr         = xr.DataArray(data=az_misti,                         coords={'time': times_misti})
-    aste_misti_lat_xr         = xr.DataArray(data=el_misti,                         coords={'time': times_misti})
-    aste_misti_pwv_xr         = xr.DataArray(data=pwv_misti,                        coords={'time': times_misti})
-    state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,               coords={'time': times_antenna})
+    lon_xr                    = xr.DataArray(data=lon,                             coords={'time': times_antenna})
+    lat_xr                    = xr.DataArray(data=lat,                             coords={'time': times_antenna})
+    temperature_xr            = xr.DataArray(data=weather_table['tmperature'],     coords={'time': times_weather})
+    humidity_xr               = xr.DataArray(data=weather_table['vapor-pressure'], coords={'time': times_weather})
+    pressure_xr               = xr.DataArray(data=weather_table['presure'],        coords={'time': times_weather})
+    wind_speed_xr             = xr.DataArray(data=weather_table['aux1'],           coords={'time': times_weather})
+    wind_direction_xr         = xr.DataArray(data=weather_table['aux2'],           coords={'time': times_weather})
+    skychop_state_xr          = xr.DataArray(data=states_skychop,                  coords={'time': times_skychop})
+    aste_cabin_temperature_xr = xr.DataArray(data=lower_cabin_temp,                coords={'time': times_cabin})
+    aste_misti_lon_xr         = xr.DataArray(data=az_misti,                        coords={'time': times_misti})
+    aste_misti_lat_xr         = xr.DataArray(data=el_misti,                        coords={'time': times_misti})
+    aste_misti_pwv_xr         = xr.DataArray(data=pwv_misti,                       coords={'time': times_misti})
+    state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,              coords={'time': times_antenna})
 
     # Tsignalsの時刻に合わせて補間する
     lon                    =                    lon_xr.interp_like(response_xr, kwargs={'fill_value': 'extrapolate'})
@@ -204,8 +204,8 @@ def merge_to_dems(
 
         # SKYの部分とその変化の部分を探す
         indices      = np.where(response[:, ch] <= skyth)
-        tmp          = state.copy() # 最終的にSKYをJUNKで上書きするためにコピーを扱う
-        tmp[indices] = 'SKY'        # 一時的にSKYをマークするが、最終的にJUNKになる。
+        tmp          = state.copy() # 最終的にSKYを残さないためにコピーを扱う
+        tmp[indices] = 'SKY'        # 一時的にSKYをマークする
         
         tmp_cut = tmp[cutnum:] != tmp[:-cutnum] # cutnum個だけ左右にずらした配列を作り、変化を探す。
 
@@ -215,7 +215,7 @@ def merge_to_dems(
 
         mask_moving = tmp_R & tmp_left_shift | tmp_right_shift
 
-        state[mask_moving] = 'JUNK' # SKYと変化の部分はすべてJUNKに置き換える(Rとは違いSKYは残らない)
+        state[mask_moving] = 'JUNK' # 変化の部分はJUNKに置き換える(Rとは違いSKYは残らない)
 
     return MS.new(
         data                    =response,

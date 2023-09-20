@@ -11,9 +11,10 @@ from astropy.table import Table
 import numpy as np
 import math
 import sys
+import argparse
 
 class TestDataMaker():
-    def __init__(self, time):
+    def __init__(self, time, **kwargs):
         """データ取得周期や打点数の計算
 
         引数
@@ -31,6 +32,15 @@ class TestDataMaker():
         self.begin_time = datetime.now(tz=timezone.utc)
         self.end_time   = self.begin_time + measure_time
 
+        # 引数の処理
+        self.p0               = kwargs.pop('p0',               1.0)
+        self.etaf             = kwargs.pop('etaf',             0.5)
+        self.T0               = kwargs.pop('T0',               1.0)
+        self.linyfc           = kwargs.pop('linyfc',           0.2)
+        self.Qr               = kwargs.pop('Qr',               1/4)
+        self.lower_cabin_temp = kwargs.pop('lower_cabin_temp', 10)
+        self.linear_readout   = kwargs.pop('linear_readout',   False)
+
         # 搭載されているMKIDの数
         self.n_kid = 63
 
@@ -44,15 +54,13 @@ class TestDataMaker():
 
         # データ点数
         measure_time = measure_time.total_seconds()
-        readout_time = readout_time.total_seconds()
-        self.n_readout = math.floor(readout_time/self.T_readout)
+        self.readout_time = readout_time.total_seconds()
+        self.n_readout = math.floor(self.readout_time/self.T_readout)
         self.n_antenna = math.floor(measure_time/self.T_antenna)
         self.n_skychop = math.floor(measure_time/self.T_skychop)
         self.n_weather = math.floor(measure_time/self.T_weather)
         self.n_misti   = math.floor(measure_time/self.T_misti)
         self.n_cabin   = math.floor(measure_time/self.T_cabin)
-        print('n_readout: {}'.format(self.n_readout))
-        print('n_skychop: {}'.format(self.n_skychop))
         return
 
     def generate_all(self):
@@ -156,7 +164,7 @@ class TestDataMaker():
         cabin_table['date']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%Y/%m/%d') for i in range(self.n_cabin)]
         cabin_table['time']  = [(self.begin_time + timedelta(seconds=self.T_cabin*i)).strftime('%H:%M') for i in range(self.n_cabin)]
         cabin_table['col3']  = dummy + bias
-        cabin_table['col4']  = dummy
+        cabin_table['col4']  = self.lower_cabin_temp
         cabin_table['col5']  = dummy
         cabin_table['col6']  = dummy
         cabin_table['col7']  = dummy
@@ -214,7 +222,7 @@ class TestDataMaker():
         header['EXTNAME']  = 'KIDRESP', 'name of binary data'
         header['FILENAME'] = 'responsibity_table_DDBXXX.npy', 'localsweep filename'
         header['JSONNAME'] = 'kid_corresp_XXX.json', 'localsweep filename'
-        dummy = (1.0, 0.5, 1.0) # p0, etaf, T0
+        dummy = (self.p0, self.etaf, self.T0)
         columns = [
             fits.Column(name='pixelid',    format='I',  array=[0]*self.n_kid),
             fits.Column(name='kidid',      format='I',  array=[i for i in range(self.n_kid)]),
@@ -230,18 +238,18 @@ class TestDataMaker():
         return hdul
 
     @property
-    def readout(self):
+    def readout(self, **kwargs):
         header = fits.Header()
         header['EXTNAME']  = 'KIDSINFO', 'name of binary data'
         header['FILENAME'] = 'localsweep.sweep', 'localsweep filename'
         header['NKID0']    = self.n_kid, 'number of KIDs (pixel 0)'
-        dummy = (1.1, 0.2)
+        dummy = (1.5, 0.25)
         columns = [
             fits.Column(name='kidid',          format='I',  array=[i for i in range(self.n_kid)]),
             fits.Column(name='pixelid',        format='I',  array=[0]*self.n_kid),
-            fits.Column(name='yfc, linyfc',    format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='yfc, linyfc',    format='2E', array=[(1.0, self.linyfc)]*self.n_kid),
             fits.Column(name='fr, dfr (300K)', format='2E', array=[dummy]*self.n_kid),
-            fits.Column(name='Qr, dQr (300K)', format='2E', array=[dummy]*self.n_kid),
+            fits.Column(name='Qr, dQr (300K)', format='2E', array=[(self.Qr, 0.25)]*self.n_kid),
             fits.Column(name='Qc, dQc (300K)', format='2E', array=[dummy]*self.n_kid),
             fits.Column(name='Qi, dQi (300K)', format='2E', array=[dummy]*self.n_kid),
         ]
@@ -257,10 +265,17 @@ class TestDataMaker():
             fits.Column(name='pixelid',   format='I', array=[0]*self.n_readout),
         ]
 
-        dummy = (1.0, 1.0, 1.0)
+        dummy = None
+        if self.linear_readout:
+            linPh_max = 300
+            linPh = np.sqrt(linPh_max/self.readout_time)
+            dummy = [(1.0, 1.0, linPh*np.sqrt(i*self.T_readout)) for i in range(self.n_readout)]
+        else:
+            dummy = [(1.0, 1.0, 1.0)]*self.n_readout
+    
         for i in range(self.n_kid):
             name   = 'Amp, Ph, linPh {}'.format(i)
-            column = fits.Column(name=name, format='3E', array=[dummy]*self.n_readout)
+            column = fits.Column(name=name, format='3E', array=dummy)
             columns.append(column)
 
         readout = fits.BinTableHDU.from_columns(columns, header)
@@ -336,43 +351,63 @@ class TestDataMaker():
     
 if __name__ == '__main__':
     """
+    引数
+    ====
+    
     説明
     ====
     並列処理を行ってデータを生成する時はコマンドラインの第一引数にデータ名を指定する。
     """
-    tdm = TestDataMaker(3) # 3分間の測定データを生成する
+    parser = argparse.ArgumentParser()
+    parser.add_argument('data_name',        type=str,   default='', nargs='?')
+    parser.add_argument('--time',           type=int,   default=3,   help='測定時間(分)を整数で指定して下さい')
+    parser.add_argument('--p0',             type=float, default=1.0, help='p0を浮動小数点で指定して下さい')
+    parser.add_argument('--etaf',           type=float, default=0.5, help='etafを浮動小数点で指定して下さい')
+    parser.add_argument('--T0',             type=float, default=1.0, help='T0を浮動小数点で指定して下さい')
+    parser.add_argument('--linyfc',         type=float, default=1.0, help='linyfcを浮動小数点で指定して下さい')
+    parser.add_argument('--linear_readout', type=bool,  default=False, help='readoutの値を線形に変化させる場合はTrueを指定して下さい')
+    parser.add_argument('--lower_cabin_temp', type=float, default=15, help='MainCabinの温度(degC)をfloatで指定して下さい')
+    a = parser.parse_args()
 
-    args = sys.argv
-    if (len(args) == 1):
+    
+    tdm = TestDataMaker(time            =a.time,
+                        p0              =a.p0,
+                        etaf            =a.etaf,
+                        T0              =a.T0,
+                        linyfc          =a.linyfc,
+                        lower_cabin_temp=a.lower_cabin_temp,
+                        linear_readout  =a.linear_readout
+                        )
+
+
+    if a.data_name == '':
         tdm.generate_all()
         sys.exit(0)
 
-    if (len(args) > 1):
-        data_name = args[1]
-        prefix    = 'testdata'
-        if (data_name == 'antenna'):
-            tdm.antenna.write('{}.ant'.format(prefix), format='ascii.commented_header', overwrite=True)
-            sys.exit(0)
-        if (data_name == 'skychop'):
-            tdm.skychop.write('{}.skychop'.format(prefix), format='ascii.commented_header', overwrite=True)
-            sys.exit(0)
-        if (data_name == 'weather'):
-            tdm.weather.write('{}.wea'.format(prefix), format='ascii.commented_header', overwrite=True)
-            sys.exit(0)
-        if (data_name == 'misti'):
-            tdm.misti.write('{}.misti'.format(prefix), format='ascii.no_header', overwrite=True)
-            sys.exit(0)
-        if (data_name == 'cabin'):
-            tdm.cabin.write('{}.cabin'.format(prefix), format='ascii.commented_header', overwrite=True)
-            sys.exit(0)
-        if (data_name == 'ddb'):
-            tdm.ddb.writeto('{}_DDB.fits.gz'.format(prefix), overwrite=True)
-            sys.exit(0)
-        if (data_name == 'readout'):
-            tdm.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
-            sys.exit(0)
-        if (data_name == 'dfits'):
-            tdm.dfits.writeto('{}_dfits.fits.gz'.format(prefix), overwrite=True)
-            sys.exit(0)
+    prefix = 'testdata'
+    if (a.data_name == 'antenna'):
+        tdm.antenna.write('{}.ant'.format(prefix), format='ascii.commented_header', overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'skychop'):
+        tdm.skychop.write('{}.skychop'.format(prefix), format='ascii.commented_header', overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'weather'):
+        tdm.weather.write('{}.wea'.format(prefix), format='ascii.commented_header', overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'misti'):
+        tdm.misti.write('{}.misti'.format(prefix), format='ascii.no_header', overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'cabin'):
+        tdm.cabin.write('{}.cabin'.format(prefix), format='ascii.commented_header', overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'ddb'):
+        tdm.ddb.writeto('{}_DDB.fits.gz'.format(prefix), overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'readout'):
+        tdm.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
+        sys.exit(0)
+    if (a.data_name == 'dfits'):
+        tdm.dfits.writeto('{}_dfits.fits.gz'.format(prefix), overwrite=True)
+        sys.exit(0)
         
 

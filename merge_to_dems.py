@@ -28,7 +28,7 @@ def merge_to_dems(
     coordinate = kwargs.pop('coordinate', 'azel')
     loadmode   = kwargs.pop('loadmode',   0)
     loadtype   = kwargs.pop('loadtype',   'Tsignal')
-    # find R
+    # find R, sky
     findR     = kwargs.pop("findR",  False)
     ch        = kwargs.pop("ch",     0)
     Rth       = kwargs.pop("Rth",    280)
@@ -192,9 +192,7 @@ def merge_to_dems(
         state_R           =          ( state == 'R' )
 
         mask_moving = state_R & state_left_shift | state_right_shift
-
         state[mask_moving] = 'JUNK'
-
 
         indices = (response[:, ch] >  skyth) & (state != 'R')
         state[indices] = 'JUNK'
@@ -214,7 +212,6 @@ def merge_to_dems(
         tmp_sky         =          ( tmp == 'SKY' )
 
         mask_moving = tmp_R & tmp_left_shift | tmp_right_shift
-
         state[mask_moving] = 'JUNK' # 変化の部分はJUNKに置き換える(Rとは違いSKYは残らない)
 
     return MS.new(

@@ -359,16 +359,16 @@ if __name__ == '__main__':
     並列処理を行ってデータを生成する時はコマンドラインの第一引数にデータ名を指定する。
     """
     parser = argparse.ArgumentParser()
-    parser.add_argument('data_name',        type=str,   default='', nargs='?')
-    parser.add_argument('--time',           type=int,   default=3,   help='測定時間(分)を整数で指定して下さい')
-    parser.add_argument('--p0',             type=float, default=1.0, help='p0を浮動小数点で指定して下さい')
-    parser.add_argument('--etaf',           type=float, default=0.5, help='etafを浮動小数点で指定して下さい')
-    parser.add_argument('--T0',             type=float, default=1.0, help='T0を浮動小数点で指定して下さい')
-    parser.add_argument('--linyfc',         type=float, default=1.0, help='linyfcを浮動小数点で指定して下さい')
-    parser.add_argument('--linear_readout', type=bool,  default=False, help='readoutの値を線形に変化させる場合はTrueを指定して下さい')
-    parser.add_argument('--lower_cabin_temp', type=float, default=15, help='MainCabinの温度(degC)をfloatで指定して下さい')
+    parser.add_argument('data_name',          type=str,   default='', nargs='?')
+    parser.add_argument('--time',             type=int,   default=3,          help='測定時間(分)を整数で指定して下さい')
+    parser.add_argument('--p0',               type=float, default=1.0,        help='p0をfloatで指定して下さい')
+    parser.add_argument('--etaf',             type=float, default=0.5,        help='etafをfloatで指定して下さい')
+    parser.add_argument('--T0',               type=float, default=1.0,        help='T0をfloatで指定して下さい')
+    parser.add_argument('--linyfc',           type=float, default=1.0,        help='linyfcをfloatで指定して下さい')
+    parser.add_argument('--linear_readout',   type=bool,  default=False,      help='readoutの値を線形に変化させる場合はTrueを指定して下さい')
+    parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
+    parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
     a = parser.parse_args()
-
     
     tdm = TestDataMaker(time            =a.time,
                         p0              =a.p0,
@@ -379,35 +379,33 @@ if __name__ == '__main__':
                         linear_readout  =a.linear_readout
                         )
 
-
     if a.data_name == '':
         tdm.generate_all()
         sys.exit(0)
 
-    prefix = 'testdata'
     if (a.data_name == 'antenna'):
-        tdm.antenna.write('{}.ant'.format(prefix), format='ascii.commented_header', overwrite=True)
+        tdm.antenna.write('{}.ant'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'skychop'):
-        tdm.skychop.write('{}.skychop'.format(prefix), format='ascii.commented_header', overwrite=True)
+        tdm.skychop.write('{}.skychop'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'weather'):
-        tdm.weather.write('{}.wea'.format(prefix), format='ascii.commented_header', overwrite=True)
+        tdm.weather.write('{}.wea'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'misti'):
-        tdm.misti.write('{}.misti'.format(prefix), format='ascii.no_header', overwrite=True)
+        tdm.misti.write('{}.misti'.format(a.prefix), format='ascii.no_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'cabin'):
-        tdm.cabin.write('{}.cabin'.format(prefix), format='ascii.commented_header', overwrite=True)
+        tdm.cabin.write('{}.cabin'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'ddb'):
-        tdm.ddb.writeto('{}_DDB.fits.gz'.format(prefix), overwrite=True)
+        tdm.ddb.writeto('{}_DDB.fits.gz'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'readout'):
-        tdm.readout.writeto('{}_reduced_readout.fits'.format(prefix), overwrite=True)
+        tdm.readout.writeto('{}_reduced_readout.fits'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'dfits'):
-        tdm.dfits.writeto('{}_dfits.fits.gz'.format(prefix), overwrite=True)
+        tdm.dfits.writeto('{}_dfits.fits.gz'.format(a.prefix), overwrite=True)
         sys.exit(0)
         
 

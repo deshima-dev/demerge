@@ -15,11 +15,12 @@ if [ $? -ne 0 ]; then
 fi
 date
 
-# $CMD antenna &
-# $CMD skychop &
-# $CMD weather &
-# $CMD misti   &
-# $CMD cabin   &
-# $CMD readout &
-# $CMD ddb     &
+$CMD readout \
+     --p0                1.0 \
+     --etaf              1.0 \
+     --T0                0.0 \
+     --linyfc            0.0 \
+     --lower_cabin_temp -273.15 \
+     --linear_readout    1 \
+     --prefix            testdata_linear
 

@@ -29,20 +29,20 @@ def merge_to_dems(
     loadmode   = kwargs.pop('loadmode',   0)
     loadtype   = kwargs.pop('loadtype',   'Tsignal')
     # find R, sky
-    findR     = kwargs.pop("findR",  False)
-    ch        = kwargs.pop("ch",     0)
-    Rth       = kwargs.pop("Rth",    280)
-    skyth     = kwargs.pop("skyth",  150)
-    cutnum    = kwargs.pop("cutnum", 1)
+    findR  = kwargs.pop("findR",  False)
+    ch     = kwargs.pop("ch",     0)
+    Rth    = kwargs.pop("Rth",    280)
+    skyth  = kwargs.pop("skyth",  150)
+    cutnum = kwargs.pop("cutnum", 1)
     # still
-    still     = kwargs.pop("still",  False)
-    period    = kwargs.pop("period", 2)
+    still  = kwargs.pop("still",  False)
+    period = kwargs.pop("period", 2) # 秒
     # shuttle
-    shuttle   = kwargs.pop("shuttle",  False)
-    xmin_off  = kwargs.pop("xmin_off", 0)
-    xmax_off  = kwargs.pop("xmax_off", 0)
-    xmin_on   = kwargs.pop("xmin_on",  0)
-    xmax_on   = kwargs.pop("xmax_on",  0)
+    shuttle     = kwargs.pop("shuttle", False)
+    min_lon_off = kwargs.pop("min_lon_off", 0)
+    max_lon_off = kwargs.pop("max_lon_off", 0)
+    min_lon_on  = kwargs.pop("min_lon_on",  0)
+    max_lon_on  = kwargs.pop("max_lon_on",  0)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -153,6 +153,23 @@ def merge_to_dems(
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
 
+    # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
+    if still:
+        seconds = (times - times[0])/np.timedelta64(1, 's')
+        for i in range(int(seconds[-1]) // period + 1):
+            off_mask = (period*(2*i)     <= seconds) & (seconds < period*(2*i + 1))
+            on_mask  = (period*(2*i + 1) <= seconds) & (seconds < period*(2*i + 2))
+            state[off_mask] = 'OFF'
+            state[on_mask]  = 'SCAN'
+
+    # shuttle観測のマスクを設定する
+    if shuttle:
+        off_mask = (min_lon_off < lon) & (lon < max_lon_off)
+        on_mask  = (min_lon_on  < lon) & (lon < max_lon_on)
+        scan[off_mask]                 = 'OFF'
+        scan[on_mask]                  = 'SCAN'
+        scan[(~off_mask) & (~on_mask)] = 'JUNK'
+
     # Rとskyの部分を探し、その変化点も含めてJUNKな部分を調べる。
     if findR:
         # Rの部分とその変化の部分を探す
@@ -211,7 +228,7 @@ def merge_to_dems(
         tmp_left_shift  = np.hstack( [tmp_cut, [False]*cutnum] )
         tmp_sky         =          ( tmp == 'SKY' )
 
-        mask_moving = tmp_R & tmp_left_shift | tmp_right_shift
+        mask_moving = tmp_sky & tmp_left_shift | tmp_right_shift
         state[mask_moving] = 'JUNK' # 変化の部分はJUNKに置き換える(Rとは違いSKYは残らない)
 
     return MS.new(

@@ -33,6 +33,111 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.dfits = 'cache/{0}/dfits_{0}.fits.gz'.format(self.obsid)
         return
 
+    def test_still(self):
+        period = 2 # 秒
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='{}.cabin'.format(prefix),
+            still=True,
+            period=period
+        )
+        state = dems.state
+        time  = dems.time
+
+        # period毎にOFF/SCANを繰り返す
+        # GRADはなくなる
+        self.assertTrue(np.array(state != 'GRAD').all(), 'GRADは無いことを確認')
+
+        seconds = (time - time[0])/np.timedelta64(1, 's')
+        off = (seconds < period)
+        on  = (period <= seconds) & (seconds < 2*period)
+        self.assertTrue(np.array(state[off] == 'OFF').all(),  'OFFであることを確認(1)')
+        self.assertTrue(np.array(state[on]  == 'SCAN').all(), 'SCANであることを確認(1)')
+        off = (2*period <= seconds) & (seconds < 3*period)
+        on  = (3*period <= seconds) & (seconds < 4*period)
+        self.assertTrue(np.array(state[off] == 'OFF').all(),  'OFFであることを確認(2)')
+        self.assertTrue(np.array(state[on]  == 'SCAN').all(), 'SCANであることを確認(2)')
+        return
+
+    def test_find_R_linear_inc(self):
+        cutnum = 2
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_linear_inc_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}_linear_inc.ant'.format(prefix),
+            readout_path='{}_linear_inc_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='{}_linear_inc.cabin'.format(prefix),
+            findR=True,
+            cutnum=cutnum,
+        )
+        response = dems.data.T[0]
+        state    = dems.state
+
+        # skyth以下の部分を探す
+        skyth = 150
+        indices = np.where(response <= skyth)[0]
+        i_sky = indices[-1]
+
+        # Rthを越える部分を探す
+        Rth = 280
+        indices = np.where(response > Rth)[0]
+        i_R = indices[0]
+
+        self.assertTrue(np.array(state[i_R + 2*cutnum:         ] == 'R').all(),    'Rの部分を確認')
+        self.assertTrue(np.array(state[i_sky         :i_R      ] == 'JUNK').all(), 'JUNKの部分を確認')
+        self.assertTrue(np.array(state[              :i_sky - 1] == 'GRAD').all(), 'GRADの部分を確認')
+
+        self.assertTrue(np.array(state != 'SKY').all(), 'SKYの部分は無いことを確認')
+        
+        return
+
+    def test_find_R_linear_dec(self):
+        cutnum = 2
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_linear_dec_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}_linear_dec.ant'.format(prefix),
+            readout_path='{}_linear_dec_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}_linear_dec.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='{}_linear_dec.cabin'.format(prefix),
+            findR=True,
+            cutnum=cutnum,
+        )
+        response = dems.data.T[0]
+        state    = dems.state
+
+        # skyth以下の部分を探す
+        skyth = 150
+        indices = np.where(response <= skyth)[0]
+        i_sky = indices[0]
+
+        # Rthを越える部分を探す
+        Rth = 280
+        indices = np.where(response > Rth)[0]
+        i_R = indices[-1]
+
+        self.assertTrue(np.array(state[              :i_R - cutnum] == 'R').all(),    'Rの部分を確認')
+        self.assertTrue(np.array(state[i_R           :i_sky       ] == 'JUNK').all(), 'JUNKの部分を確認')
+        self.assertTrue(np.array(state[i_sky + cutnum:            ] == 'GRAD').all(), 'GRADの部分を確認')
+
+        self.assertTrue(np.array(state != 'SKY').all(), 'SKYの部分は無いことを確認')
+        
+        return
+
     def test_merge_to_dems(self):
         prefix = 'testdata'
 
@@ -68,7 +173,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #
         # ここでtdmaker.pyのTestDataMaker()クラスで単純な以下のようなテストデータ与えられる。これらの値は0による割り算が発生しないように適当に選ばれている。
         # linPh  = 1.0
-        # linyfc = 0.2
+        # linyfc = 0.25
         # Qr     = 1.1
         # p0     = 1.0
         # etaf   = 0.5
@@ -77,15 +182,15 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # Tamb   = 273.15 + 15 ( = weather temperature)
         #
         # 上記の値で計算すると以下のようになる。
-        # f_shift    =  2/11
-        # Tlos_model = (2/11 + sqrt(289.15))**2/0.5 - 2 - 288.15
+        # f_shift    =  15/88
+        # Tlos_model = (15/88 + sqrt(289.15))**2/0.5 - 2 - 288.15
         #
         # この結果をfloat32表現するとdataの値に一致する。
         #
-        expected = np.array([((2/11 + np.sqrt(289.15))**2)/0.5 - 2 - 288.15]).astype(np.float32) # 注意 float32
+        expected = np.array([((15/88 + np.sqrt(289.15))**2)/0.5 - 2 - 288.15]).astype(np.float32) # 注意 float32
         self.assertEqual(round(expected[0], 4), round(dems.data[0][0], 4), 'MS::dataの計算値が正しいことを確認')
-        self.assertEqual(n_time, len(dems.data),    'dems.dataの打刻数の確認')
-        self.assertEqual(n_kid,  len(dems.data[0]), 'dems.dataのチャネル数の確認')
+        self.assertEqual(n_time, len(dems.data),    'MS::dataの打刻数の確認')
+        self.assertEqual(n_kid,  len(dems.data[0]), 'MS::dataのチャネル数の確認')
 
         # MS::mask (既定値)
         self.assertFalse(dems.mask[0 ][0 ], 'maskに既定値が格納されていることを確認[ 0, 0]')
@@ -199,15 +304,15 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertTrue((dems.aste_misti_lon.values == 180).all(),  'MS::aste_misti_lonが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_lat.values == 90).all(),   'MS::aste_misti_latが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_pwv.values == 0.61).all(), 'MS::aste_misti_pwvが既定値で無いことを確認')
-        self.assertEqual('altaz', dems.aste_misti_frame,     'MS::aste_misti_frameが既定値であることを確認')
+        self.assertEqual('altaz', dems.aste_misti_frame,            'MS::aste_misti_frameが既定値であることを確認')
 
         # DESHIMA 2.0 specific
         self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
         self.assertTrue(np.array(dems.d2_mkid_type != '').all())
-        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5).all(), 'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
+        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5).all(),           'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
         self.assertTrue(np.array(dems.d2_roomchopper_isblocking == False).all(), 'd2_roomchopper_isblockingの値が既定値であることを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(),   'd2_skychopper_isblockingの値が既定値で無いことを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
         self.assertEqual('0.4.0', dems.d2_dems_version)
@@ -218,8 +323,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
         """cabinの温度をロードする"""
         datetimes, upper, lower = mf.retrieve_cabin_temps('../data/deshima2.0/cosmos_20171103184436/20171103184436.cabin')
         self.assertEqual(4, len(datetimes), '時刻の行数を確認')
-        self.assertEqual(4, len(upper), 'upper_cabin_tempの行数を確認')
-        self.assertEqual(4, len(lower), 'lower_cabin_tempの行数を確認')
+        self.assertEqual(4, len(upper),     'upper_cabin_tempの行数を確認')
+        self.assertEqual(4, len(lower),     'lower_cabin_tempの行数を確認')
         expected = np.array([datetime(2017, 11, 3, hour=18, minute=44)]).astype('datetime64[ns]')
         self.assertEqual(expected[0], datetimes[0])
         self.assertEqual(13.2,        upper[0])

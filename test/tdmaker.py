@@ -36,12 +36,13 @@ class TestDataMaker():
         self.p0               = kwargs.pop('p0',               1.0)
         self.etaf             = kwargs.pop('etaf',             0.5)
         self.T0               = kwargs.pop('T0',               1.0)
-        self.linyfc           = kwargs.pop('linyfc',           0.2)
-        self.Qr               = kwargs.pop('Qr',               1/4)
-        self.lower_cabin_temp = kwargs.pop('lower_cabin_temp', 10)
-        self.linear_readout   = kwargs.pop('linear_readout',   False)
+        self.linyfc           = kwargs.pop('linyfc',           0.25)
+        self.Qr               = kwargs.pop('Qr',               1.1)
+        self.lower_cabin_temp = kwargs.pop('lower_cabin_temp', 15)
+        self.linear_readout   = kwargs.pop('linear_readout',   '') # inc, dec 増加か減少を選ぶ
+        self.all_grad         = kwargs.pop('all_grad',         False)
 
-        # 搭載されているMKIDの数
+        # 見つかったMKIDの数
         self.n_kid = 63
 
         # データ取得周期(秒)
@@ -53,14 +54,14 @@ class TestDataMaker():
         self.T_cabin   = 60
 
         # データ点数
-        measure_time = measure_time.total_seconds()
+        self.measure_time = measure_time.total_seconds()
         self.readout_time = readout_time.total_seconds()
         self.n_readout = math.floor(self.readout_time/self.T_readout)
-        self.n_antenna = math.floor(measure_time/self.T_antenna)
-        self.n_skychop = math.floor(measure_time/self.T_skychop)
-        self.n_weather = math.floor(measure_time/self.T_weather)
-        self.n_misti   = math.floor(measure_time/self.T_misti)
-        self.n_cabin   = math.floor(measure_time/self.T_cabin)
+        self.n_antenna = math.floor(self.measure_time/self.T_antenna)
+        self.n_skychop = math.floor(self.measure_time/self.T_skychop)
+        self.n_weather = math.floor(self.measure_time/self.T_weather)
+        self.n_misti   = math.floor(self.measure_time/self.T_misti)
+        self.n_cabin   = math.floor(self.measure_time/self.T_cabin)
         return
 
     def generate_all(self):
@@ -111,8 +112,9 @@ class TestDataMaker():
         #           n = N * (time / (time + over))
         # で表せる。
         #
-        n = math.floor(self.n_antenna*(self.time/(self.time + self.over)))
-        antenna_table['type'][math.floor(n/2):] = 'ON'
+        if self.all_grad == False:
+            n = math.floor(self.n_antenna*(self.time/(self.time + self.over)))
+            antenna_table['type'][math.floor(n/2):] = 'ON'
         return antenna_table
 
     @property
@@ -266,10 +268,12 @@ class TestDataMaker():
         ]
 
         dummy = None
-        if self.linear_readout:
-            linPh_max = 300
+        linPh_max = 300
+        if self.linear_readout == 'inc':
             linPh = np.sqrt(linPh_max/self.readout_time)
             dummy = [(1.0, 1.0, linPh*np.sqrt(i*self.T_readout)) for i in range(self.n_readout)]
+        elif self.linear_readout == 'dec':
+            dummy = [(1.0, 1.0, np.sqrt(-linPh_max/self.readout_time*i*self.T_readout + linPh_max)) for i in range(self.n_readout)]
         else:
             dummy = [(1.0, 1.0, 1.0)]*self.n_readout
     
@@ -364,8 +368,10 @@ if __name__ == '__main__':
     parser.add_argument('--p0',               type=float, default=1.0,        help='p0をfloatで指定して下さい')
     parser.add_argument('--etaf',             type=float, default=0.5,        help='etafをfloatで指定して下さい')
     parser.add_argument('--T0',               type=float, default=1.0,        help='T0をfloatで指定して下さい')
-    parser.add_argument('--linyfc',           type=float, default=1.0,        help='linyfcをfloatで指定して下さい')
-    parser.add_argument('--linear_readout',   type=bool,  default=False,      help='readoutの値を線形に変化させる場合はTrueを指定して下さい')
+    parser.add_argument('--Qr',               type=float, default=1.1,        help='Qrをfloatで指定して下さい')
+    parser.add_argument('--linyfc',           type=float, default=0.25,       help='linyfcをfloatで指定して下さい')
+    parser.add_argument('--linear_readout',   type=str,   default='',         help='readoutの値を線形に変化させる場合はinc/decのいずれかを指定して下さい')
+    parser.add_argument('--all_grad',         type=bool,  default=False,      help='すべてのSCAN状態をGRADにする場合はTrueを指定して下さい')
     parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
     a = parser.parse_args()
@@ -374,9 +380,11 @@ if __name__ == '__main__':
                         p0              =a.p0,
                         etaf            =a.etaf,
                         T0              =a.T0,
+                        Qr              =a.Qr,
                         linyfc          =a.linyfc,
                         lower_cabin_temp=a.lower_cabin_temp,
-                        linear_readout  =a.linear_readout
+                        linear_readout  =a.linear_readout,
+                        all_grad        =a.all_grad
                         )
 
     if a.data_name == '':
@@ -407,5 +415,3 @@ if __name__ == '__main__':
     if (a.data_name == 'dfits'):
         tdm.dfits.writeto('{}_dfits.fits.gz'.format(a.prefix), overwrite=True)
         sys.exit(0)
-        
-

@@ -139,7 +139,6 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
     linyfc   = rhdus['KIDSINFO'].data['yfc, linyfc'].T[1]
     Qr       = rhdus['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
     fshift = np.array((linphase - linyfc)/ (4.*Qr)).T
-    print(linyfc)
     fshift_err = np.zeros( len(fshift) )
     #---- Responsivity curve
     (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T

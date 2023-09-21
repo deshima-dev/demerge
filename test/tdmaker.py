@@ -41,6 +41,7 @@ class TestDataMaker():
         self.lower_cabin_temp = kwargs.pop('lower_cabin_temp', 15)
         self.linear_readout   = kwargs.pop('linear_readout',   '') # inc, dec 増加か減少を選ぶ
         self.all_grad         = kwargs.pop('all_grad',         False)
+        self.linear_antenna   = kwargs.pop('linear_antenna',   False)
 
         # 見つかったMKIDの数
         self.n_kid = 63
@@ -101,6 +102,18 @@ class TestDataMaker():
         antenna_table['az-prog(center)'] = dummy
         antenna_table['el-prog(center)'] = dummy
         antenna_table['type']            = ['GRAD']*self.n_antenna
+
+        # lonがs線形に0から180まで変化するデータを作る
+        if self.linear_antenna:
+            lon_max = 180
+            lon = [lon_max/self.measure_time*(i*self.T_antenna) for i in range(self.n_antenna)]
+            
+            antenna_table['az-prg']          = [0.0]*self.n_antenna
+            antenna_table['el-prg']          = [0.0]*self.n_antenna
+            antenna_table['az-real']         = [0.0]*self.n_antenna
+            antenna_table['el-real']         = [0.0]*self.n_antenna
+            antenna_table['az-prg(no-col)']  = lon
+            antenna_table['el-prog(no-col)'] = [0.0]*self.n_antenna
 
         # READOUTの時間で丁度半分の時刻でONに切り替えるためにantennaの打刻数を比を使って補正
         #
@@ -307,13 +320,22 @@ class TestDataMaker():
 
         header = fits.Header()
         header['EXTNAME'] = 'READOUT', 'name of binary data'
-        rmin = 100
+        rmin = 0
         rmax = 300
         dr   = (rmax - rmin)/self.n_readout
         dummy = (1.1)*self.n_kid
+
+        if self.linear_readout == 'inc':
+            Tsignal = [rmin + dr*i for i in range(self.n_readout)]
+        elif self.linear_readout == 'dec':
+            Tsignal = [rmax - dr*i for i in range(self.n_readout)]
+        else:
+            Tsignal = [rmin + dr*i for i in range(self.n_readout)]
+            
+        
         columns = [
             fits.Column(name='starttime', format='26A', array=[(self.begin_time + timedelta(microseconds=self.T_readout*1e6*i)).isoformat() for i in range(self.n_readout)]),
-            fits.Column(name='Tsignal',   format='63D', array=[rmin + dr*i for i in range(self.n_readout)]),
+            fits.Column(name='Tsignal',   format='63D', array=Tsignal),
         ]
         readout = fits.BinTableHDU.from_columns(columns, header)
 
@@ -371,6 +393,7 @@ if __name__ == '__main__':
     parser.add_argument('--Qr',               type=float, default=1.1,        help='Qrをfloatで指定して下さい')
     parser.add_argument('--linyfc',           type=float, default=0.25,       help='linyfcをfloatで指定して下さい')
     parser.add_argument('--linear_readout',   type=str,   default='',         help='readoutの値を線形に変化させる場合はinc/decのいずれかを指定して下さい')
+    parser.add_argument('--linear_antenna',   type=bool,  default=False,      help='antennaのlonを線形に変化させる場合はTrueを指定して下さい')
     parser.add_argument('--all_grad',         type=bool,  default=False,      help='すべてのSCAN状態をGRADにする場合はTrueを指定して下さい')
     parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
@@ -384,6 +407,7 @@ if __name__ == '__main__':
                         linyfc          =a.linyfc,
                         lower_cabin_temp=a.lower_cabin_temp,
                         linear_readout  =a.linear_readout,
+                        linear_antenna  =a.linear_antenna,
                         all_grad        =a.all_grad
                         )
 

@@ -26,7 +26,7 @@ def merge_to_dems(
     # その他の引数の処理と既定値の設定
     pixel_id   = kwargs.pop('pixel_id',   0)
     coordinate = kwargs.pop('coordinate', 'azel')
-    loadmode   = kwargs.pop('loadmode',   0)
+    mode       = kwargs.pop('mode',   0)
     loadtype   = kwargs.pop('loadtype',   'Tsignal')
     # find R, sky
     findR  = kwargs.pop("findR",  False)
@@ -39,10 +39,10 @@ def merge_to_dems(
     period = kwargs.pop("period", 2) # 秒
     # shuttle
     shuttle     = kwargs.pop("shuttle", False)
-    min_lon_off = kwargs.pop("min_lon_off", 0)
-    max_lon_off = kwargs.pop("max_lon_off", 0)
-    min_lon_on  = kwargs.pop("min_lon_on",  0)
-    max_lon_on  = kwargs.pop("max_lon_on",  0)
+    lon_min_off = kwargs.pop("lon_min_off", 0)
+    lon_max_off = kwargs.pop("lon_max_off", 0)
+    lon_min_on  = kwargs.pop("lon_min_on",  0)
+    lon_max_on  = kwargs.pop("lon_max_on",  0)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -97,10 +97,10 @@ def merge_to_dems(
         lat        = el_prog + antenna_table['el-real'] - antenna_table['el-prg']
         lon_origin = np.median(antenna_table['az-prog(center)'])
         lat_origin = np.median(antenna_table['el-prog(center)'])
-        if loadmode in [0, 1]:
+        if mode in [0, 1]:
             lon -= antenna_table['az-prog(center)']
             lat -= antenna_table['el-prog(center)']
-            if loadmode == 0:
+            if mode == 0:
                 lon *= np.cos(np.deg2rad(lat))
     elif coordinate == 'radec':
         lon        = antenna_table['ra-prg']
@@ -164,11 +164,11 @@ def merge_to_dems(
 
     # shuttle観測のマスクを設定する
     if shuttle:
-        off_mask = (min_lon_off < lon) & (lon < max_lon_off)
-        on_mask  = (min_lon_on  < lon) & (lon < max_lon_on)
-        scan[off_mask]                 = 'OFF'
-        scan[on_mask]                  = 'SCAN'
-        scan[(~off_mask) & (~on_mask)] = 'JUNK'
+        mask_off = (lon_min_off < lon) & (lon < lon_max_off)
+        mask_on  = (lon_min_on  < lon) & (lon < lon_max_on)
+        state[mask_off]                 = 'OFF'
+        state[mask_on]                  = 'SCAN'
+        state[(~mask_off) & (~mask_on)] = 'JUNK'
 
     # Rとskyの部分を探し、その変化点も含めてJUNKな部分を調べる。
     if findR:

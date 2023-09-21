@@ -3,6 +3,11 @@
 Python 3.9
 dems   0.4.0
 
+テスト用のデータについて
+========================
+同ディレクトリにあるmktd.shを実行すると本テストに必要なダミーデータが生成される。
+ $ ./mktd.sh
+
 (C) 2023 内藤システムズ
 """
 import os
@@ -31,6 +36,49 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.obsid = '20171103184436'
         self.reduced_fits = 'cache/{0}/reduced_{0}.fits'.format(self.obsid)
         self.dfits = 'cache/{0}/dfits_{0}.fits.gz'.format(self.obsid)
+        return
+
+    def test_shuttle(self):
+        lon_min_off = 20;
+        lon_max_off = 80;
+        lon_min_on  = 100;
+        lon_max_on  = 150;
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}_linear_antenna.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='{}.cabin'.format(prefix),
+            shuttle=True,
+            lon_min_off=lon_min_off,
+            lon_max_off=lon_max_off,
+            lon_min_on=lon_min_on,
+            lon_max_on=lon_max_on,
+            mode=2,
+        )
+        state = dems.state
+        time  = dems.time
+        lon   = dems.lon
+
+        indices = np.where((lon_min_off < lon) & (lon <= lon_max_off))
+        self.assertTrue(np.array(state[indices] == 'OFF').all(), 'OFFの区間を確認')
+
+        indices = np.where((lon_min_on < lon) & (lon <= lon_max_on))
+        self.assertTrue(np.array(state[indices] == 'SCAN').all(), 'ONの区間を確認')
+
+        indices = np.where(lon <= lon_min_off)
+        self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(1)')
+
+        indices = np.where((lon_max_off < lon) & (lon <= lon_min_on))
+        self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(2)')
+        
+        indices = np.where(lon_max_on < lon)
+        self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(3)')
+
         return
 
     def test_still(self):

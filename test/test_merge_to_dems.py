@@ -41,16 +41,16 @@ class MergeToDemsTestDrive(unittest.TestCase):
     def test_short_measure(self):
         """READOUT時間が環境観測時間よりも長い場合に補間に与える影響を確認する"""
         prefix = 'testdata_short_measure'
-        # dems = mtd.merge_to_dems(
-        #     ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-        #     obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
-        #     antenna_path='{}_antenna.ant'.format(prefix),
-        #     readout_path='{}_reduced_readout.fits'.format(prefix),
-        #     skychop_path='{}.skychop'.format(prefix),
-        #     weather_path='{}.wea'.format(prefix),
-        #     misti_path='{}.misti'.format(prefix),
-        #     cabin_path='{}.cabin'.format(prefix),
-        # )
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='{}.cabin'.format(prefix),
+        )
         
         return
 

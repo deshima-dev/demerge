@@ -104,9 +104,7 @@ PARAMS="
      --prefix            testdata_short_measure \
      --time              3                      \
      --measure_time      2                      \
-     --over_time         0                      \
 "
-
 $CMD readout $PARAMS
 $CMD ddb     $PARAMS
 $CMD cabin   $PARAMS

@@ -8,7 +8,14 @@ DATA_NAMES="readout ddb dfits antenna skychop weather misti cabin"
 
 date
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
-echo $DATA_NAMES | xargs -P${NCPU} -n1 $CMD
+
+
+
+PARAMS="
+     --time 3 \
+     --measure_time 4
+"
+echo $DATA_NAMES | xargs -P${NCPU} --verbose -n1 -I % $CMD % $PARAMS
 if [ $? -ne 0 ]; then
     echo "失敗:${CMD}"
     exit 1
@@ -76,6 +83,38 @@ PARAMS="
      --prefix            testdata_linear_antenna
 "
 $CMD antenna $PARAMS
+
+#
+# 環境測定時間をreadoutよりも短くする
+# skychop_stateやstateを補間したときの振る舞いを確認するためのダミーデータ
+#
+# ここで
+# --timeはREADOUT時間、
+# --measure_timeはREADOUT以外の環境測定時間、
+# --over_timeはmeasure_timeに加算される調整用の時間。
+#
+PARAMS="
+     --p0                1.0                    \
+     --etaf              1.0                    \
+     --T0                0.0                    \
+     --Qr                0.25                   \
+     --linyfc            0.0                    \
+     --lower_cabin_temp -273.15                 \
+     --all_grad          1                      \
+     --prefix            testdata_short_measure \
+     --time              3                      \
+     --measure_time      2                      \
+     --over_time         0                      \
+"
+
+$CMD readout $PARAMS
+$CMD ddb     $PARAMS
+$CMD cabin   $PARAMS
+$CMD antenna $PARAMS
+$CMD weather $PARAMS
+$CMD misti   $PARAMS
+$CMD skychop $PARAMS
+
 
 
 date

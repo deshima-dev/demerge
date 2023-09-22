@@ -38,6 +38,22 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.dfits = 'cache/{0}/dfits_{0}.fits.gz'.format(self.obsid)
         return
 
+    def test_short_measure(self):
+        """READOUT時間が環境観測時間よりも長い場合に補間に与える影響を確認する"""
+        prefix = 'testdata_short_measure'
+        # dems = mtd.merge_to_dems(
+        #     ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+        #     obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
+        #     antenna_path='{}_antenna.ant'.format(prefix),
+        #     readout_path='{}_reduced_readout.fits'.format(prefix),
+        #     skychop_path='{}.skychop'.format(prefix),
+        #     weather_path='{}.wea'.format(prefix),
+        #     misti_path='{}.misti'.format(prefix),
+        #     cabin_path='{}.cabin'.format(prefix),
+        # )
+        
+        return
+
     def test_shuttle(self):
         lon_min_off = 20;
         lon_max_off = 80;
@@ -63,20 +79,19 @@ class MergeToDemsTestDrive(unittest.TestCase):
         state = dems.state
         time  = dems.time
         lon   = dems.lon
-
-        indices = np.where((lon_min_off < lon) & (lon <= lon_max_off))
+        indices = np.where((lon_min_off < lon) & (lon < lon_max_off))
         self.assertTrue(np.array(state[indices] == 'OFF').all(), 'OFFの区間を確認')
 
-        indices = np.where((lon_min_on < lon) & (lon <= lon_max_on))
+        indices = np.where((lon_min_on < lon) & (lon < lon_max_on))
         self.assertTrue(np.array(state[indices] == 'SCAN').all(), 'ONの区間を確認')
 
         indices = np.where(lon <= lon_min_off)
         self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(1)')
 
-        indices = np.where((lon_max_off < lon) & (lon <= lon_min_on))
+        indices = np.where((lon_max_off <= lon) & (lon <= lon_min_on))
         self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(2)')
         
-        indices = np.where(lon_max_on < lon)
+        indices = np.where(lon_max_on <= lon)
         self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(3)')
 
         return
@@ -300,10 +315,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #
         self.assertTrue(np.array(dems.lon != 0).all(), 'MS::lonが既定値ではないことを確認')
         self.assertEqual(-2.1*np.cos(np.deg2rad(-2.1)), dems.lon.values[0], 'MS::lonの計算値が正しいことを確認')
+        #self.assertTrue(np.isnan(dems.lon.values[0:27]).all(), 'MS::lonにNaNがあることを確認')
+        #print(dems.lon.values[0:27])
 
         # MS::lat
         self.assertTrue(np.array(dems.lat != 0).all(), 'MS::latが既定値ではないことを確認')
-        self.assertEqual(-2.1, dems.lat.values[0],     'MS::latの計算値が正しいことを確認')
+        self.assertEqual(-2.1, dems.lat.values[27],     'MS::latの計算値が正しいことを確認')
 
         # MS::lon_origin
         self.assertTrue(np.array(dems.lon_origin != 0).all(),    'MS::lon_originが既定値ではないことを確認')
@@ -348,6 +365,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(dems.telescope_coordinates, expected, 'MS::telescope_coordinatesが既定値であることを確認')
 
         # ASTE Specific
+        # self.assertTrue(np.isnan(dems.aste_cabin_temperature[:26]).all(), 'MS::aste_cabin_temperatureにnanである部分があることを確認')
+        # self.assertTrue(np.isnan(dems.aste_misti_lon.values[:42]).all(),  'MS::aste_misti_lonにnanである部分があることを確認')
+        # self.assertTrue(np.isnan(dems.aste_misti_lat.values[:42]).all(),  'MS::aste_misti_latにnanである部分があることを確認')
+        # self.assertTrue(np.isnan(dems.aste_misti_pwv.values[:42]).all(),  'MS::aste_misti_pwvにnanである部分があることを確認')
+
         self.assertTrue(np.array(dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
         self.assertTrue((dems.aste_misti_lon.values == 180).all(),  'MS::aste_misti_lonが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_lat.values == 90).all(),   'MS::aste_misti_latが既定値で無いことを確認')

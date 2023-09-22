@@ -25,13 +25,6 @@ class TestDataMaker():
         ======
         なし
         """
-        self.time       = time
-        self.over       = 1 # READOUTより少し多めの観測時間(分)
-        measure_time    = timedelta(minutes=self.time + self.over) # READOUTの時間より環境測定の時間の方が長くなるように設定
-        readout_time    = timedelta(minutes=self.time)
-        self.begin_time = datetime.now(tz=timezone.utc)
-        self.end_time   = self.begin_time + measure_time
-
         # 引数の処理
         self.p0               = kwargs.pop('p0',               1.0)
         self.etaf             = kwargs.pop('etaf',             0.5)
@@ -42,6 +35,22 @@ class TestDataMaker():
         self.linear_readout   = kwargs.pop('linear_readout',   '') # inc, dec 増加か減少を選ぶ
         self.all_grad         = kwargs.pop('all_grad',         False)
         self.linear_antenna   = kwargs.pop('linear_antenna',   False)
+        self.measure_time     = kwargs.pop('measure_time',     None) # 測定時間を意図的に変更する場合に使う
+        #self.over             = kwargs.pop('over_time',        1)
+
+        self.time = time
+        measure_time = None
+        if self.measure_time == None:
+            # measure_time = timedelta(minutes=self.time + self.over) # READOUTの時間より環境測定の時間の方が長くなるように設定
+            measure_time = timedelta(minutes=self.time) # READOUTの時間より環境測定の時間の方が長くなるように設定
+        else:
+            # measure_time = timedelta(minutes=self.measure_time + self.over)
+            measure_time = timedelta(minutes=self.measure_time)
+        readout_time    = timedelta(minutes=self.time)
+
+        self.begin_time = datetime(year=2023, month=9, day=22, hour=9, minute=00, tzinfo=timezone.utc)
+        self.end_time   = self.begin_time + measure_time
+        
 
         # 見つかったMKIDの数
         self.n_kid = 63
@@ -55,6 +64,15 @@ class TestDataMaker():
         self.T_cabin   = 60
 
         # データ点数
+        #
+        # !!注意!!
+        # measure_timeとreadout_timeはここで秒に置き換えられる!
+        #
+        # 打点数は割り算の結果を小数点以下切り捨てで計算されるため、
+        # end_timeにぴったりの打点数以下になる。
+        # そのためREADOUTの時刻に併せて補間すると毎回時刻の終わりに外挿が発生しNaNが格納される。
+        # これを防ぐために計算された打点数に+1して必ずREADOUTのend_time以上になるようにする。
+        #
         self.measure_time = measure_time.total_seconds()
         self.readout_time = readout_time.total_seconds()
         self.n_readout = math.floor(self.readout_time/self.T_readout)
@@ -125,8 +143,9 @@ class TestDataMaker():
         #           n = N * (time / (time + over))
         # で表せる。
         #
+        over = (self.measure_time - self.readout_time)/60 # 秒から分へ変換
         if self.all_grad == False:
-            n = math.floor(self.n_antenna*(self.time/(self.time + self.over)))
+            n = math.floor(self.n_antenna*(self.time/(self.time + over)))
             antenna_table['type'][math.floor(n/2):] = 'ON'
         return antenna_table
 
@@ -138,7 +157,8 @@ class TestDataMaker():
         skychop_table['state'] = [1]*self.n_skychop
 
         # READOUTの時間で丁度半分の時刻で0に切り替えるためにskychopの打刻数を比を使って補正(理屈はantennaの補正と同じ)
-        n = math.floor(self.n_skychop*(self.time/(self.time + self.over)))
+        over = (self.measure_time - self.readout_time)/60 # 秒から分へ変換
+        n = math.floor(self.n_skychop*(self.time/(self.time + over)))
         skychop_table['state'][math.floor(n/2):] = 0
         return skychop_table
 
@@ -397,6 +417,8 @@ if __name__ == '__main__':
     parser.add_argument('--all_grad',         type=bool,  default=False,      help='すべてのSCAN状態をGRADにする場合はTrueを指定して下さい')
     parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
+    parser.add_argument('--measure_time',     type=int,   default=None,       help='環境測定時間(分)を整数で指定して下さい')
+    parser.add_argument('--over_time',        type=int,   default=1,          help='環境測定時間(分)をREADOUT時間よりも多くする分数を指定して下さい')
     a = parser.parse_args()
     
     tdm = TestDataMaker(time            =a.time,
@@ -408,7 +430,9 @@ if __name__ == '__main__':
                         lower_cabin_temp=a.lower_cabin_temp,
                         linear_readout  =a.linear_readout,
                         linear_antenna  =a.linear_antenna,
-                        all_grad        =a.all_grad
+                        all_grad        =a.all_grad,
+                        measure_time    =a.measure_time,
+                        over_time       =a.over_time,
                         )
 
     if a.data_name == '':

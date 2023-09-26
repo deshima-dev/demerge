@@ -66,6 +66,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # skychop time   |--------------------------------------|
         #
         # skychop state  11111111111111111110000000000000000000011111111111111111111
+        #                                この境界を確認する--> ~~
         #                                                       |<~~ exporalate ~~>|
         #
         # d2_skychopper_isblockingが外挿されるとそれはnumpy.nanになる。これがdemsのbool型に格納されるとTrueに変換される。
@@ -88,7 +89,9 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         indices_extrapolate = np.where(dems.time > times_antenna[-1])[0]
         self.assertTrue((dems.state[indices_extrapolate] == 'GRAD').all(), 'stateの外挿部分がGRADになることを確認')
-        self.assertTrue(dems.state[indices_extrapolate[0] - 1] == 'ON',    'stateの内挿部分と外挿部分が隣り合っていることを確認')
+
+        indices_on = np.where(dems.state == 'ON')[0]
+        self.assertEqual(indices_on[-1] + 1, indices_extrapolate[0], 'stateの外挿部分と内挿部分(Falseになっている部分)が隣り合っていることを確認')
         
         return
 

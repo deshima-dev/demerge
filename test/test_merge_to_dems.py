@@ -25,7 +25,7 @@ import math
 import merge_function as mf
 import merge_to_dems  as mtd
 
-from astropy.io     import fits
+from astropy.io     import fits, ascii
 from dems.d2        import MS
 from merge_to_dfits import MergeToDfits
 from datetime       import datetime
@@ -55,7 +55,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
         times_skychop = mf.convert_timestamp(times_skychop)
         times_skychop = np.array(times_skychop).astype('datetime64[ns]')
 
-        # 外挿部分の論理値の確認
+        antenna_table = ascii.read('{}.ant'.format(prefix))[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
+        times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
+        times_antenna = np.array(times_antenna).astype('datetime64[ns]')
+        
+        # d2_skychopper_isblockingの外挿部分の論理値の確認
         #
         # readout time   |---------------------------------------------------------|
         #
@@ -79,6 +83,13 @@ class MergeToDemsTestDrive(unittest.TestCase):
         indices_false = np.where(dems.d2_skychopper_isblocking == False)[0]
         self.assertEqual(indices_false[-1] + 1, indices_extrapolate[0], '外挿部分と内挿部分(Falseになっている部分)がk隣り合っていることを確認')
 
+        # stateの外挿部分の値の確認(確認の方法はd2_skychopper_isblockingと同じ)
+        self.assertEqual(len(dems.time.values), len(dems.state.values), 'stateの要素数の確認')
+
+        indices_extrapolate = np.where(dems.time > times_antenna[-1])[0]
+        self.assertTrue((dems.state[indices_extrapolate] == 'GRAD').all(), 'stateの外挿部分がGRADになることを確認')
+        self.assertTrue(dems.state[indices_extrapolate[0] - 1] == 'ON',    'stateの内挿部分と外挿部分が隣り合っていることを確認')
+        
         return
 
     def test_shuttle(self):

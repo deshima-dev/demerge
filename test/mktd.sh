@@ -100,7 +100,6 @@ PARAMS="
      --Qr                0.25                   \
      --linyfc            0.0                    \
      --lower_cabin_temp -273.15                 \
-     --all_grad          1                      \
      --prefix            testdata_short_measure \
      --time              3                      \
      --measure_time      2                      \

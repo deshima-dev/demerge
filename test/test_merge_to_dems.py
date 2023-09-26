@@ -51,7 +51,34 @@ class MergeToDemsTestDrive(unittest.TestCase):
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
         )
-        
+        times_skychop, states_skychop = mf.retrieve_skychop_states('{}.skychop'.format(prefix))
+        times_skychop = mf.convert_timestamp(times_skychop)
+        times_skychop = np.array(times_skychop).astype('datetime64[ns]')
+
+        # 外挿部分の論理値の確認
+        #
+        # readout time   |---------------------------------------------------------|
+        #
+        # skychop time   |--------------------------------------|
+        #
+        # skychop state  11111111111111111110000000000000000000011111111111111111111
+        #                                                       |<~~ exporalate ~~>|
+        #
+        # d2_skychopper_isblockingが外挿されるとそれはnumpy.nanになる。これがdemsのbool型に格納されるとTrueに変換される。
+        # ダミーデータtestdata_short_measure.skychopは上図のようにreadout timeよりskychop timeの方が短くなっている。
+        # またskychopは半分の時間で0に切り替わるようになっている。このため外挿が始まると0から1への切り替えが発生して、外挿部分がわかる。
+        # まず、skychopの時刻とdems全体の時刻から外挿が発生すべき時刻のインデックスを調べる。
+        # 次に、skychopがFalseになっている部分のインデックスを調べ、外挿が発生したインデックスの値がFalseのインデックス+1であることを確認する。
+        # これで外挿された時の振る舞いが分かる。
+        #
+        self.assertEqual(len(dems.time.values), len(dems.d2_skychopper_isblocking.values), 'd2_skychopper_isblockingの要素数の確認')
+
+        indices_extrapolate = np.where(dems.time > times_skychop[-1])[0]
+        self.assertTrue((dems.d2_skychopper_isblocking.values[indices_extrapolate] == True).all(), 'd2_skychopper_isblockingの外挿部分がTrueになることを確認')
+
+        indices_false = np.where(dems.d2_skychopper_isblocking == False)[0]
+        self.assertEqual(indices_false[-1] + 1, indices_extrapolate[0], '外挿部分と内挿部分(Falseになっている部分)がk隣り合っていることを確認')
+
         return
 
     def test_shuttle(self):
@@ -306,39 +333,24 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #     prev = state
         # self.assertEqual(1, n_state_change, 'MS::stateの切り替えが1回だけ発生していることを確認')
 
-        # MS::lon
+        # Telescope Pointing
         #
-        # coordinate = azel, loadmode = 0 の場合
+        # coordinate = azel, loadmode = 0 の場合:
+        #   lon = -2.1*cos(deg2rad(lat))
+        #   lat = -2.1
         #
-        # lon = -2.1*cos(deg2rad(lat))
-        # lat = -2.1
-        #
-        self.assertTrue(np.array(dems.lon != 0).all(), 'MS::lonが既定値ではないことを確認')
-        self.assertEqual(-2.1*np.cos(np.deg2rad(-2.1)), dems.lon.values[0], 'MS::lonの計算値が正しいことを確認')
-        #self.assertTrue(np.isnan(dems.lon.values[0:27]).all(), 'MS::lonにNaNがあることを確認')
-        #print(dems.lon.values[0:27])
-
-        # MS::lat
-        self.assertTrue(np.array(dems.lat != 0).all(), 'MS::latが既定値ではないことを確認')
-        self.assertEqual(-2.1, dems.lat.values[27],     'MS::latの計算値が正しいことを確認')
-
-        # MS::lon_origin
-        self.assertTrue(np.array(dems.lon_origin != 0).all(),    'MS::lon_originが既定値ではないことを確認')
-        self.assertTrue(np.array(dems.lon_origin == 1.1).all() , 'MS::lon_originの計算値が正しいことを確認')
-
-        # MS::lat_origin
-        self.assertTrue(np.array(dems.lat_origin != 0).all(),   'MS::lat_originが既定値ではないことを確認')
-        self.assertTrue(np.array(dems.lat_origin == 1.1).all(), 'MS::lat_originの計算値が正しいことを確認')
-
-        # MS::frame
+        self.assertTrue((dems.lon        == -2.1*np.cos(np.deg2rad(-2.1))).all(), 'MS::lonの全ての計算値が正しいことを確認')
+        self.assertTrue((dems.lat        == -2.1                         ).all(), 'MS::latの全ての値が正しいことを確認')
+        self.assertTrue((dems.lon_origin ==  1.1                         ).all(), 'MS::lon_originの全ての値が正しいことを確認')
+        self.assertTrue((dems.lat_origin ==  1.1                         ).all(), 'MS::lat_originの全ての値が正しいことを確認')
         self.assertEqual('altaz', dems.frame, 'MS::frameが既定値であることを確認')
 
         # Weather Informations
-        self.assertTrue(np.array(dems.temperature    == 15.0).all(), 'MS::temperatureが既定値でないことを確認')
-        self.assertTrue(np.array(dems.pressure       == 15.0).all(), 'MS::pressureが既定値でないことを確認')
-        self.assertTrue(np.array(dems.humidity       == 15.0).all(), 'MS::humidityが既定値でないことを確認')
-        self.assertTrue(np.array(dems.wind_speed     == 15.0).all(), 'MS::wind_speedが既定値でないことを確認')
-        self.assertTrue(np.array(dems.wind_direction == 15.0).all(), 'MS::wind_directionが既定値でないことを確認')
+        self.assertTrue((dems.temperature    == 15.0).all(), 'MS::temperatureが既定値でないことを確認')
+        self.assertTrue((dems.pressure       == 15.0).all(), 'MS::pressureが既定値でないことを確認')
+        self.assertTrue((dems.humidity       == 15.0).all(), 'MS::humidityが既定値でないことを確認')
+        self.assertTrue((dems.wind_speed     == 15.0).all(), 'MS::wind_speedが既定値でないことを確認')
+        self.assertTrue((dems.wind_direction == 15.0).all(), 'MS::wind_directionが既定値でないことを確認')
 
         # Data Informations
         #
@@ -346,8 +358,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # beam_major, beam_minor, beam_pa, exposure, intervalは固定値。
         # MergeToDfits()クラスでも固定値が指定されていた。
         #
-        self.assertTrue(np.array(dems.bandwidth  == 0.0).all(),   'MS::bandwidthが既定値であることを確認')
-        self.assertTrue(np.array(dems.frequency  == 0.0).all(),   'MS::frequencyが既定値であることを確認')
+        self.assertTrue(np.array(dems.bandwidth  == 0.0  ).all(), 'MS::bandwidthが既定値であることを確認')
+        self.assertTrue(np.array(dems.frequency  == 0.0  ).all(), 'MS::frequencyが既定値であることを確認')
         self.assertTrue(np.array(dems.beam_major == 0.005).all(), 'MS::beam_majorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_minor == 0.005).all(), 'MS::beam_minorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_pa    == 0.005).all(), 'MS::beam_paが既定値で無いことを確認')
@@ -365,16 +377,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(dems.telescope_coordinates, expected, 'MS::telescope_coordinatesが既定値であることを確認')
 
         # ASTE Specific
-        # self.assertTrue(np.isnan(dems.aste_cabin_temperature[:26]).all(), 'MS::aste_cabin_temperatureにnanである部分があることを確認')
-        # self.assertTrue(np.isnan(dems.aste_misti_lon.values[:42]).all(),  'MS::aste_misti_lonにnanである部分があることを確認')
-        # self.assertTrue(np.isnan(dems.aste_misti_lat.values[:42]).all(),  'MS::aste_misti_latにnanである部分があることを確認')
-        # self.assertTrue(np.isnan(dems.aste_misti_pwv.values[:42]).all(),  'MS::aste_misti_pwvにnanである部分があることを確認')
-
-        self.assertTrue(np.array(dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
-        self.assertTrue((dems.aste_misti_lon.values == 180).all(),  'MS::aste_misti_lonが既定値で無いことを確認')
-        self.assertTrue((dems.aste_misti_lat.values == 90).all(),   'MS::aste_misti_latが既定値で無いことを確認')
-        self.assertTrue((dems.aste_misti_pwv.values == 0.61).all(), 'MS::aste_misti_pwvが既定値で無いことを確認')
-        self.assertEqual('altaz', dems.aste_misti_frame,            'MS::aste_misti_frameが既定値であることを確認')
+        self.assertTrue((dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
+        self.assertTrue((dems.aste_misti_lon.values  == 180          ).all(), 'MS::aste_misti_lonが既定値で無いことを確認')
+        self.assertTrue((dems.aste_misti_lat.values  == 90           ).all(), 'MS::aste_misti_latが既定値で無いことを確認')
+        self.assertTrue((dems.aste_misti_pwv.values  == 0.61         ).all(), 'MS::aste_misti_pwvが既定値で無いことを確認')
+        self.assertEqual('altaz', dems.aste_misti_frame,                      'MS::aste_misti_frameが既定値であることを確認')
 
         # DESHIMA 2.0 specific
         self.assertTrue(np.array(dems.d2_mkid_id != 0).any())

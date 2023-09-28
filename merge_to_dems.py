@@ -268,7 +268,6 @@ if __name__ == '__main__':
     """Demsオブジェクトを作成する"""
     parser = argparse.ArgumentParser()
 
-    print('必須引数処理')
     # 必須引数
     parser.add_argument('filename',  type=str, help='出力ファイルへのパスを指定して下さい(.nc)')
     parser.add_argument('--ddb',     type=str, required=True, help='DDBファイルへのパスを指定して下さい(.fits.gz)')
@@ -280,7 +279,6 @@ if __name__ == '__main__':
     parser.add_argument('--misti',   type=str, required=True, help='mistiファイルへのパスを指定して下さい(.misti)')
     parser.add_argument('--cabin',   type=str, required=True, help='cabinファイルへのパスを指定して下さい(.cabin)')
 
-    print('オプション引数処理')
     # オプション引数
     parser.add_argument('--pixel_id',    type=int,   default=0,         help='pixel_idを整数で指定します')
     parser.add_argument('--coordinate',  type=str,   default='azel',    help='座標系(azel/radec)を文字列で指定します')
@@ -299,10 +297,8 @@ if __name__ == '__main__':
     parser.add_argument('--lon_min_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
     parser.add_argument('--lon_max_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
 
-    print('parser実行')
     a = parser.parse_args()
 
-    print('demsオブジェクト生成')
     dems = merge_to_dems(
         ddbfits_path=a.ddb,
         obsinst_path=a.obs,
@@ -331,5 +327,4 @@ if __name__ == '__main__':
         lon_max_on =a.lon_max_on,
     )
     
-    print(type(dems))
     dems.to_netcdf(a.filename)

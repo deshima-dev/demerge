@@ -15,13 +15,7 @@ DFITSをASTE生データからマージするスクリプト
 | lmfit        | 1.2.1     |
 | sympy        | 1.12      |
 | pyyaml       | 6.0       |
-| dems         | 0.2.0     |
-
-# demsのインストール方法
-
-```
-$ pip install -q "dems==0.2.0"
-```
+| dems         | 0.4.0     |
 
 参考:https://github.com/deshima-dev/dems
 
@@ -39,5 +33,6 @@ $ ./run.sh -d data/deshima2.0 20171103184436
 $ pwd
 /home/hoge/dmerge
 $ cd test
-$ python test_merge_to_dems.py
+$ ./mktd.sh                    # テストに必要なダミーデータを生成します
+$ python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
 ```

@@ -5,6 +5,7 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
+import argparse
 import numpy          as np
 import xarray         as xr
 import merge_function as mf
@@ -262,3 +263,73 @@ def merge_to_dems(
         observer                =obsinst_params['observer'],
         object                  =obsinst_params['obs_object'],
     )
+
+if __name__ == '__main__':
+    """Demsオブジェクトを作成する"""
+    parser = argparse.ArgumentParser()
+
+    print('必須引数処理')
+    # 必須引数
+    parser.add_argument('filename',  type=str, help='出力ファイルへのパスを指定して下さい(.nc)')
+    parser.add_argument('--ddb',     type=str, required=True, help='DDBファイルへのパスを指定して下さい(.fits.gz)')
+    parser.add_argument('--obs',     type=str, required=True, help='obsファイルへのパスを指定して下さい(.obs)')
+    parser.add_argument('--antenna', type=str, required=True, help='antennaファイルへのパスを指定して下さい(.antenna)')
+    parser.add_argument('--readout', type=str, required=True, help='readuced readoutファイルへのパスを指定して下さい(.fits)')
+    parser.add_argument('--skychop', type=str, required=True, help='skychopファイルへのパスを指定して下さい(.skychop)')
+    parser.add_argument('--weather', type=str, required=True, help='weatherファイルへのパスを指定して下さい(.weather)')
+    parser.add_argument('--misti',   type=str, required=True, help='mistiファイルへのパスを指定して下さい(.misti)')
+    parser.add_argument('--cabin',   type=str, required=True, help='cabinファイルへのパスを指定して下さい(.cabin)')
+
+    print('オプション引数処理')
+    # オプション引数
+    parser.add_argument('--pixel_id',    type=int,   default=0,         help='pixel_idを整数で指定します')
+    parser.add_argument('--coordinate',  type=str,   default='azel',    help='座標系(azel/radec)を文字列で指定します')
+    parser.add_argument('--mode',        type=int,   default=0,         help='座標の読み込み方法を整数で指定します(0:相対座標cos射影あり(おすすめ既定値), 1:相対座標cos射影なし, 2:絶対座標)')
+    parser.add_argument('--loadtype',    type=str,   default='Tsignal', help='読み込むデータを文字列で指定します(既定値: Tsignal, 現在はTsignalの読み込みしかできません)')
+    parser.add_argument('--findR',       type=bool,  default=False,     help='findRにTrueを指定するとFindR, Skyを実行します')
+    parser.add_argument('--ch',          type=int,   default=0,         help='findRに利用するチャネルを整数で指定します')
+    parser.add_argument('--Rth',         type=float, default=280.0,     help='R閾値を実数で指定します')
+    parser.add_argument('--skyth',       type=float, default=150.0,     help='sky閾値を実数で指定します')
+    parser.add_argument('--cutnum',      type=int,   default=1,         help='findRでのカット数を整数で指定します')
+    parser.add_argument('--still',       type=bool,  default=False,     help='Trueに設定するとstill観測用の解析を行います')
+    parser.add_argument('--period',      type=int,   default=2,         help='still観測の1/2周期(秒)を整数で指定します')
+    parser.add_argument('--shuttle',     type=bool,  default=False,     help='Trueを指定するとshuttle観測用の解析を行います')
+    parser.add_argument('--lon_min_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最小値を実数で指定します')
+    parser.add_argument('--lon_max_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最大値を実数で指定します')
+    parser.add_argument('--lon_min_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
+    parser.add_argument('--lon_max_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
+
+    print('parser実行')
+    a = parser.parse_args()
+
+    print('demsオブジェクト生成')
+    dems = merge_to_dems(
+        ddbfits_path=a.ddb,
+        obsinst_path=a.obs,
+        antenna_path=a.antenna,
+        readout_path=a.readout,
+        skychop_path=a.skychop,
+        weather_path=a.weather,
+        misti_path  =a.misti,
+        cabin_path  =a.cabin,
+
+        pixel_id   =a.pixel_id,
+        coordinate =a.coordinate,
+        mode       =a.mode,
+        loadtype   =a.loadtype,
+        findR      =a.findR,
+        ch         =a.ch,
+        Rth        =a.Rth,
+        skyth      =a.skyth,
+        cutnum     =a.cutnum,
+        still      =a.still,
+        period     =a.period,
+        shuttle    =a.shuttle,
+        lon_min_off=a.lon_min_off,
+        lon_max_off=a.lon_max_off,
+        lon_min_on =a.lon_min_on,
+        lon_max_on =a.lon_max_on,
+    )
+    
+    print(type(dems))
+    dems.to_netcdf(a.filename)

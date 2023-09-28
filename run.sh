@@ -2,14 +2,14 @@
 # 一連のDESHIMA解析を実行する
 #
 # Filename: run.sh
-# (C)2021 内藤システムズ
+# (C)2023 内藤システムズ
 #
 # 実行環境条件
 # ------------
 #  - このスクリプトはshで動かしてください
 #  - /bin/shが利用できること
 #  - xargsが利用できること
-#  - コマンド「python」でPython3.7が動作すること
+#  - コマンド「python」でPython3.9が動作すること
 # 
 #
 # 使用方法
@@ -114,32 +114,31 @@ if [ $? -ne 0 ]; then
 fi
 
 #
-# 引数
-# ====
-# reduced fitsファイルへの相対パス
-# 作成するdfitsファイルへの相対パス
+# 引数(上から順に)
+# ================
+# caldb fitsファイルへの相対パス
 # obsファイルへの相対パス
 # antファイルへの相対パス
-# weaファイルへの相対パス
-# caldb fitsファイルへの相対パス
-# yamlファイルへの相対パス
-# cabinファイルへの相対パス
+# reduced fitsファイルへの相対パス
 # skychopファイルへの相対パス
+# weaファイルへの相対パス
 # mistiファイルへの相対パス
+# cabinファイルへの相対パス
+# 出力するnetCDFファイルへの相対パス
 #
-python mergetofits.py \
-       "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits" \
-       "${CACHE_DIR}/${OBSID}/dfits_${OBSID}.fits.gz" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea" \
-       "DDB_20180619.fits.gz" \
-       "dfits_dict.yaml" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"
+python merge_to_dems.py                                      \
+    --ddb     "DDB_20180619.fits.gz"                         \
+    --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
+    --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \
+    --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
+    --skychop "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
+    --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
+    --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
+    --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
+    "${CACHE_DIR}/${OBSID}/${OBSID}.nc"
+
 if [ $? -ne 0 ]; then
-    echo "失敗:mergetofits.py"
+    echo "失敗:merge_to_dems.py"
     exit 1
 fi
 

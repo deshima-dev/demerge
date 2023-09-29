@@ -273,7 +273,7 @@ if __name__ == '__main__':
     parser.add_argument('--ddb',     type=str, required=True, help='DDBファイルへのパスを指定して下さい(.fits.gz)')
     parser.add_argument('--obs',     type=str, required=True, help='obsファイルへのパスを指定して下さい(.obs)')
     parser.add_argument('--antenna', type=str, required=True, help='antennaファイルへのパスを指定して下さい(.antenna)')
-    parser.add_argument('--readout', type=str, required=True, help='readuced readoutファイルへのパスを指定して下さい(.fits)')
+    parser.add_argument('--readout', type=str, required=True, help='reduced readoutファイルへのパスを指定して下さい(.fits)')
     parser.add_argument('--skychop', type=str, required=True, help='skychopファイルへのパスを指定して下さい(.skychop)')
     parser.add_argument('--weather', type=str, required=True, help='weatherファイルへのパスを指定して下さい(.weather)')
     parser.add_argument('--misti',   type=str, required=True, help='mistiファイルへのパスを指定して下さい(.misti)')

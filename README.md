@@ -45,6 +45,11 @@ $ ./run.sh -d data/deshima2.0 20171103184436
 ### 観測データの保存先の構造
 
 ```
+data
+├── D2_supplements
+
+(((中略)))
+
 ├── deshima2.0
 │   ├── cosmos_20171103184436
 │   │   ├── 20171103184436_info.txt

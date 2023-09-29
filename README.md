@@ -24,6 +24,8 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 
 ## 解析の実行例
 
+以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/deshima2.0に格納されているものとします。
+
 ```
 $ pwd
 /home/hoge/dmerge
@@ -39,6 +41,50 @@ $ ./run.sh -d data/deshima2.0 20171103184436
 |-d  |観測データディレクトリの指定|
 |-c  |キャッシュディレクトリを指定|
 |-g  |グラフディレクトリを指定    |
+
+### 観測データの保存先の構造
+
+```
+├── deshima2.0
+│   ├── cosmos_20171103184436
+│   │   ├── 20171103184436_info.txt
+│   │   ├── 20171103184436.ant
+│   │   ├── 20171103184436.cabin
+│   │   ├── 20171103184436.fits.gz
+│   │   ├── 20171103184436.misti
+│   │   ├── 20171103184436.obs
+│   │   ├── 20171103184436.roomchop
+│   │   ├── 20171103184436.skychop
+│   │   ├── 20171103184436.tsky
+│   │   ├── 20171103184436.wea
+│   │   ├── kids.list
+│   │   ├── localsweep_info.txt
+│   │   ├── localsweep.sweep
+│   │   └── pretune
+│   │       ├── kids.list
+│   │       ├── localsweep_info.txt
+│   │       └── localsweep.sweep
+│   ├── cosmos_20171111103248
+│   │   ├── 20171111103248_info.txt
+│   │   ├── 20171111103248.ant
+│   │   ├── 20171111103248.cabin
+│   │   ├── 20171111103248.fits.gz
+│   │   ├── 20171111103248.misti
+│   │   ├── 20171111103248.obs
+│   │   ├── 20171111103248.roomchop
+│   │   ├── 20171111103248.skychop
+│   │   ├── 20171111103248.tsky
+│   │   ├── 20171111103248.wea
+│   │   ├── kids.list
+│   │   ├── localsweep_info.txt
+│   │   ├── localsweep.sweep
+│   │   └── pretune
+│   │       ├── kids.list
+│   │       ├── localsweep_info.txt
+│   │       └── localsweep.sweep
+
+((( 続く )))
+```
 
 ### 解析結果の保存場所
 

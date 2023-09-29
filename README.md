@@ -215,7 +215,7 @@ data_nameを指定すると指定されたデータだけが生成されます�
 
 --timeは観測時間(分)を指定します。--measure_timeを指定しなければ観測時間と環境測定時間は同じになります。観測時間とはreadoutの時間であり、環境測定時間はreadout以外のcabinやweatherなどの測定時間になります。通常--timeだけを指定した場合、または--timeも--measure_timeも省略した場合は環境測定時間が観測時間よりも少し長くなるように生成されます。このようなデータではreadoutの時刻に合わせて環境測定時間を補間する場合に外挿処理は発生しません。外挿処理が発生した場合の振る舞いを調べる場合に--measure_timeオプションで--timeよりも短い時間を指定します。
 
---p0, --etaf, --T0, --Qr, --linyfcはmerge_function.pyで定義されているTlos_model()関数とcalibrate_to_power()関数で計算に利用される係数を設定します。tdmk.shでは計算値のTsignalが定数になるように設定したり、0Kから300Kまで3分間で線形に変化するように係数を設定しています。
+--p0, --etaf, --T0, --Qr, --linyfcはmerge_function.pyで定義されているTlos_model()関数とcalibrate_to_power()関数で計算に利用される係数を設定します。mktd.shでは計算値のTsignalが定数になるように設定したり、0Kから300Kまで3分間で線形に変化するように係数を設定しています。
 
 計算結果のTsignalを線形に変化させるためには--linear_readoutにincまたはdecの文字列を指定します。incはTsignalが単調増加し、decは単調減少します。
 

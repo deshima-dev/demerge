@@ -15,12 +15,12 @@
 # 使用方法
 # --------
 # このスクリプトの第一引数にobsid(観測ID)を与えてください。
-#  $ ./run.sh <<obsid>>
+#  $ ./run.sh -d <<データ保存先へのパス>> <<obsid>>
 #
 #
 # 使用例
 # ------
-#  $ ./run.sh 20171103184836
+#  $ ./run.sh -d data/deshima2.0 20171103184836
 #
 #
 # 指定可能なオプション
@@ -84,8 +84,8 @@ fi
 
 START_TIME=`date +%s`
 
-python make_divided_data.py \
-       "${DATA_DIR}/cosmos_${OBSID}/kids.list" \
+python make_divided_data.py                           \
+       "${DATA_DIR}/cosmos_${OBSID}/kids.list"        \
        "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" \
        "${CACHE_DIR}/${OBSID}"
@@ -117,9 +117,9 @@ fi
 # 引数(上から順に)
 # ================
 # caldb fitsファイルへの相対パス
+# reduced fitsファイルへの相対パス
 # obsファイルへの相対パス
 # antファイルへの相対パス
-# reduced fitsファイルへの相対パス
 # skychopファイルへの相対パス
 # weaファイルへの相対パス
 # mistiファイルへの相対パス
@@ -128,9 +128,9 @@ fi
 #
 python merge_to_dems.py                                      \
     --ddb     "DDB_20180619.fits.gz"                         \
+    --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \
-    --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --skychop "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \

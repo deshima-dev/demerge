@@ -1,7 +1,7 @@
 # dmerge
 DEMSをASTE生データからマージするスクリプト
 
-MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、demsオブジェクトを生成できるようにしました。今回の更新ではrun.shを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。demsの構造についてはhttps://github.com/deshima-dev/demsをご覧下さい。
+MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、demsオブジェクトを生成できるようにしました。今回の更新ではrun.shを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。demsの構造については https://github.com/deshima-dev/dems をご覧下さい。
 
 ## 動作環境
 

@@ -105,11 +105,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
         lon_max_off = 80;
         lon_min_on  = 100;
         lon_max_on  = 150;
-        prefix = 'testdata'
+        prefix = 'testdata_linear_antenna'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
             obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
-            antenna_path='{}_linear_antenna.ant'.format(prefix),
+            antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
             weather_path='{}.wea'.format(prefix),
@@ -177,16 +177,16 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
     def test_find_R_linear_inc(self):
         cutnum = 2
-        prefix = 'testdata'
+        prefix = 'testdata_linear_inc'
         dems = mtd.merge_to_dems(
-            ddbfits_path='{}_linear_inc_DDB.fits.gz'.format(prefix),
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
             obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
-            antenna_path='{}_linear_inc.ant'.format(prefix),
-            readout_path='{}_linear_inc_reduced_readout.fits'.format(prefix),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
-            cabin_path='{}_linear_inc.cabin'.format(prefix),
+            cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
         )
@@ -213,16 +213,16 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
     def test_find_R_linear_dec(self):
         cutnum = 2
-        prefix = 'testdata'
+        prefix = 'testdata_linear_dec'
         dems = mtd.merge_to_dems(
-            ddbfits_path='{}_linear_dec_DDB.fits.gz'.format(prefix),
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
             obsinst_path='../data/deshima2.0/cosmos_{0}/{0}.obs'.format(self.obsid),
-            antenna_path='{}_linear_dec.ant'.format(prefix),
-            readout_path='{}_linear_dec_reduced_readout.fits'.format(prefix),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
-            weather_path='{}_linear_dec.wea'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
-            cabin_path='{}_linear_dec.cabin'.format(prefix),
+            cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
         )

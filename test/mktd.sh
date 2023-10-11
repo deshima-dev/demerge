@@ -21,6 +21,18 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+
+#
+# デフォルトで利用するダミーデータ
+#
+$CMD readout $PARAMS
+$CMD ddb     $PARAMS
+$CMD cabin   $PARAMS
+$CMD antenna $PARAMS
+$CMD weather $PARAMS
+$CMD misti   $PARAMS
+$CMD skychop $PARAMS
+
 #
 # find R, skyで利用するダミーデータ
 # calibrate_to_power()関数で計算すると時間とともに線形に増加するTsignalを出力するためのダミーデータ
@@ -42,7 +54,8 @@ $CMD ddb     $PARAMS
 $CMD cabin   $PARAMS
 $CMD antenna $PARAMS
 $CMD weather $PARAMS
-$CMD dfits   $PARAMS
+$CMD misti   $PARAMS
+$CMD skychop $PARAMS
 
 #
 # find R, skyで利用するダミーデータ
@@ -65,7 +78,8 @@ $CMD ddb     $PARAMS
 $CMD cabin   $PARAMS
 $CMD antenna $PARAMS
 $CMD weather $PARAMS
-$CMD dfits   $PARAMS
+$CMD misti   $PARAMS
+$CMD skychop $PARAMS
 
 #
 # shuttle機能をテストするためのダミーデータ
@@ -82,7 +96,13 @@ PARAMS="
      --all_grad          1                      \
      --prefix            testdata_linear_antenna
 "
+$CMD readout $PARAMS
+$CMD ddb     $PARAMS
+$CMD cabin   $PARAMS
 $CMD antenna $PARAMS
+$CMD weather $PARAMS
+$CMD misti   $PARAMS
+$CMD skychop $PARAMS
 
 #
 # 環境測定時間をreadoutよりも短くする

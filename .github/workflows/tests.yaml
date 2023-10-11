@@ -28,3 +28,8 @@ jobs:
       - run: pip install poetry && poetry install
       - run: black --check ./
       - run: cd test && ./mktd.sh && python test_merge_to_dems.py
+      - run: ./run.sh -d data/deshima2.0 20171103184436
+      # - run: ./run.sh -d data/deshima2.0 20171111103248
+      # - run: ./run.sh -d data/deshima2.0 20171111110002
+      # - run: ./run.sh -d data/deshima2.0 20171113070539
+      # - run: ./run.sh -d data/deshima2.0 20171115052750

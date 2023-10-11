@@ -13,6 +13,11 @@ import merge_function as mf
 from astropy.io import fits, ascii
 from dems.d2    import MS
 
+
+# constants
+DMERGE_VERSION = "2.0.0"
+
+
 def merge_to_dems(
         ddbfits_path='',
         obsinst_path='',
@@ -93,7 +98,7 @@ def merge_to_dems(
             el_prog = antenna_table['el-prog(no-col)']
         else:
             raise KeyError('{}ファイルにaz-prg(no-cor)列とaz-prg(no-col)列がありません。どちらか片方が存在する必要があります。ANTENNAファイルの形式を確認してください。'.format(antenna_path))
-        
+
         lon        = az_prg  + antenna_table['az-real'] - antenna_table['az-prg']
         lat        = el_prog + antenna_table['el-real'] - antenna_table['el-prg']
         lon_origin = np.median(antenna_table['az-prog(center)'])
@@ -222,7 +227,7 @@ def merge_to_dems(
         indices      = np.where(response[:, ch] <= skyth)
         tmp          = state.copy() # 最終的にSKYを残さないためにコピーを扱う
         tmp[indices] = 'SKY'        # 一時的にSKYをマークする
-        
+
         tmp_cut = tmp[cutnum:] != tmp[:-cutnum] # cutnum個だけ左右にずらした配列を作り、変化を探す。
 
         tmp_right_shift = np.hstack( [[False]*cutnum, tmp_cut] )
@@ -254,6 +259,7 @@ def merge_to_dems(
         d2_mkid_type            =kid_type,
         d2_mkid_frequency       =kid_freq,
         d2_skychopper_isblocking=skychop_state,
+        d2_dmerge_version       =DMERGE_VERSION,
         beam_major              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_minor              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_pa                 =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
@@ -326,5 +332,5 @@ if __name__ == '__main__':
         lon_min_on =a.lon_min_on,
         lon_max_on =a.lon_max_on,
     )
-    
+
     dems.to_netcdf(a.filename)

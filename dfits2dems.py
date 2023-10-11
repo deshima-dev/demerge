@@ -14,6 +14,11 @@ from dems.d2           import MS
 from scipy.interpolate import interp1d
 from datetime          import datetime
 
+
+# constants
+DMERGE_VERSION = "2.0.0"
+
+
 def convert_dfits_to_dems(filename, **kwargs):
     # Optionalな引数の処理
     coodinate           = kwargs.pop('coodinate', 'azel')
@@ -119,7 +124,7 @@ def convert_dfits_to_dems(filename, **kwargs):
     # nearestを利用するためにskychopの補間にはscipyのinterp1dを使う。skychopの0,1は離散的な真理値のため。
     f_skychop = interp1d(seconds_skychop, skychop['state'], kind='nearest', bounds_error=False, fill_value=(skychop['state'][0], skychop['state'][-1]))
     d2_skychopper_isblocking = f_skychop(seconds)
-    
+
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still_period != None:
         for i in range(int(seconds[-1]) // still_period + 1):
@@ -137,12 +142,12 @@ def convert_dfits_to_dems(filename, **kwargs):
         scan[(~off_mask) & (~on_mask)] = 'JUNK'
 
     response = readout['Tsignal']
-        
+
     # findR
     if True:
         mask = np.where(response[:, R_ch] >= R_th)
         scan[mask] = 'R'
-            
+
     ms = MS.new(
         data=response,
         time=time,
@@ -163,6 +168,7 @@ def convert_dfits_to_dems(filename, **kwargs):
         d2_mkid_id=obsinfo['kidids'][0].astype(np.int64),
         d2_mkid_type=obsinfo['kidtypes'][0],
         d2_mkid_frequency=obsinfo['kidfreqs'][0].astype(np.float64),
+        d2_dmerge_version=DMERGE_VERSION,
 
         aste_misti_lon=aste_misti_lon,
         aste_misti_lat=aste_misti_lat,

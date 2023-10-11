@@ -30,6 +30,11 @@ from dems.d2        import MS
 from merge_to_dfits import MergeToDfits
 from datetime       import datetime
 
+
+# constants
+DMERGE_VERSION = "2.0.0"
+
+
 class MergeToDemsTestDrive(unittest.TestCase):
     """merge_to_dems.pyモジュールの単体テスト"""
     def setUp(self):
@@ -58,7 +63,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         antenna_table = ascii.read('{}.ant'.format(prefix))[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
         times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
         times_antenna = np.array(times_antenna).astype('datetime64[ns]')
-        
+
         # d2_skychopper_isblockingの外挿部分の論理値の確認
         #
         # readout time   |---------------------------------------------------------|
@@ -92,7 +97,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         indices_on = np.where(dems.state == 'ON')[0]
         self.assertEqual(indices_on[-1] + 1, indices_extrapolate[0], 'stateの外挿部分と内挿部分(Falseになっている部分)が隣り合っていることを確認')
-        
+
         return
 
     def test_shuttle(self):
@@ -131,7 +136,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         indices = np.where((lon_max_off <= lon) & (lon <= lon_min_on))
         self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(2)')
-        
+
         indices = np.where(lon_max_on <= lon)
         self.assertTrue(np.array(state[indices] == 'JUNK').all(), 'JUNKの区間を確認(3)')
 
@@ -203,7 +208,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertTrue(np.array(state[              :i_sky - 1] == 'GRAD').all(), 'GRADの部分を確認')
 
         self.assertTrue(np.array(state != 'SKY').all(), 'SKYの部分は無いことを確認')
-        
+
         return
 
     def test_find_R_linear_dec(self):
@@ -239,7 +244,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertTrue(np.array(state[i_sky + cutnum:            ] == 'GRAD').all(), 'GRADの部分を確認')
 
         self.assertTrue(np.array(state != 'SKY').all(), 'SKYの部分は無いことを確認')
-        
+
         return
 
     def test_merge_to_dems(self):
@@ -309,7 +314,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(1.0, dems.weight[-1][-1], 'weightに既定値が格納されていることを確認[-1,-1]')
         self.assertEqual(1.0, dems.weight[-1][0 ], 'weightに既定値が格納されていることを確認[-1, 0]')
         self.assertTrue(np.array(dems.weight == 1.0).all(), '全weightに既定値が格納されていることを確認')
-        
+
         # MS::time
         self.assertEqual(n_time, len(dems.time),            'MS::timeの打点数の確認')
         self.assertTrue(np.array(times == dems.time).all(), '時刻がREADOUTの打刻と一致することを確認')
@@ -407,7 +412,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
         self.assertEqual('0.4.0', dems.d2_dems_version)
-        self.assertEqual('1.0.0', dems.d2_dmerge_version)
+        self.assertEqual(DMERGE_VERSION, dems.d2_dmerge_version)
         return
 
     def test_retrieve_cabin_temps(self):

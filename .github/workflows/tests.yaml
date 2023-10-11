@@ -1,0 +1,28 @@
+name: Tests
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  job:
+    name: Test (Python ${{ matrix.python }})
+    runs-on: ubuntu-latest
+    env:
+      POETRY_VIRTUALENVS_CREATE: false
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.9", "3.10", "3.11"]
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-python@v4
+        with:
+          python-version: ${{ matrix.python }}
+      - run: pip install poetry && poetry install
+      - run: black --check ./
+      - run: cd test && ./mktd.sh && python test_merge_to_dems.py

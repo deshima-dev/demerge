@@ -26,7 +26,8 @@ import sys
 import shutil
 import pickle
 import dmerge
-if __name__=='__main__':
+
+if __name__ == "__main__":
     """
     コマンドライン引数
     ------------------
@@ -37,7 +38,7 @@ if __name__=='__main__':
     """
     args = sys.argv
     kidslist = dmerge.load_kidslist(args[1])
-    localsweeps = dmerge.load_localsweep(args[2], framelen=kidslist[0]['framelen'])
+    localsweeps = dmerge.load_localsweep(args[2], framelen=kidslist[0]["framelen"])
     tods = dmerge.TODs(args[3])
     kids = dmerge.divide_data(kidslist, localsweeps, tods)
     tods.close()
@@ -45,5 +46,5 @@ if __name__=='__main__':
         shutil.rmtree(args[4])
     os.mkdir(args[4])
     for kid in kids:
-        with open(args[4] + '/kid{:05}.pkl'.format(int(kid['kidid'])), 'wb') as f:
+        with open(args[4] + "/kid{:05}.pkl".format(int(kid["kidid"])), "wb") as f:
             pickle.dump(kid, f)

@@ -4,16 +4,12 @@ File name: dmerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
-import os
-import sys
 import numpy as np
 import scipy
 import scipy.signal
-import json
-import pickle
 import lmfit
 import sympy
-from collections import Mapping
+from collections.abc import Mapping
 import astropy.io.fits as pyfits
 from astropy.io import fits
 

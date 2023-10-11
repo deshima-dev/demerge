@@ -10,24 +10,18 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
-import os
 import sys
 
 sys.path.append("../")
 
 import unittest
-import dfits2dems as dd
 import numpy as np
 import xarray as xa
-import pandas as pd
-import math
 
 import merge_function as mf
 import merge_to_dems as mtd
 
 from astropy.io import fits, ascii
-from dems.d2 import MS
-from merge_to_dfits import MergeToDfits
 from datetime import datetime
 
 

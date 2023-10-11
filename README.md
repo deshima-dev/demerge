@@ -9,16 +9,15 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 
 | モジュール   | バージョン|
 |--------------|-----------|
+| astropy      | 5.2.2     |
+| dems         | 0.4.0     |
+| lmfit        | 1.2.1     |
+| matplotlib   | 3.7.2     |
 | numpy        | 1.24.4    |
 | pandas       | 2.0.3     |
-| astropy      | 5.2.2     |
-| pyreadline   | 2.1       |
-| matplotlib   | 3.7.2     |
-| scipy        | 1.10.1    |
-| lmfit        | 1.2.1     |
-| sympy        | 1.12      |
 | pyyaml       | 6.0       |
-| dems         | 0.4.0     |
+| scipy        | 1.10.1    |
+| sympy        | 1.12      |
 
 参考:https://github.com/deshima-dev/dems
 

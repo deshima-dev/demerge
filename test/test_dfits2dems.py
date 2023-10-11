@@ -7,23 +7,25 @@ Python 3.9
 import os
 import sys
 
-sys.path.append('../')
+sys.path.append("../")
 
 import unittest
 import dfits2dems as dd
-import numpy      as np
-import pandas     as pd
+import numpy as np
+import pandas as pd
 import math
 
-from astropy.io     import fits
-from dems.d2        import MS
+from astropy.io import fits
+from dems.d2 import MS
 from merge_to_dfits import MergeToDfits
-from datetime       import datetime
+from datetime import datetime
 
 import merge_function as fc
 
+
 class Dfits2demsTestDrive(unittest.TestCase):
     """dfits2dems.pyモジュールの単体テスト"""
+
     def setUp(self):
         # self.filename = 'dfits_dummy.fits.gz'
         # with fits.open(self.filename) as hdul:
@@ -34,7 +36,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
         #     self.cabin   = hdul['CABIN_T'].data
         #     self.skychop = hdul['SKYCHOP'].data
         #     self.misti   = hdul['MISTI'].data
-        
+
         return
 
     # def test_dfits2dems(self):
@@ -60,7 +62,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
     #     result = np.array(np.where(ms.scan != ''))
     #     self.assertTrue(result.any(), 'MS::scanに規定値以外がセットされたことを確認する')
-        
+
     #     result = np.array(np.where(ms.temperature > 0.0))
     #     self.assertTrue(result.any(), 'MS::temperatureに規定値以外がセットされたことを確認する')
 
@@ -105,7 +107,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
 
     #     self.assertTrue(ms.lon_origin > 0.0, 'MS::lon_originに規定値以外がセットされたことを確認する')
     #     self.assertTrue(ms.lat_origin > 0.0, 'MS::lat_originに規定値以外がセットされたことを確認する')
-        
+
     #     self.assertEqual(ms.observer,       'dummy_observer',  'MS::observer')
     #     self.assertEqual(ms.object,         'dummy_object',    'MS::object')
     #     self.assertEqual(ms.telescope_name, 'dummy_telescope', 'MS::telescope_name')
@@ -138,7 +140,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
     #     # findR (dummy_dfits.pyによって意図的にRthを超える値が設定されている)
     #     self.assertEqual(1, len(np.where(ms.scan == 'R')))
     #     self.assertEqual('R', ms.scan[22])
-        
+
     #     return
 
     # def test_retrieve_cabin_temps(self):
@@ -161,13 +163,17 @@ class Dfits2demsTestDrive(unittest.TestCase):
     #     return
 
     def test_retrieve_misti_log(self):
-        time, az, el, pwv = dd.retrieve_misti_log('../data/deshima2.0/cosmos_20171103184436/20171103184436.misti')
-        self.assertEqual(1848, len(time), 'mistiファイルの行数を確認')
-        expected = datetime(2017, 11, 3, hour=18, minute=44, second=38, microsecond=900000)
-        self.assertEqual(expected, time[0], '時刻が正しいことを確認')
-        self.assertEqual(180.0,    az[0],   'azが正しいことを確認')
-        self.assertEqual(90.0,     el[0],   'elが正しいことを確認')
-        self.assertEqual(0.610,    pwv[0],  'pwvが正しいことを確認')
+        time, az, el, pwv = dd.retrieve_misti_log(
+            "../data/deshima2.0/cosmos_20171103184436/20171103184436.misti"
+        )
+        self.assertEqual(1848, len(time), "mistiファイルの行数を確認")
+        expected = datetime(
+            2017, 11, 3, hour=18, minute=44, second=38, microsecond=900000
+        )
+        self.assertEqual(expected, time[0], "時刻が正しいことを確認")
+        self.assertEqual(180.0, az[0], "azが正しいことを確認")
+        self.assertEqual(90.0, el[0], "elが正しいことを確認")
+        self.assertEqual(0.610, pwv[0], "pwvが正しいことを確認")
         return
 
     # def test_MergeToDfits(self):
@@ -185,7 +191,7 @@ class Dfits2demsTestDrive(unittest.TestCase):
     #                        mistilog   = '{}/{}.misti'.format(path, obsid),
     #                        skychoplog = 'skychop_testdata.skychop',
     #                        rout_data  = 'cache/{}/reduced_{}.fits'.format(obsid, obsid))
-        
+
     #     dfits_hdus = mtd.dfits
     #     mtd.kidsinfo_hdus.close()
 
@@ -208,5 +214,6 @@ class Dfits2demsTestDrive(unittest.TestCase):
     #     self.assertEqual(1848, len(dfits_hdus['misti'].data['el']))
     #     return
 
-if __name__=='__main__':
+
+if __name__ == "__main__":
     unittest.main()

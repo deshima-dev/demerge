@@ -34,7 +34,7 @@ from scipy import interpolate
 import dmerge
 from merge_to_dfits import MergeToDfits
 
-if __name__=='__main__':
+if __name__ == "__main__":
     """
     コマンドライン引数
     ------------------
@@ -49,30 +49,32 @@ if __name__=='__main__':
     args[9] string skychopファイルへの相対パス
     args[10] string mistiファイルへの相対パス
     """
-    args            = sys.argv
+    args = sys.argv
     reducedfitsfile = args[1]
-    dfitsfile       = args[2]
-    obsinst         = args[3]
-    antennalog      = args[4]
-    weatherlog      = args[5]
-    ddb_fits        = args[6]
-    dfitsdict       = args[7]
-    cabinlog        = args[8]
-    skychoplog      = args[9]
-    mistilog        = args[10]
+    dfitsfile = args[2]
+    obsinst = args[3]
+    antennalog = args[4]
+    weatherlog = args[5]
+    ddb_fits = args[6]
+    dfitsdict = args[7]
+    cabinlog = args[8]
+    skychoplog = args[9]
+    mistilog = args[10]
 
     if os.path.exists(dfitsfile):
         os.remove(dfitsfile)
 
-    mtd = MergeToDfits(ddbfits=ddb_fits,
-                       dfitsdict=dfitsdict,
-                       obsinst=obsinst,
-                       antennalog=antennalog,
-                       rout_data=reducedfitsfile,
-                       weatherlog=weatherlog,
-                       cabinlog=cabinlog,
-                       skychoplog=skychoplog,
-                       mistilog=mistilog)
+    mtd = MergeToDfits(
+        ddbfits=ddb_fits,
+        dfitsdict=dfitsdict,
+        obsinst=obsinst,
+        antennalog=antennalog,
+        rout_data=reducedfitsfile,
+        weatherlog=weatherlog,
+        cabinlog=cabinlog,
+        skychoplog=skychoplog,
+        mistilog=mistilog,
+    )
     dfits_hdus = mtd.dfits
     dfits_hdus.writeto(dfitsfile)
     mtd.kidsinfo_hdus.close()

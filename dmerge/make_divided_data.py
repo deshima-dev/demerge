@@ -25,9 +25,10 @@ import os
 import sys
 import shutil
 import pickle
-import dmerge
+from . import dmerge
 
-if __name__ == "__main__":
+
+def main() -> None:
     """
     コマンドライン引数
     ------------------
@@ -48,3 +49,7 @@ if __name__ == "__main__":
     for kid in kids:
         with open(args[4] + "/kid{:05}.pkl".format(int(kid["kidid"])), "wb") as f:
             pickle.dump(kid, f)
+
+
+if __name__ == "__main__":
+    main()

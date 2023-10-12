@@ -21,6 +21,20 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 
 参考:https://github.com/deshima-dev/dems
 
+## インストール
+
+run.shの実行には、dmergeパッケージのPython環境へのインストールが必要です。
+
+```
+# pipでインストールする場合
+$ pip install -e .
+
+# Poetryでインストールする場合
+$ poetry install
+```
+
+インストール後、run.shの実行に必要なコマンドラインツールが利用可能になります。
+
 ## 解析の実行例
 
 以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/deshima2.0に格納されているものとします。

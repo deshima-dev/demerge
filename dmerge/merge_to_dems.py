@@ -8,14 +8,14 @@ dems   0.4.0
 import argparse
 import numpy as np
 import xarray as xr
-import merge_function as mf
+from . import merge_function as mf
 
 from astropy.io import fits, ascii
 from dems.d2 import MS
 
 
 # constants
-DMERGE_VERSION = "2.0.0"
+from . import __version__ as DMERGE_VERSION
 
 
 def merge_to_dems(
@@ -303,7 +303,7 @@ def merge_to_dems(
     )
 
 
-if __name__ == "__main__":
+def main() -> None:
     """Demsオブジェクトを作成する"""
     parser = argparse.ArgumentParser()
 
@@ -425,3 +425,7 @@ if __name__ == "__main__":
     )
 
     dems.to_netcdf(a.filename)
+
+
+if __name__ == "__main__":
+    main()

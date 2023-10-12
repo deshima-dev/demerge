@@ -20,7 +20,7 @@ import pickle
 import numpy as np
 from astropy.io import fits
 from scipy import interpolate
-import dmerge
+from . import dmerge
 
 
 def make_reduced_fits(kidfiles, output_filename):
@@ -270,7 +270,7 @@ def make_reduced_fits(kidfiles, output_filename):
     return
 
 
-if __name__ == "__main__":
+def main() -> None:
     """
     コマンドライン引数
     ------------------
@@ -282,3 +282,7 @@ if __name__ == "__main__":
     output_filename = args[2]
     kidfiles = sorted(glob.glob(cache_dir + "/kid*.pkl"))  # ファイル名で昇順で並べ替える
     make_reduced_fits(kidfiles, output_filename)
+
+
+if __name__ == "__main__":
+    main()

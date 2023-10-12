@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dmerge"
-version = "2.0.0"
+version = "2.0.2"
 description = "Merge DESHIMA datasets observed with ASTE"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",
@@ -26,6 +26,13 @@ sympy = "^1.12"
 black = "^23.9.1"
 ipython = "^8.16.1"
 pytest = "^7.4.2"
+
+[tool.poetry.scripts]
+calc_resonance_params = "dmerge.calc_resonance_params:main"
+make_divided_data = "dmerge.make_divided_data:main"
+make_reduced_fits = "dmerge.make_reduced_fits:main"
+merge_to_dems = "dmerge.merge_to_dems:main"
+plot = "dmerge.plot:main"
 
 [build-system]
 requires = ["poetry-core"]

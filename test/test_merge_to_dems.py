@@ -10,16 +10,12 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
-import sys
-
-sys.path.append("../")
-
 import unittest
 import numpy as np
 import xarray as xa
 
-import merge_function as mf
-import merge_to_dems as mtd
+from dmerge import merge_function as mf
+from dmerge import merge_to_dems as mtd
 
 from astropy.io import fits, ascii
 from datetime import datetime

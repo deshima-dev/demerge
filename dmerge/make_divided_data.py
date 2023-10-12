@@ -25,7 +25,7 @@ import os
 import sys
 import shutil
 import pickle
-import dmerge
+from . import dmerge
 
 
 def main() -> None:

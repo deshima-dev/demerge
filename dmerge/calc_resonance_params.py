@@ -13,7 +13,7 @@ Filename: calc_resonance_params.py
 import os
 import sys
 import pickle
-import dmerge
+from . import dmerge
 
 
 def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):

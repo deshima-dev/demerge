@@ -20,7 +20,7 @@ import pickle
 import numpy as np
 from astropy.io import fits
 from scipy import interpolate
-import dmerge
+from . import dmerge
 
 
 def make_reduced_fits(kidfiles, output_filename):

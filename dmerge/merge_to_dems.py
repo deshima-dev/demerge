@@ -8,7 +8,7 @@ dems   0.4.0
 import argparse
 import numpy as np
 import xarray as xr
-import merge_function as mf
+from . import merge_function as mf
 
 from astropy.io import fits, ascii
 from dems.d2 import MS

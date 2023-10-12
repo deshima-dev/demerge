@@ -84,19 +84,19 @@ fi
 
 START_TIME=`date +%s`
 
-python make_divided_data.py                           \
+make_divided_data                                     \
        "${DATA_DIR}/cosmos_${OBSID}/kids.list"        \
        "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
        "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" \
        "${CACHE_DIR}/${OBSID}"
 if [ $? -ne 0 ]; then
-    echo "失敗:make_divided_data.py"
+    echo "失敗:make_divided_data"
     exit 1
 fi
 
-ls ${CACHE_DIR}/${OBSID}/*.pkl | xargs -P${NCPU} -n1 python calc_resonance_params.py
+ls ${CACHE_DIR}/${OBSID}/*.pkl | xargs -P${NCPU} -n1 calc_resonance_params
 if [ $? -ne 0 ]; then
-    echo "失敗:calc_resonance_params.py"
+    echo "失敗:calc_resonance_params"
     exit 1
 fi
 
@@ -105,11 +105,11 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-python make_reduced_fits.py \
+make_reduced_fits \
        "${CACHE_DIR}/${OBSID}" \
        "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"
 if [ $? -ne 0 ]; then
-    echo "失敗:make_reduced_fits.py"
+    echo "失敗:make_reduced_fits"
     exit 1
 fi
 
@@ -126,7 +126,7 @@ fi
 # cabinファイルへの相対パス
 # 出力するnetCDFファイルへの相対パス
 #
-python merge_to_dems.py                                      \
+merge_to_dems                                                \
     --ddb     "data/DDB_20180619.fits.gz"                    \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
@@ -138,7 +138,7 @@ python merge_to_dems.py                                      \
     "${CACHE_DIR}/${OBSID}/${OBSID}.nc"
 
 if [ $? -ne 0 ]; then
-    echo "失敗:merge_to_dems.py"
+    echo "失敗:merge_to_dems"
     exit 1
 fi
 
@@ -158,9 +158,9 @@ for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
 do
     FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
 done
-echo $FILENAMES | xargs -P${NCPU} -n2 python plot.py
+echo $FILENAMES | xargs -P${NCPU} -n2 plot
 if [ $? -ne 0 ]; then
-    echo "失敗:plot.py"
+    echo "失敗:plot"
     exit 1
 fi
 

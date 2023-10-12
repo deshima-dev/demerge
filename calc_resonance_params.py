@@ -62,7 +62,7 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     return kid
 
 
-if __name__ == "__main__":
+def main() -> None:
     """
     コマンドライン引数
     ------------------
@@ -75,3 +75,7 @@ if __name__ == "__main__":
     kid = calc_resonance_params(kid)
     with open(filename, "wb") as f:
         pickle.dump(kid, f)
+
+
+if __name__ == "__main__":
+    main()

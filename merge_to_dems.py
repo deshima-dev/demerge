@@ -303,7 +303,7 @@ def merge_to_dems(
     )
 
 
-if __name__ == "__main__":
+def main() -> None:
     """Demsオブジェクトを作成する"""
     parser = argparse.ArgumentParser()
 
@@ -425,3 +425,7 @@ if __name__ == "__main__":
     )
 
     dems.to_netcdf(a.filename)
+
+
+if __name__ == "__main__":
+    main()

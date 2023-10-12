@@ -269,7 +269,7 @@ def plot(kid, oldkid=None):
     return fig1, fig2
 
 
-if __name__ == "__main__":
+def main() -> None:
     """
     コマンドライン引数
     ------------------
@@ -294,3 +294,7 @@ if __name__ == "__main__":
             "{}/tod_kid{:05}.png".format(graph_dir, kid["kidid"]), transparent=False
         )
         plt.close()
+
+
+if __name__ == "__main__":
+    main()

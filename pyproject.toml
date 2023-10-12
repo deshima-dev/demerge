@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dmerge"
-version = "2.1.0"
+version = "2.1.1"
 description = "Merge DESHIMA datasets observed with ASTE"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",

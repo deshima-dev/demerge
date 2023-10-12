@@ -10,7 +10,7 @@
 #  - /bin/shが利用できること
 #  - xargsが利用できること
 #  - コマンド「python」でPython3.9が動作すること
-# 
+#
 #
 # 使用方法
 # --------
@@ -127,7 +127,7 @@ fi
 # 出力するnetCDFファイルへの相対パス
 #
 python merge_to_dems.py                                      \
-    --ddb     "DDB_20180619.fits.gz"                         \
+    --ddb     "data/DDB_20180619.fits.gz"                    \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \

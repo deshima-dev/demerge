@@ -22,7 +22,8 @@ from datetime import datetime
 
 
 # constants
-DMERGE_VERSION = "2.0.0"
+from dems import __version__ as DEMS_VERSION
+from dmerge import __version__ as DMERGE_VERSION
 
 
 class MergeToDemsTestDrive(unittest.TestCase):
@@ -499,7 +500,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             round(np.count_nonzero(dems.d2_skychopper_isblocking == True) / n_time, 1),
             "MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認",
         )
-        self.assertEqual("0.4.0", dems.d2_dems_version)
+        self.assertEqual(DEMS_VERSION, dems.d2_dems_version)
         self.assertEqual(DMERGE_VERSION, dems.d2_dmerge_version)
         return
 

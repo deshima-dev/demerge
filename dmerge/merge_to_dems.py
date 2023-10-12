@@ -15,7 +15,7 @@ from dems.d2 import MS
 
 
 # constants
-DMERGE_VERSION = "2.0.0"
+from . import __version__ as DMERGE_VERSION
 
 
 def merge_to_dems(

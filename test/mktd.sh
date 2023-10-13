@@ -1,30 +1,22 @@
 #!/bin/sh
+
 #
-# プロセスを分けてテストデータを生成する
+# 実行スクリプトを指定
 #
 CMD="python tdmaker.py"
 
-DATA_NAMES="readout ddb dfits antenna skychop weather misti cabin"
-
-date
-NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
-
-
-
-PARAMS="
-     --time 3 \
-     --measure_time 4
-"
-echo $DATA_NAMES | xargs -P${NCPU} --verbose -n1 -I % $CMD % $PARAMS
-if [ $? -ne 0 ]; then
-    echo "失敗:${CMD}"
-    exit 1
-fi
-
+#
+# 開始時刻を出力
+#
+date --iso-8601=seconds
 
 #
 # デフォルトで利用するダミーデータ
 #
+PARAMS="
+     --time 3 \
+     --measure_time 4
+"
 $CMD readout $PARAMS
 $CMD ddb     $PARAMS
 $CMD cabin   $PARAMS
@@ -132,6 +124,5 @@ $CMD weather $PARAMS
 $CMD misti   $PARAMS
 $CMD skychop $PARAMS
 
-
-
-date
+# 終了時刻を出力
+date --iso-8601=seconds

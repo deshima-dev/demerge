@@ -4,17 +4,20 @@ File name: dmerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
+import os
+import sys
 import numpy as np
 import scipy
 import scipy.signal
+import json
+import pickle
 import lmfit
 import sympy
 from collections.abc import Mapping
 import astropy.io.fits as pyfits
 from astropy.io import fits
 
-
-# -------------------------
+#-------------------------
 # For make_divided_data.py
 def divide_data(kidslist, localsweep, tods):
     """KID毎にSweepデータやTODを分割して辞書に格納する
@@ -30,30 +33,27 @@ def divide_data(kidslist, localsweep, tods):
     """
     result = []
     for i, (nbin, l, r) in enumerate(find_nearest_blind_tones(kidslist)):
-        result.append(
-            {
-                "pixelid": 0,
-                "kidid": i,
-                "bin": nbin,
-                "fftgain": tods.fftgain,
-                "framert": tods.framert,
-                "nbins": tods.nbins,
-                "npoints": tods.npoints,
-                "lofreq": tods.lofreq,
-                "localsweep": localsweep[nbin],
-                "readpower": kidslist[3][nbin],
-                "blind_tone_left": tods[l],  # FixedData class
-                "blind_tone_right": tods[r],  # FixedData class
-                "tod": tods[nbin],  # FixedData class
-                "tod_timestamp": tods.timestamp,
-                "enabled": True,
-            }
-        )
+        result.append({
+            'pixelid': 0,
+            'kidid': i,
+            'bin': nbin,
+            'fftgain': tods.fftgain,
+            'framert': tods.framert,
+            'nbins': tods.nbins,
+            'npoints': tods.npoints,
+            'lofreq': tods.lofreq,
+            'localsweep': localsweep[nbin],
+            'readpower': kidslist[3][nbin],
+            'blind_tone_left': tods[l], #FixedData class
+            'blind_tone_right': tods[r], #FixedData class
+            'tod': tods[nbin], #FixedData class
+            'tod_timestamp': tods.timestamp,
+            'enabled': True,
+        })
     return result
 
-
 def find_nearest_blind_tones(kidslist):
-    """KID信号の左右にある最も近いblind信号を探す
+    """ KID信号の左右にある最も近いblind信号を探す
     引数
     ----
     kidslist(dmerge.read_kidslist()関数の戻り値)
@@ -110,7 +110,6 @@ def find_nearest_blind_tones(kidslist):
         result.append([kid, left_tone, right_tone])
     return result
 
-
 def load_kidslist(filename):
     """kids.listファイルを読み込みBIN番号やローカル発振器の周波数などを取得する
     引数
@@ -165,30 +164,29 @@ def load_kidslist(filename):
     powers = {}
     kid_bins = []
     blind_bins = []
-    with open(filename, "rt") as f:
+    with open(filename, 'rt') as f:
         # 最初の2行はヘッダーとして処理する
-        line = f.readline().strip()  # 行末の空白や改行などを削除する
-        name, lofreq = line.split(":")
-        info[name[1:]] = float(lofreq) * MHz  # name変数に格納されている文字列から最初の"#"を除いた部分をキーとする
+        line = f.readline().strip() # 行末の空白や改行などを削除する
+        name, lofreq = line.split(':')
+        info[name[1:]] = float(lofreq)*MHz # name変数に格納されている文字列から最初の"#"を除いた部分をキーとする
 
         line = f.readline().strip()
-        name, framelen = line.split(":")
+        name, framelen = line.split(':')
         info[name[1:]] = int(framelen)
 
-        bins = None  # kid_binsリストかblind_binsリストかへの参照になる
+        bins = None # kid_binsリストかblind_binsリストかへの参照になる
         for line in f:
             line = line.strip()
-            if line[1:] == "KIDs":
+            if line[1:] == 'KIDs':
                 bins = kid_bins
                 continue
-            elif line[1:] == "blinds":
+            elif line[1:] == 'blinds':
                 bins = blind_bins
                 continue
             nbin, power = line.split()
             bins.append(int(nbin))
             powers[int(nbin)] = float(power)
     return info, kid_bins, blind_bins, powers
-
 
 def load_localsweep(filename, framelen):
     """ローカルsweepデータを読み込みBIN番号とSweepDataオブジェクトを対応づけた辞書として返す
@@ -215,19 +213,16 @@ def load_localsweep(filename, framelen):
     上記のページにローカルsweepデータの読み方と各種計算方法が記されている。
     """
     MHz = 1e6
-    sample_rate = 2e9  # Sample/sec
+    sample_rate = 2e9 # Sample/sec
     rawdata = np.loadtxt(filename)
-    bins = map(int, rawdata[0, 1::3])  # リスト内包表記よりもmap()関数の方が速い
-    idata = rawdata[:, 2::3].T
-    qdata = rawdata[:, 3::3].T
-    lofreqs = rawdata[:, 0] * MHz
-    dfreq = sample_rate / (2**framelen)  # frequency resolution
-    return {
-        b: SweepData(i, q, lofreqs + b * dfreq) for b, i, q in zip(bins, idata, qdata)
-    }
+    bins    = map(int, rawdata[0, 1::3]) #リスト内包表記よりもmap()関数の方が速い
+    idata   = rawdata[:, 2::3].T
+    qdata   = rawdata[:, 3::3].T
+    lofreqs = rawdata[:, 0]*MHz
+    dfreq   = sample_rate/(2**framelen) # frequency resolution
+    return {b: SweepData(i, q, lofreqs + b*dfreq) for b, i, q in zip(bins, idata, qdata)}
 
-
-# -----------------------------
+#-----------------------------
 # For calc_resonance_params.py
 def fit_onepeak(sweepdata, peaks, nfwhm=5):
     """Sweepデータをgaolinbgでフィットする
@@ -242,7 +237,7 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
     MinimizerResult gaolinbgによるフィットの結果
     slice           フィット範囲(インデックス)
     """
-    initial_params = gaolinbg_guess(sweepdata, peaks)  # params = guess(data)
+    initial_params = gaolinbg_guess(sweepdata, peaks) #params = guess(data)
     gaolinbg_param_names = initial_params.keys()
     s = slice(None)
     if nfwhm > 0:
@@ -261,23 +256,18 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
         ----
         lmfit.Minimize()関数では複素関数を扱えない為、このような変換を行う。
         """
-        return complex_to_cartesian2darray(
-            Dfun(x, arga, absa, tau, fr, Qr, Qc, phi0, c)
-        )
+        return complex_to_cartesian2darray(Dfun(x, arga, absa, tau, fr, Qr, Qc, phi0, c))
 
     def Dfun_pars(p, x, dat=None):
-        v = dict(
-            (k, v) for (k, v) in p.valuesdict().items() if k in gaolinbg_param_names
-        )
+        v = dict((k, v) for (k, v) in p.valuesdict().items() if k in gaolinbg_param_names)
         return wrapped_Dfun(x, **v)
 
     kws = {}
-    kws["Dfun"] = Dfun_pars
-    kws["col_deriv"] = 1
+    kws['Dfun'] = Dfun_pars
+    kws['col_deriv'] = 1
 
     gaolinbg_func = gaolinbg_function()
     ys = complex_to_cartesian2darray(sweepdata.iq[s])
-
     def residue(p, x):
         """データとの差を計算する
         引数
@@ -298,18 +288,17 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
         return complex_to_cartesian2darray(gaolinbg_func(x, **v)) - ys
 
     params = lmfit.Parameters()
-    params.add("arga", initial_params["arga"])
-    params.add("absa", initial_params["absa"])
-    params.add("tau", initial_params["tau"])
-    params.add("fr", initial_params["fr"])
-    params.add("Qr", initial_params["Qr"])
-    params.add("Qc", initial_params["Qc"])
-    params.add("phi0", initial_params["phi0"])
-    params.add("c", initial_params["c"])
-    params.add("Qi", expr="1/(1/Qr - 1/Qc*cos(phi0))")
+    params.add('arga', initial_params['arga'])
+    params.add('absa', initial_params['absa'])
+    params.add('tau',  initial_params['tau'])
+    params.add('fr',   initial_params['fr'])
+    params.add('Qr',   initial_params['Qr'])
+    params.add('Qc',   initial_params['Qc'])
+    params.add('phi0', initial_params['phi0'])
+    params.add('c',    initial_params['c'])
+    params.add('Qi',   expr='1/(1/Qr - 1/Qc*cos(phi0))')
     minimizer_result = lmfit.minimize(residue, params, args=(sweepdata.x[s],), **kws)
-    return minimizer_result, s  # fit結果, フィット範囲
-
+    return minimizer_result, s # fit結果, フィット範囲
 
 def search_peak(sweepdata, peaks):
     """複数のピークが見つかった場合は中心周波数に一番近いピークを採用する
@@ -322,15 +311,14 @@ def search_peak(sweepdata, peaks):
     ------
     dict 選択されたピークのパラメタをまとめた辞書
     """
-    center = (sweepdata.x[0] + sweepdata.x[-1]) / 2.0
-    minind = 0
-    mindist = abs(peaks[0]["f0"] - center)
+    center  = (sweepdata.x[0] + sweepdata.x[-1])/2.0
+    minind  = 0
+    mindist = abs(peaks[0]['f0'] - center)
     for i in range(1, len(peaks)):
-        if mindist > abs(peaks[i]["f0"] - center):
-            minind = i
-            mindist = abs(peaks[i]["f0"] - center)
+        if mindist > abs(peaks[i]['f0'] - center):
+            minind  = i
+            mindist = abs(peaks[i]['f0'] - center)
     return peaks[minind]
-
 
 def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio=0.5):
     """Search peaks in data.
@@ -348,7 +336,7 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
     ------
     list Lorentzianのフィット共にgaolinbgのパラメタの初期値を決定するのに必要なパラメタを辞書にまとめたリスト
     """
-    dfreq = freq[1] - freq[0]  # frequency resolution
+    dfreq = freq[1] - freq[0] # frequency resolution
     if smooth is None:
         smooth = 15
 
@@ -358,21 +346,17 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
 
     # ピーク探索
     if threshold is None:
-        d2sigma = np.std(deriv2)
-        d2sigma = np.std(deriv2[np.abs(deriv2) < 2 * d2sigma])
-        threshold = 3 * d2sigma
+        d2sigma   = np.std(deriv2)
+        d2sigma   = np.std(deriv2[np.abs(deriv2)<2*d2sigma])
+        threshold = 3*d2sigma
     kid_indices = []
     for i in np.where(deriv2 > threshold)[0]:
-        if (
-            i < len(deriv2) - 1
-            and deriv2[i - 1] <= deriv2[i]
-            and deriv2[i] >= deriv2[i + 1]
-        ):
+        if i < len(deriv2) - 1 and deriv2[i - 1] <= deriv2[i] and deriv2[i] >= deriv2[i + 1]:
             kid_indices.append(i)
 
-    kids = []  # 各KIDをLorentzianでフィットした結果(Lorentzianのパラメタ)
-    nbadq = 0  # Qが条件を満たさなかったKIDの数
-    nbadd = 0  # maxratioを満たさなかったKIDの数
+    kids = [] # 各KIDをLorentzianでフィットした結果(Lorentzianのパラメタ)
+    nbadq = 0 # Qが条件を満たさなかったKIDの数
+    nbadd = 0 # maxratioを満たさなかったKIDの数
     if not kid_indices:
         return []
 
@@ -384,42 +368,36 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
         # フィットの結果Qと(bg-d)/bgが条件を満たさない場合は、そのピークは無視される。
         #
         l, r = i, i
-        while l > 0 and deriv2[l] > 0:
-            l -= 1
-        while r < len(deriv2) and deriv2[r] > 0:
-            r += 1
-        w = (r - l + 1) * dfreq
-        w = w * 6.0 / np.sqrt(3)  # convert to FWHM
-        l = int((l - i) * 6.0 / np.sqrt(3) + i)
-        r = int((r - i) * 6.0 / np.sqrt(3) + i)
-        if l < 0:
-            l = 0
-        if r >= len(freq):
-            r = len(freq) - 1
+        while l > 0           and deriv2[l] > 0: l -= 1
+        while r < len(deriv2) and deriv2[r] > 0: r += 1
+        w = (r - l + 1)*dfreq
+        w = w*6.0/np.sqrt(3) # convert to FWHM
+        l = int((l - i)*6.0/np.sqrt(3) + i)
+        r = int((r - i)*6.0/np.sqrt(3) + i)
+        if l < 0         : l = 0
+        if r >= len(freq): r = len(freq) - 1
 
-        q0 = freq[i] / w
+        q0 = freq[i]/w
         f, q, d, bg = fitLorentzian(freq[l:r], ampl[l:r], freq[i], q0)
         ##### refitting by extending fit range
-        if (bg - d) / bg > maxratio:
+        if (bg - d)/bg > maxratio:
             n = 10
             if l - n >= 0 and r + n < len(freq):
-                f, q, d, bg = fitLorentzian(
-                    freq[l - n : r + n], ampl[l - n : r + n], freq[i], q0
-                )
-                print("rough refitting with Lorentzian...")
+                f, q, d, bg = fitLorentzian(freq[l-n:r+n], ampl[l-n:r+n], freq[i], q0)
+                print('rough refitting with Lorentzian...')
         if q < minq:
             nbadq += 1
             continue
-        if (bg - d) / bg > maxratio:
+        if (bg - d)/bg > maxratio:
             nbadd += 1
             continue
         kids.append((f, q, d, bg))
     del l, r, f, q, d, bg
     if nbadq > 0:
-        print("removed", nbadq, "peaks with bad Q")
+        print('removed', nbadq, 'peaks with bad Q')
     if nbadd > 0:
-        print("removed", nbadd, "peaks with bad S21min")
-    kids.sort()  # sort by frequency
+        print('removed', nbadd, 'peaks with bad S21min')
+    kids.sort() #sort by frequency
 
     # pick up a peak which is closest to the carrier frequency (when fc in freq range)
     if len(kids) > 0 and fc >= freq[0] and fc <= freq[-1]:
@@ -429,29 +407,28 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
     # gaolinbgのパラメタの初期値を決めるためのbackgroundなどを計算する
     for i, (f, q, depth, bg) in enumerate(kids):
         f0ind = np.argmin(abs(freq - f))
-        w = f / q
-        dl = w / 2.0 / dfreq
-        dr = w / 2.0 / dfreq
-        bg_l = ampl_s[max(int(f0ind - 3 * dl), 0)]
-        if int(f0ind - 3 * dl) < 0:
+        w     = f/q
+        dl    = w/2.0/dfreq
+        dr    = w/2.0/dfreq
+        bg_l  = ampl_s[max(int(f0ind - 3*dl), 0)]
+        if int(f0ind - 3*dl)<0:
             bg_r = ampl_s[0]
         else:
-            bg_r = ampl_s[min(int(f0ind - 3 * dl), len(freq) - 1)]
-        a_off = (bg_l + bg_r) / 2.0
-        a_on = ampl_s[f0ind]
+            bg_r  = ampl_s[min(int(f0ind - 3*dl), len(freq) - 1)]
+        a_off = (bg_l + bg_r)/2.0
+        a_on  = ampl_s[f0ind]
         kids[i] = {
-            "Q": q,
-            "f0": f,
-            "f0ind": f0ind,
-            "dl": int(dl),
-            "dr": int(dr),
-            "a_off": a_off,
-            "a_on": a_on,
-            "ampl": depth,
-            "bg": bg,
+            'Q': q,
+            'f0': f,
+            'f0ind': f0ind,
+            'dl': int(dl),
+            'dr': int(dr),
+            'a_off': a_off,
+            'a_on': a_on,
+            'ampl': depth,
+            'bg': bg
         }
     return kids
-
 
 def oddify(n):
     """n/2を切り上げそれを2倍して1足し奇数にして返す
@@ -463,8 +440,7 @@ def oddify(n):
     ------
     integer 奇数
     """
-    return int(np.ceil(n / 2.0) * 2 + 1)
-
+    return int(np.ceil(n/2.0)*2+1)
 
 def fitLorentzian(freq, ampl, f0, q0):
     """Fit data with Lorentzian curve.
@@ -486,12 +462,10 @@ def fitLorentzian(freq, ampl, f0, q0):
     d : amplitude for Lorentzian curve
     bg: constant background level
     """
-
     def f(x):
-        (a, b, c, d) = x  # background, amplitude, 2/FWHM, freq. center
-        y = a + b / (((freq - d) * c) ** 2 + 1)
+        (a, b, c, d) = x # background, amplitude, 2/FWHM, freq. center
+        y = a + b / (((freq-d)*c)**2 + 1)
         return y - ampl
-
     a = np.median(ampl)
     b = -0.8 * a
     c = 2.0 * q0 / f0
@@ -502,7 +476,6 @@ def fitLorentzian(freq, ampl, f0, q0):
     fc = d
     q = abs(c * d / 2.0)
     return (fc, q, -b, a)
-
 
 def adjust_fitrange(nfwhm, ndata, nparams, peakparams, factor=1):
     """Adjust fit range to make sure :math:`N_{free} \geq nparam`
@@ -528,155 +501,92 @@ def adjust_fitrange(nfwhm, ndata, nparams, peakparams, factor=1):
      - dl   : a integer, index count to reach the left half-maximum
      - dr   : a integer, index count to reach the right half-maximum
     """
-    f0ind = peakparams["f0ind"]
-    l, c, r = f0ind - peakparams["dl"], f0ind, f0ind + peakparams["dr"]
-    if (r - l + 1) * factor >= nparams:
-        rbegin, rend = int(c - nfwhm * (c - l)), int(c + nfwhm * (r - c))
+    f0ind = peakparams['f0ind']
+    l, c, r = f0ind-peakparams['dl'], f0ind, f0ind+peakparams['dr']
+    if (r - l + 1)*factor >= nparams:
+        rbegin, rend = int(c-nfwhm*(c-l)), int(c+nfwhm*(r-c))
     else:
-        n = nparams / (float(r - l + 1) * factor)
-        rbegin, rend = int(f0ind - nfwhm * n * (c - l)), int(c + nfwhm * n * (r - c))
+        n = nparams/(float(r - l + 1)*factor)
+        rbegin, rend = int(f0ind-nfwhm*n*(c-l)), int(c+nfwhm*n*(r-c))
     if rbegin < 0:
         if rend + (-rbegin) >= ndata:
-            rend = ndata - 1
+            rend = ndata-1
             rbegin = 0
         else:
             rend = rend + (-rbegin)
             rbegin = 0
     if rend >= ndata:
         if rbegin - (rend - ndata) < 0:
-            rbegin = 0
-            rend = ndata - 1
+           rbegin = 0
+           rend = ndata-1
         else:
-            rbegin = rbegin - (rend - ndata)
-            rend = ndata - 1
-    if (rend - rbegin + 1) * factor < 11:
+           rbegin = rbegin - (rend - ndata)
+           rend = ndata-1
+    if (rend - rbegin + 1)*factor < 11:
         raise Exception("Fit range guess error")
     return slice(rbegin, rend)
 
-
-# -------------------------
+#-------------------------
 # For make_reduced_fits.py
 def readout_dict():
-    hdr_key_lis = [
-        "EXTNAME",
-        "FILENAME",
-        "FRAMERT",
-        "FRAMELEN",
-        "DSAMPLE",
-    ]
-    hdr_val_lis = ["READOUT", None, None, None, None]
-    hdr_com_lis = [
-        "name of binary data",
-        "input filename",
-        "sampling rate",
-        "2-log of frame length",
-        "number of down sampling",
-        "label for field 0",
-        "data format of field 0",
-        "label for field 1",
-        "data format of field 1",
-    ]
-    cols_key_lis = [
-        "timestamp",
-        "pixelid",
-    ]
+    hdr_key_lis = ['EXTNAME', 'FILENAME', 'FRAMERT', 'FRAMELEN', 'DSAMPLE',]
+    hdr_val_lis = ['READOUT', None, None, None, None]
+    hdr_com_lis = ['name of binary data',
+                   'input filename',
+                   'sampling rate',
+                   '2-log of frame length',
+                   'number of down sampling',
+                   'label for field 0', 'data format of field 0',
+                   'label for field 1', 'data format of field 1',]
+    cols_key_lis = ['timestamp', 'pixelid',]
     cols_data_lis = []
-    tform = [
-        "D",
-        "I",
-    ]
-    tunit = [
-        None,
-        None,
-    ]
+    tform = ['D', 'I',]
+    tunit = [None, None,]
 
-    r_dict = {
-        "hdr_key_lis": hdr_key_lis,
-        "hdr_val_lis": hdr_val_lis,
-        "hdr_com_lis": hdr_com_lis,
-        "cols_key_lis": cols_key_lis,
-        "cols_data_lis": cols_data_lis,
-        "tform": tform,
-        "tunit": tunit,
-    }
+    r_dict = {'hdr_key_lis': hdr_key_lis,
+              'hdr_val_lis': hdr_val_lis,
+              'hdr_com_lis': hdr_com_lis,
+              'cols_key_lis': cols_key_lis,
+              'cols_data_lis': cols_data_lis,
+              'tform': tform,
+              'tunit': tunit}
     return r_dict
 
-
 def kids_dict():
-    hdr_key_lis = [
-        "EXTNAME",
-        "FILENAME",
-    ]
-    hdr_val_lis = [
-        "KIDSINFO",
-        None,
-    ]
-    hdr_com_lis = [
-        "name of binary data",
-        "localsweep filename",
-        "label for field 0",
-        "data format of field 0",
-        "label for field 1",
-        "data format of field 1",
-        "label for field 2",
-        "data format of field 2",
-        "data unit of field 2",
-        "label for field 3",
-        "data format of field 3",
-        "data unit of field 3",
-        "label for field 4",
-        "data format of field 4",
-        "label for field 5",
-        "data format of field 5",
-        "data unit of field 5",
-        "label for field 6",
-        "data format of field 6",
-        "label for field 7",
-        "data format of field 7",
-        "label for field 8",
-        "data format of field 8",
-    ]
-    cols_key_lis = [
-        "pixelid",
-        "kidid",
-        "Pread",
-        "fc",
-        "yfc, linyfc",
-        "fr, dfr (300K)",
-        "Qr, dQr (300K)",
-        "Qc, dQc (300K)",
-        "Qi, dQi (300K)",
-    ]
+    hdr_key_lis = ['EXTNAME', 'FILENAME',]
+    hdr_val_lis = ['KIDSINFO', None,]
+    hdr_com_lis = ['name of binary data',
+                   'localsweep filename',
+                   'label for field 0', 'data format of field 0',
+                   'label for field 1', 'data format of field 1',
+                   'label for field 2', 'data format of field 2', 'data unit of field 2',
+                   'label for field 3', 'data format of field 3', 'data unit of field 3',
+                   'label for field 4', 'data format of field 4',
+                   'label for field 5', 'data format of field 5', 'data unit of field 5',
+                   'label for field 6', 'data format of field 6',
+                   'label for field 7', 'data format of field 7',
+                   'label for field 8', 'data format of field 8']
+    cols_key_lis = ['pixelid', 'kidid', 'Pread', 'fc', 'yfc, linyfc',
+                    'fr, dfr (300K)', 'Qr, dQr (300K)', 'Qc, dQc (300K)', 'Qi, dQi (300K)']
     cols_data_lis = []
-    tform = ["I", "I", "E", "E", "2E", "2E", "2E", "2E", "2E"]
-    tunit = [None, None, "dBm", "GHz", None, "GHz", None, None, None]
+    tform = ['I', 'I', 'E', 'E', '2E', '2E', '2E', '2E', '2E']
+    tunit = [None, None, 'dBm', 'GHz', None, 'GHz', None, None, None]
 
-    k_dict = {
-        "hdr_key_lis": hdr_key_lis,
-        "hdr_val_lis": hdr_val_lis,
-        "hdr_com_lis": hdr_com_lis,
-        "cols_key_lis": cols_key_lis,
-        "cols_data_lis": cols_data_lis,
-        "tform": tform,
-        "tunit": tunit,
-    }
+    k_dict = {'hdr_key_lis': hdr_key_lis,
+              'hdr_val_lis': hdr_val_lis,
+              'hdr_com_lis': hdr_com_lis,
+              'cols_key_lis': cols_key_lis,
+              'cols_data_lis': cols_data_lis,
+              'tform': tform,
+              'tunit': tunit}
     return k_dict
 
-
 def rebin_array(inarray, rebin):
-    return inarray[: (inarray.size // rebin) * rebin].reshape(-1, rebin).mean(axis=1)
+    return inarray[:(inarray.size//rebin)*rebin].reshape(-1, rebin).mean(axis=1)
 
-
-def find_glitch(
-    yss,
-    baseline_thresh=6.0,
-    glitch_thresh=5.0,
-    clusterize_thresh=2,
-    offset=0,
-    opt_diff2=True,
-    smrange=1,
-    returnval=False,
-):
+def find_glitch(yss,
+                baseline_thresh = 6.0, glitch_thresh = 5.0, clusterize_thresh = 2, offset = 0,
+                opt_diff2=True, smrange=1, returnval=False):
     """
     find glitches common to `yss`, assuming glitch exists at the same
     time of all data in `yss`. Too close glitches or broad glitch are
@@ -699,60 +609,55 @@ def find_glitch(
     (option) threshold value for glitch identification (return when returnval=True)
     """
     ave = np.average(yss, axis=0)
-    xs = np.arange(len(yss[0]))
-    dx = xs[1] - xs[0]
+    xs  = np.arange(len(yss[0]))
+    dx  = xs[1] - xs[0]
     if opt_diff2:
-        diff2 = np.array(_numdif_2(ave, dx))
+        diff2 = np.array( _numdif_2(ave, dx) )
         sigma = np.std(diff2)
-        good = np.abs(diff2) < (baseline_thresh * sigma)
+        good  = (np.abs(diff2) < (baseline_thresh*sigma))
         sigma = np.std(diff2[good])
-        bad = np.abs(diff2) >= (glitch_thresh * sigma)
+        bad   = (np.abs(diff2) >= (glitch_thresh*sigma))
         if returnval:
-            thre = glitch_thresh * sigma / np.sqrt(6) * (dx**2)
+            thre = glitch_thresh*sigma/np.sqrt(6)*(dx**2)
     else:
         ##### rolling mean
-        weights = np.ones(smrange) / smrange
-        assert len(ave) > len(weights)
-        smooth = np.convolve(ave, weights, "same")
+        weights = np.ones(smrange)/smrange
+        assert( len(ave)>len(weights) )
+        smooth  = np.convolve(ave, weights, 'same')
 
-        invalid = int((len(weights) - 1) / 2)
-        smooth[:invalid] = np.mean(ave[:invalid]) * np.ones(len(ave[:invalid]))
-        smooth[-invalid - 1 :] = np.mean(ave[-invalid - 1 :]) * np.ones(
-            len(ave[-invalid - 1 :])
-        )
+        invalid = int( (len(weights)-1)/2 )
+        smooth[:invalid] = np.mean(ave[:invalid]) * np.ones( len(ave[:invalid]) )
+        smooth[-invalid-1:] = np.mean(ave[-invalid-1:]) * np.ones( len(ave[-invalid-1:]) )
 
         ave_sm = ave - smooth
 
-        mean = np.mean(ave_sm)
+        mean  = np.mean(ave_sm)
         sigma = np.std(ave_sm)
-        good = np.abs(ave_sm - mean) < (baseline_thresh * sigma)
-        mean = np.mean(ave_sm[good])
+        good  = (np.abs(ave_sm-mean) < (baseline_thresh*sigma))
+        mean  = np.mean(ave_sm[good])
         sigma = np.std(ave_sm[good])
-        bad = np.abs(ave_sm - mean) >= (glitch_thresh * sigma)
+        bad   = (np.abs(ave_sm-mean) >= (glitch_thresh*sigma))
         if returnval:
-            thre = glitch_thresh * sigma
+            thre = glitch_thresh*sigma
     ## treat broad glitch (or too close glitches) as one glitch
     bad = _clusterize_indices(bad, clusterize_thresh)
     if opt_diff2:
-        bad = np.concatenate(([bad[0]], bad, [bad[-1]]))
+        bad = np.concatenate( ([bad[0]], bad, [bad[-1]]) )
 
     bad_ = np.copy(bad)
-    if offset > 0:
-        for i, b in enumerate(bad):
+    if offset>0:
+        for i,b in enumerate(bad):
             if b:
                 bad_[i] = True
                 for j in range(offset):
-                    if (i + j + 1) < len(bad):
-                        bad_[i + j + 1] = True
+                    if (i+j+1)<len(bad): bad_[i+j+1] = True
     if returnval:
         return bad_, thre
     else:
         return bad_
 
-
 def _numdif_2(y, dx):
-    return (y[2:] + y[:-2] - 2 * y[1:-1]) / dx**2
-
+    return (y[2:]+y[:-2]-2*y[1:-1])/dx**2
 
 def _clusterize_indices(indices, threshold):
     """Fill small gap (within `threshold`) in indices.
@@ -774,17 +679,16 @@ def _clusterize_indices(indices, threshold):
     """
 
     results = np.copy(indices)
-    prev = 0
+    prev  = 0
     first = True
     for i, x in enumerate(results):
         if x:
             if (not first) and i - prev <= threshold + 1:
                 for j in range(prev, i):
                     results[j] = True
-            prev = i
+            prev  = i
             first = False
     return results
-
 
 def calibrate_with_blind_tones(signal, blind_left, blind_right):
     """do blind tone calibration.
@@ -804,24 +708,21 @@ def calibrate_with_blind_tones(signal, blind_left, blind_right):
     where freq is a frequency [Hz],
     IQ is a 1-D array of IQ data as complex value.
     """
-
     def get_f_iq(fx):
         if isinstance(blind_left, FixedData):
             return fx._frequency, fx.iq
         else:
             return fx
-
     f_s, iq_s = get_f_iq(signal)
     f_l, iq_l = get_f_iq(blind_left)
     f_r, iq_r = get_f_iq(blind_right)
 
     calib_l = iq_l / np.average(iq_l)
     calib_r = iq_r / np.average(iq_r)
-    calib_s = calib_l + (calib_r - calib_l) / (f_r - f_l) * (f_s - f_l)  # interpolate
+    calib_s = calib_l + (calib_r - calib_l)/(f_r - f_l) * (f_s - f_l) # interpolate
 
-    calibrated = iq_s / calib_s
+    calibrated = (iq_s / calib_s)
     return calibrated
-
 
 def interpolate_bad(ys, bad):
     """Linear interpolate `ys` in region `bad`.
@@ -834,46 +735,31 @@ def interpolate_bad(ys, bad):
     ------
     an 1-D array, with bad region interpolated.
     """
-    xs = np.arange(len(ys))
+    xs  = np.arange(len(ys))
     deglitched = np.interp(xs, xs[~bad], ys[~bad])
     return deglitched
 
-
 def createBinTableHDU(data_dict):
-    # -------- Set Header and Comments
+    #-------- Set Header and Comments
     header = fits.Header()
-    for i, j, k in zip(
-        data_dict["hdr_key_lis"], data_dict["hdr_val_lis"], data_dict["hdr_com_lis"]
-    ):
+    for (i, j, k) in zip(data_dict['hdr_key_lis'], data_dict['hdr_val_lis'], data_dict['hdr_com_lis']):
         header[i] = j, k
-    # -------- Create Collumns of the Binary Table
+    #-------- Create Collumns of the Binary Table
     columns = []
-    for i in range(len(data_dict["cols_key_lis"])):
-        columns.append(
-            fits.Column(
-                name=data_dict["cols_key_lis"][i],
-                format=data_dict["tform"][i],
-                array=data_dict["cols_data_lis"][i],
-                unit=data_dict["tunit"][i],
-            )
-        )
+    for i in range(len(data_dict['cols_key_lis'])):
+        columns.append(fits.Column(name=data_dict['cols_key_lis'][i],
+                                    format=data_dict['tform'][i],
+                                    array=data_dict['cols_data_lis'][i],
+                                    unit=data_dict['tunit'][i]))
     hdu = fits.BinTableHDU.from_columns(columns, header)
-    # -------- Add comments
-    for i in range(
-        -(
-            len(data_dict["hdr_com_lis"])
-            - data_dict["hdr_com_lis"].index("label for field 0")
-        ),
-        0,
-    ):
-        addHeaderComments(hdu.header, list(hdu.header)[i], data_dict["hdr_com_lis"][i])
+    #-------- Add comments
+    for i in range(-(len(data_dict['hdr_com_lis'])-data_dict['hdr_com_lis'].index('label for field 0')), 0):
+        addHeaderComments(hdu.header, list(hdu.header)[i], data_dict['hdr_com_lis'][i])
     return hdu
-
 
 def addHeaderComments(hdr, key, com):
     """Add Comments to Header"""
     hdr.comments[key] = com
-
 
 def f_Lorentzian(params, freq, data=None):
     """Lorengzianモデル関数
@@ -891,173 +777,107 @@ def f_Lorentzian(params, freq, data=None):
     モデルの計算値|計算値とdataの差
     """
     params = params.valuesdict()
-    b = params["bg"]
-    a = params["amp"]
-    fc = params["f0"]
-    fwhm = params["fwhm"]
-    model = b + a / (((freq - fc) * (2.0 / fwhm)) ** 2 + 1)
+    b      = params['bg']
+    a      = params['amp']
+    fc     = params['f0']
+    fwhm   = params['fwhm']
+    model = b + a/(((freq - fc)*(2.0/fwhm))**2 + 1)
     if data is None:
         return model
     return model - data
 
-
 def gaolinbg_guess(sweepdata, peaks):
-    gaolinbg_paramnames = "arga absa tau fr Qr Qc phi0 c".split()
-    x = sweepdata.x
+    gaolinbg_paramnames = 'arga absa tau fr Qr Qc phi0 c'.split()
+    x      = sweepdata.x
     deltax = x[1] - x[0]
-    pdict = search_peak(sweepdata, peaks)
-    y0 = sweepdata.iq[pdict["f0ind"]]
-    FWHM = pdict["f0"] / pdict["Q"]
-    ddeg = sweepdata.deg[1:] - sweepdata.deg[:-1]
-    tau = -np.average(ddeg[abs(ddeg) < 180]) * np.pi / 180.0 / deltax / 2 / np.pi
-    f0 = pdict["f0"]
-    theta = np.angle(y0)
-    arga = np.angle(y0 * np.exp(1j * 2 * np.pi * tau * f0))
-    absa = pdict["a_off"]
-    fr = f0
-    Qr = f0 / FWHM
-    Qc = Qr
-    phi0 = 0
-    c = 0
+    pdict  = search_peak(sweepdata, peaks)
+    y0     = sweepdata.iq[pdict['f0ind']]
+    FWHM   = pdict['f0']/pdict['Q']
+    ddeg   = sweepdata.deg[1:] - sweepdata.deg[:-1]
+    tau    = -np.average(ddeg[abs(ddeg)<180])*np.pi/180.0/deltax/2/np.pi
+    f0     = pdict['f0']
+    theta  = np.angle(y0)
+    arga   = np.angle(y0*np.exp(1j*2*np.pi*tau*f0))
+    absa   = pdict['a_off']
+    fr     = f0
+    Qr     = f0/FWHM
+    Qc     = Qr
+    phi0   = 0
+    c      = 0
     return dict(zip(gaolinbg_paramnames, (arga, absa, tau, fr, Qr, Qc, phi0, c)))
 
-
 def gaolinbg_rewind(x, y, arga, absa, tau, fr, Qr, Qc, phi0, c):
-    tmp = y / absa / np.exp(-1j * (2 * np.pi * x * tau - arga)) - c * (x - fr)
-    return (tmp - 1) * Qc / Qr / np.exp(1j * phi0) + 0.5
-
+    tmp = y/absa/np.exp(-1j*(2*np.pi*x*tau - arga)) - c*(x - fr)
+    return (tmp - 1)*Qc/Qr/np.exp(1j*phi0) + 0.5
 
 def gaolinbg_expression():
-    arg_symbols = sympy.symbols(r"(\arg{a}) |a| tau f_r Q_r Q_c phi_0 c")
-    arg_names = "arga absa tau fr Qr Qc phi0 c".split()
+    arg_symbols = sympy.symbols(r'(\arg{a}) |a| tau f_r Q_r Q_c phi_0 c')
+    arg_names = 'arga absa tau fr Qr Qc phi0 c'.split()
     arga, absa, tau, fr, Qr, Qc, phi0, c = arg_symbols
-    x = sympy.symbols("x")
+    x = sympy.symbols('x')
     from sympy import exp, I, pi
-
-    expr = (
-        absa
-        * exp(-I * (2 * pi * x * tau - arga))
-        * (
-            1
-            + c * (x - fr)
-            - Qr / Qc * exp(I * phi0) / (1 + 2 * I * Qr * ((x - fr) / fr))
-        )
-    )
+    expr = (absa*exp(-I*(2*pi*x*tau - arga))*(1 + c*(x - fr) - Qr/Qc*exp(I*phi0)/(1 + 2*I*Qr*((x - fr)/fr))))
     return expr, arg_symbols, arg_names
-
 
 def gaolinbg_bg_expression():
-    arg_symbols = sympy.symbols(r"(\arg{a}) |a| tau f_r Q_r Q_c phi_0 c")
-    arg_names = "arga absa tau fr Qr Qc phi0 c".split()
+    arg_symbols = sympy.symbols(r'(\arg{a}) |a| tau f_r Q_r Q_c phi_0 c')
+    arg_names = 'arga absa tau fr Qr Qc phi0 c'.split()
     arga, absa, tau, fr, Qr, Qc, phi0, c = arg_symbols
-    x = sympy.symbols("x")
+    x = sympy.symbols('x')
     from sympy import exp, I, pi
-
-    expr = absa * exp(-I * (2 * pi * x * tau - arga)) * (1 + c * (x - fr))
+    expr = (absa*exp(-I*(2*pi*x*tau - arga))*(1 + c*(x - fr)))
     return expr, arg_symbols, arg_names
-
 
 def gaolinbg_function():
     expr, arg_symbols, arg_names = gaolinbg_expression()
     expr_ = expr.subs(zip(arg_symbols, arg_names))
-    args = sympy.symbols(["x"] + arg_names)
-    return sympy.lambdify(args, expr_, "numpy", dummify=False)
-
+    args = sympy.symbols(['x'] + arg_names)
+    return sympy.lambdify(args, expr_, 'numpy', dummify=False)
 
 def gaolinbg_bg_function():
     expr, arg_symbols, arg_names = gaolinbg_bg_expression()
     expr_ = expr.subs(zip(arg_symbols, arg_names))
-    args = sympy.symbols(["x"] + arg_names)
-    return sympy.lambdify(args, expr_, "numpy", dummify=False)
-
+    args = sympy.symbols(['x'] + arg_names)
+    return sympy.lambdify(args, expr_, 'numpy', dummify=False)
 
 def gaolinbg_param_gradient_function():
     expr, arg_symbols, arg_names = gaolinbg_expression()
-    funcargs = ["x"] + arg_names
+    funcargs = ['x'] + arg_names
     arga, absa, tau, fr, Qr, Qc, phi0, c = arg_symbols
-    gradfuncs = [  # 各パラメータに関する導関数を求め、関数化(Pythonで使える)する。
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, arga).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, absa).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, tau).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, fr).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, Qr).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, Qc).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, phi0).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
-        sympy.lambdify(
-            funcargs,
-            sympy.diff(expr, c).subs(zip(arg_symbols, arg_names)),
-            "numpy",
-            dummify=False,
-        ),
+    gradfuncs = [ #各パラメータに関する導関数を求め、関数化(Pythonで使える)する。
+        sympy.lambdify(funcargs, sympy.diff(expr, arga).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, absa).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, tau ).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, fr  ).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, Qr  ).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, Qc  ).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, phi0).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
+        sympy.lambdify(funcargs, sympy.diff(expr, c   ).subs(zip(arg_symbols, arg_names)), 'numpy', dummify=False),
     ]
-
     def total_derivative(x, arga, absa, tau, fr, Qr, Qc, phi0, c):
-        return np.array(
-            np.broadcast_arrays(
-                gradfuncs[0](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[1](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[2](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[3](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[4](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[5](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[6](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-                gradfuncs[7](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
-            )
-        )
+        return np.array(np.broadcast_arrays(
+            gradfuncs[0](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[1](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[2](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[3](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[4](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[5](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[6](x, arga, absa, tau, fr, Qr, Qc, phi0, c),
+            gradfuncs[7](x, arga, absa, tau, fr, Qr, Qc, phi0, c)))
 
     return total_derivative
-
 
 def complex_to_cartesian2darray(x):
     x = np.atleast_1d(x)
     shape = x.shape
-    return np.concatenate([np.real(x), np.imag(x)], axis=len(shape) - 1)
-
+    return np.concatenate([np.real(x), np.imag(x)], axis=len(shape)-1)
 
 def cartesian2darray_to_complex(x):
     assert x.shape[-1] % 2 == 0
     size = x.shape[-1] / 2
-    return x[..., :size] + 1j * x[..., size:]
+    return x[...,:size] + 1j*x[...,size:]
 
-
-def power_spectrum_density(
-    data, dt, ndivide=1, window=scipy.signal.windows.hann, overwrap_half=False
-):
+def power_spectrum_density(data, dt, ndivide=1, window=scipy.signal.windows.hann, overwrap_half=False):
     """Calculate power spectrum density of data.
     引数
     ----
@@ -1071,40 +891,34 @@ def power_spectrum_density(
     (frequencies, psd)
     """
     if overwrap_half:
-        step = int(len(data) / (ndivide + 1))
-        size = step * 2
+        step = int(len(data)/(ndivide + 1))
+        size = step*2
     else:
-        step = int(len(data) / ndivide)
+        step = int(len(data)/ndivide)
         size = step
     if bin(size).count("1") != 1:
         if overwrap_half:
-            warnings.warn(
-                "warning: ((length of data)/(ndivide+1))*2 is not power of 2: %d" % size
-            )
+            warnings.warn('warning: ((length of data)/(ndivide+1))*2 is not power of 2: %d' % size)
         else:
-            warnings.warn(
-                "warning: (length of data)/ndivide is not power of 2: %d" % size
-            )
+            warnings.warn('warning: (length of data)/ndivide is not power of 2: %d' % size)
     psd = np.zeros(size)
-    T = (size - 1) * dt
-    vs = 1 / dt
+    T = (size - 1)*dt
+    vs = 1/dt
     vk_ = scipy.fft.fftfreq(size, dt)
     vk = vk_[np.where(vk_ >= 0)]
     for i in range(ndivide):
-        d = data[i * step : i * step + size]
+        d = data[i*step:i*step+size]
         if window is None:
-            w = np.ones(size)
+            w    = np.ones(size)
             corr = 1.0
         else:
-            w = window(size)
+            w    = window(size)
             corr = np.mean(w**2)
-        psd = psd + 2 * (np.abs(scipy.fft.fft(d * w))) ** 2 / size * dt / corr
-    return vk, psd[: len(vk)] / ndivide
+        psd  = psd + 2*(np.abs(scipy.fft.fft(d*w)))**2/size*dt/corr
+    return vk, psd[:len(vk)]/ndivide
 
-
-class SweepData:
+class SweepData():
     """mkid_data.data.SweepDataを単純化したクラス"""
-
     def __init__(self, i=None, q=None, freq=None):
         self.i = i
         self.q = q
@@ -1114,7 +928,7 @@ class SweepData:
     @property
     def x(self):
         GHz = 1e9
-        return self.freq / GHz
+        return self.freq/GHz
 
     @property
     def amplitude(self):
@@ -1122,19 +936,17 @@ class SweepData:
 
     @property
     def iq(self):
-        return self.i + 1j * self.q
+        return self.i + 1j*self.q
 
     @property
     def deg(self):
-        return np.arctan2(self.q, self.i) * 180 / np.pi
+        return np.arctan2(self.q, self.i)*180/np.pi
 
     def __len__(self):
         return len(self.freq)
 
-
-class FixedData:
+class FixedData():
     """mkid_data.data.FixedDataを単純化したクラス"""
-
     def __init__(self):
         self.timestamp = None
         self.freq = None
@@ -1149,28 +961,26 @@ class FixedData:
     @property
     def frequency(self):
         GHz = 1e9
-        return self._frequency / GHz
+        return self._frequency/GHz
 
     @property
     def iq(self):
-        return self.i + 1j * self.q
+        return self.i + 1j*self.q
 
     @property
     def i(self):
-        return self._i / self.fftgain
+        return self._i/self.fftgain
 
     @property
     def q(self):
-        return self._q / self.fftgain
+        return self._q/self.fftgain
 
     @property
     def t(self):
-        return self.timestamp / self.rate
+        return self.timestamp/self.rate
 
-
-class FixedFitData:
+class FixedFitData():
     """mkid_data.data.FixedFitDataを単純化したクラス"""
-
     def __init__(self, freq=None, timestamp=None, ampl=None, phase=None, info=None):
         self._freq = freq
         self._timestamp = timestamp
@@ -1182,7 +992,7 @@ class FixedFitData:
     @property
     def frequency(self):
         GHz = 1e9
-        return self._freq / GHz
+        return self._freq/GHz
 
     @property
     def amplitude(self):
@@ -1203,7 +1013,6 @@ class FixedFitData:
     def unpack(self):
         return (self._timestamp, self._ampl, self._phase)
 
-
 class TODs(Mapping):
     """TODデータを保持するクラス
     注意
@@ -1215,10 +1024,8 @@ class TODs(Mapping):
     --------
     bbsweeplib.kids.py fits_tods_fits
     """
-
     chunksize = int(1e6)
     kSampleRate = 2e9
-
     def __init__(self, infile):
         """コンストラクタ
         引数
@@ -1229,32 +1036,30 @@ class TODs(Mapping):
         ------
         なし
         """
-        self.infile = infile
+        self.infile  = infile
         self.open()
 
     def open(self):
         self.hud = pyfits.open(self.infile)
         bintable = self.hud[1]
-        self.fftgain = bintable.header["fftgain"]
-        self.framert = bintable.header["framert"]
-        self.nbins = bintable.header["nbins"]
-        self.npoints = bintable.header["npoints"]
-        self.lofreq = bintable.header["lofreq"]
-        self.bins = [
-            _to_nbit_signed(bintable.header["BIN%d" % i], self.npoints)
-            for i in range(self.nbins)
-        ]
-        self.if_freq = self.kSampleRate * np.array(self.bins) / 2**self.npoints
+        self.fftgain  = bintable.header['fftgain']
+        self.framert  = bintable.header['framert']
+        self.nbins    = bintable.header['nbins']
+        self.npoints  = bintable.header['npoints']
+        self.lofreq   = bintable.header['lofreq']
+        self.bins     = [_to_nbit_signed(bintable.header['BIN%d' % i], self.npoints)
+                         for i in range(self.nbins)]
+        self.if_freq      = self.kSampleRate * np.array(self.bins) / 2**self.npoints
         self.carrier_freq = self.if_freq + self.lofreq
 
         bindata = bintable.data
-        timestamp_ = bindata.field("timestamp")
-        framenr_ = bindata.field("framenr")
+        timestamp_ = bindata.field('timestamp')
+        framenr_ = bindata.field('framenr')
         self.timestamp = timestamp_
         self.framenr = framenr_
         self._read_bins = {}
 
-        self.offset = -100  # remove last part of data (sometimes they behave bad)
+        self.offset = -100 # remove last part of data (sometimes they behave bad)
 
     def close(self):
         self.hud.close()
@@ -1274,18 +1079,18 @@ class TODs(Mapping):
             return self._read_bins[key]
         else:
             ind = self.bins.index(key)
-            chunksize = int(1e4)
-            name = "kid_%04d" % ind
-            rawdata = self.hud[1].data["data"]
-            read_I_ = rawdata[: self.offset, 2 * ind]
-            read_Q_ = rawdata[: self.offset, 2 * ind + 1]
+            chunksize=int(1e4)
+            name = 'kid_%04d' % ind
+            rawdata = self.hud[1].data['data']
+            read_I_ = rawdata[:self.offset, 2*ind    ]
+            read_Q_ = rawdata[:self.offset, 2*ind + 1]
 
             info = dict()
-            info["bins"] = self.bins
-            info["freqs"] = self.carrier_freq[ind]
-            info["header"] = self.hud[1].header
+            info['bins'] = self.bins
+            info['freqs'] = self.carrier_freq[ind]
+            info['header'] = self.hud[1].header
             d = FixedData()
-            d.timestamp = self.timestamp[: self.offset]
+            d.timestamp = self.timestamp[:self.offset]
             d._i = read_I_
             d._q = read_Q_
             d.fftgain = self.fftgain
@@ -1295,22 +1100,21 @@ class TODs(Mapping):
             return d
 
     def __getstate__(self):
-        if hasattr(self, "hud"):
+        if hasattr(self, 'hud'):
             dic = self.__dict__.copy()
-            dic["_read_bins"] = {}
-            dic["hud"] = None
+            dic['_read_bins'] = {}
+            dic['hud'] = None
             return dic
         else:
             return self.__dict__
 
     def __setstate__(self, dic):
         self.__dict__ = dic.copy()
-        if "hud" in dic:
+        if 'hud' in dic:
             self.open()
 
-
 def _to_nbit_signed(x, n):
-    if x > 2 ** (n - 1):
-        return -((~x & (2**n - 1)) + 1)
+    if x > 2**(n-1):
+        return -((~x & (2**n-1))+1)
     else:
         return x

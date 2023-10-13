@@ -23,9 +23,7 @@ scipy = "^1.10.1"
 sympy = "^1.12"
 
 [tool.poetry.group.dev.dependencies]
-black = "^23.9.1"
 ipython = "^8.16.1"
-pytest = "^7.4.2"
 
 [tool.poetry.scripts]
 calc_resonance_params = "dmerge.calc_resonance_params:main"

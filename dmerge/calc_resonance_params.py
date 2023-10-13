@@ -15,7 +15,6 @@ import sys
 import pickle
 from . import dmerge
 
-
 def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     """1つのKIDに対するresonanceパラメータを求める
     引数
@@ -29,38 +28,31 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     ------
     dict フィットの結果を引数で与えられたkidに追加した辞書
     """
-    fc = kid["tod"].frequency
-    peaks = dmerge.find_peaks(
-        kid["localsweep"].x,
-        kid["localsweep"].amplitude,
-        fc,
-        minq=minq,
-        maxratio=maxratio,
-    )
-    result, fitrange = dmerge.fit_onepeak(kid["localsweep"], peaks, nfwhm=nfwhm)
+    fc = kid['tod'].frequency
+    peaks = dmerge.find_peaks(kid['localsweep'].x, kid['localsweep'].amplitude, fc, minq=minq, maxratio=maxratio)
+    result, fitrange = dmerge.fit_onepeak(kid['localsweep'], peaks, nfwhm=nfwhm)
 
-    fr = result.params["fr"].value  # GHz
-    dfr = result.params["fr"].stderr  # GHz
-    Qr = result.params["Qr"].value
-    dQr = result.params["Qr"].stderr
-    Qc = result.params["Qc"].value
-    dQc = result.params["Qc"].stderr
-    Qi = result.params["Qi"].value
-    dQi = result.params["Qi"].stderr
-    if dfr / fr < 0.0 or dQr / Qr < 0.0 or dQc / Qc < 0.0 or dQi / Qi < 0.0:
-        kid["enabled"] = False
-    elif fr != fr or dfr != dfr or Qr != Qr or dQr != dQr:  # reject Nan
-        kid["enabled"] = False
-    elif abs(Qr) == float("inf") or abs(dQr) == float("inf"):  # reject +/-inf
-        kid["enabled"] = False
-    if kid["enabled"]:
-        kid["resonance_params"] = result.params
-        kid["fitrange"] = fitrange
+    fr = result.params['fr'].value # GHz
+    dfr = result.params['fr'].stderr # GHz
+    Qr = result.params['Qr'].value
+    dQr = result.params['Qr'].stderr
+    Qc = result.params['Qc'].value
+    dQc = result.params['Qc'].stderr
+    Qi = result.params['Qi'].value
+    dQi = result.params['Qi'].stderr
+    if dfr/fr<0. or dQr/Qr<0. or dQc/Qc<0. or dQi/Qi<0.:
+        kid['enabled'] = False
+    elif fr!=fr or dfr!=dfr or Qr!=Qr or dQr!=dQr: # reject Nan
+        kid['enabled'] = False
+    elif abs(Qr)==float('inf') or abs(dQr)==float('inf'): # reject +/-inf
+        kid['enabled'] = False
+    if kid['enabled']:
+        kid['resonance_params'] = result.params
+        kid['fitrange'] = fitrange
     else:
-        kid["resonance_params"] = None
-        kid["fitrange"] = None
+        kid['resonance_params'] = None
+        kid['fitrange'] = None
     return kid
-
 
 def main() -> None:
     """
@@ -70,12 +62,11 @@ def main() -> None:
     """
     args = sys.argv
     filename = args[1]
-    with open(filename, "rb") as f:
+    with open(filename, 'rb') as f:
         kid = pickle.load(f)
     kid = calc_resonance_params(kid)
-    with open(filename, "wb") as f:
+    with open(filename, 'wb') as f:
         pickle.dump(kid, f)
 
-
-if __name__ == "__main__":
+if __name__=='__main__':
     main()

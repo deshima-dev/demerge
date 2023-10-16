@@ -1,6 +1,6 @@
 {
     "name": "dmerge",
-    "image":"python:3.9",
+    "image":"python:3.12",
     "onCreateCommand": "pip install poetry==1.6.1",
     "postCreateCommand": "poetry install",
     "containerEnv": {

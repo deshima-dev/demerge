@@ -11,19 +11,17 @@ readme = "README.md"
 homepage = "https://github.com/deshima-dev/dmerge/"
 
 [tool.poetry.dependencies]
-python = ">=3.9, <3.12"
-astropy = "^5.2.2"
-dems = "^0.4.0"
-lmfit = "^1.2.1"
-matplotlib = "^3.7.2"
-numpy =	"^1.24.4"
-pandas = "^2.0.3"
-pyyaml = "^6.0"
-scipy = "^1.10.1"
-sympy = "^1.12"
+python = ">=3.9, <3.13"
+astropy = "^5.2"
+dems = "^0.5"
+lmfit = "^1.2"
+matplotlib = "^3.7"
+numpy =	"^1.25"
+scipy = "^1.10"
+sympy = "^1.10"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.16.1"
+ipython = "^8.15"
 
 [tool.poetry.scripts]
 calc_resonance_params = "dmerge.calc_resonance_params:main"

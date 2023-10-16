@@ -5,21 +5,8 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 
 ## 動作環境
 
- - python 3.9.10
-
-| モジュール   | バージョン|
-|--------------|-----------|
-| astropy      | 5.2.2     |
-| dems         | 0.4.0     |
-| lmfit        | 1.2.1     |
-| matplotlib   | 3.7.2     |
-| numpy        | 1.24.4    |
-| pandas       | 2.0.3     |
-| pyyaml       | 6.0       |
-| scipy        | 1.10.1    |
-| sympy        | 1.12      |
-
-参考:https://github.com/deshima-dev/dems
+- CPython: 3.9-3.12
+- Dependent packages: pyproject.tomlをご確認ください
 
 ## インストール
 

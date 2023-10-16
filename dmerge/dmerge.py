@@ -6,6 +6,7 @@ Python 3.7
 """
 import os
 import sys
+from warnings import catch_warnings, simplefilter
 import numpy as np
 import scipy
 import scipy.signal
@@ -287,18 +288,20 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
         v = {k: v for (k, v) in p.valuesdict().items() if k in gaolinbg_param_names}
         return complex_to_cartesian2darray(gaolinbg_func(x, **v)) - ys
 
-    params = lmfit.Parameters()
-    params.add('arga', initial_params['arga'])
-    params.add('absa', initial_params['absa'])
-    params.add('tau',  initial_params['tau'])
-    params.add('fr',   initial_params['fr'])
-    params.add('Qr',   initial_params['Qr'])
-    params.add('Qc',   initial_params['Qc'])
-    params.add('phi0', initial_params['phi0'])
-    params.add('c',    initial_params['c'])
-    params.add('Qi',   expr='1/(1/Qr - 1/Qc*cos(phi0))')
-    minimizer_result = lmfit.minimize(residue, params, args=(sweepdata.x[s],), **kws)
-    return minimizer_result, s # fit結果, フィット範囲
+    with catch_warnings():
+        simplefilter("ignore")
+        params = lmfit.Parameters()
+        params.add('arga', initial_params['arga'])
+        params.add('absa', initial_params['absa'])
+        params.add('tau',  initial_params['tau'])
+        params.add('fr',   initial_params['fr'])
+        params.add('Qr',   initial_params['Qr'])
+        params.add('Qc',   initial_params['Qc'])
+        params.add('phi0', initial_params['phi0'])
+        params.add('c',    initial_params['c'])
+        params.add('Qi',   expr='1/(1/Qr - 1/Qc*cos(phi0))')
+        minimizer_result = lmfit.minimize(residue, params, args=(sweepdata.x[s],), **kws)
+        return minimizer_result, s # fit結果, フィット範囲
 
 def search_peak(sweepdata, peaks):
     """複数のピークが見つかった場合は中心周波数に一番近いピークを採用する

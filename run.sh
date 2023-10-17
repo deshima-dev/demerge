@@ -70,8 +70,7 @@ if [ -z $GRAPH_DIR ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
 if [ -z $DATA_DIR ]; then
-    #DATA_DIR="../raw_dataset/obs" # 観測データの場所の規定値
-    DATA_DIR="/home/deshima/desql/ASTE2017/data/ASTE2017/obs" # 観測データの場所の規定値
+    DATA_DIR="data/cosmos" # 観測データの場所の規定値
 fi
 if [ -z $DDB_FILE ]; then
     DDB_FILE="data/ddb/ddb_20180619.fits.gz" # DDBファイルの規定値

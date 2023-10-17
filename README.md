@@ -1,18 +1,32 @@
 # dmerge
 DEMSをASTE生データからマージするスクリプト
 
-MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、demsオブジェクトを生成できるようにしました。今回の更新ではrun.shを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。demsの構造については https://github.com/deshima-dev/dems をご覧下さい。
+MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新ではrun.shを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 
 ## 動作環境
 
 - CPython: 3.9-3.12
-- Dependent packages: pyproject.tomlをご確認ください
+- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/dmerge/blob/v2.2.0/pyproject.toml)をご確認ください
 
 ## インストール
 
-run.shの実行には、dmergeパッケージのPython環境へのインストールが必要です。
+以下のコマンドで実行環境にダウンロード（クローン）してください。
 
+```shell
+# テストデータを含める場合
+git clone --recursive https://github.com/deshima-dev/dmerge.git
+cd dmerge && git checkout v2.2.0
+
+# 最小構成でダウンロードする場合
+git clone --depth=1 https://github.com/deshima-dev/dmerge.git
+cd dmerge && git checkout v2.2.0
 ```
+
+run.shの実行には、加えてdmergeパッケージのPython環境へのインストールが必要です。
+
+```shell
+cd /path/to/dmerge
+
 # pipでインストールする場合
 $ pip install -e .
 
@@ -24,33 +38,30 @@ $ poetry install
 
 ## 解析の実行例
 
-以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/deshima2.0に格納されているものとします。
+以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/cosmosに格納されているものとします。
 
-```
-$ pwd
-/home/hoge/dmerge
-$ ./run.sh -d data/deshima2.0 20171103184436
+```shell
+cd /path/to/dmerge
+./run.sh -d data/cosmos 20171103184436
 ```
 
 ### run.shの引数
 
 以下の引数を指定するとrun.shのデータの取得ディレクトリと保存先を変更することができます。
 
-|引数|説明                        |
-|----|----------------------------|
-|-d  |観測データディレクトリの指定|
-|-c  |キャッシュディレクトリを指定|
-|-g  |グラフディレクトリを指定    |
+| 引数 | 説明 | デフォルト |
+| --- | --- | --- |
+| `-d` | 観測データディレクトリの指定 | `data/cosmos` |
+| `-c` | キャッシュディレクトリを指定 | `cache` |
+| `-g` | グラフディレクトリを指定 | `graph` |
+| `-b` | DDBファイルを指定 | `data/ddb/ddb_20180619.fits.gz` |
+| `-o` | 出力データディレクトリを指定 | `cache` |
 
 ### 観測データの保存先の構造
 
 ```
 data
-├── D2_supplements
-
-(((中略)))
-
-├── deshima2.0
+├── cosmos
 │   ├── cosmos_20171103184436
 │   │   ├── 20171103184436_info.txt
 │   │   ├── 20171103184436.ant
@@ -69,37 +80,19 @@ data
 │   │       ├── kids.list
 │   │       ├── localsweep_info.txt
 │   │       └── localsweep.sweep
-│   ├── cosmos_20171111103248
-│   │   ├── 20171111103248_info.txt
-│   │   ├── 20171111103248.ant
-│   │   ├── 20171111103248.cabin
-│   │   ├── 20171111103248.fits.gz
-│   │   ├── 20171111103248.misti
-│   │   ├── 20171111103248.obs
-│   │   ├── 20171111103248.roomchop
-│   │   ├── 20171111103248.skychop
-│   │   ├── 20171111103248.tsky
-│   │   ├── 20171111103248.wea
-│   │   ├── kids.list
-│   │   ├── localsweep_info.txt
-│   │   ├── localsweep.sweep
-│   │   └── pretune
-│   │       ├── kids.list
-│   │       ├── localsweep_info.txt
-│   │       └── localsweep.sweep
 
 ((( 続く )))
 ```
 
 ### 解析結果の保存場所
 
-解析を実行するとdmergeディレクトリ直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/((OBSID))/((OBSID)).ncというパスに保存されます。
+run.shを実行するとdmergeディレクトリ直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
 
 以下にOBSID=20171103184436を解析した時のcache内のファイル構造を示します。
 ```
 cache
 ├── 20171103184436
-│   ├── 20171103184436.nc <--- これがmerge_to_dems.pyで生成されるファイル
+│   ├── dems_20171103184436.nc <--- これがmerge_to_dems.pyで生成されるファイル
 │   ├── kid00000.pkl
 │   ├── kid00001.pkl
 │   ├── kid00002.pkl
@@ -157,19 +150,17 @@ graph
 
 ## テストの実行方法
 
-```
-$ pwd
-/home/hoge/dmerge
-$ cd test
-$ ./mktd.sh                    # テストに必要なダミーデータを生成します
-$ python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
+```shell
+cd /path/to/dmerge/test
+./mktd.sh                    # テストに必要なダミーデータを生成します
+python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
 ```
 
-test_merge_to_dems.pyを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdmerge/data/deshima2.0/cosmos_20171103184436/の中のものを使います。
+test_merge_to_dems.pyを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdata/cosmos/cosmos_20171103184436/の中のものを使います。
 
 ## merge_to_dems.pyについて
 
-merge_to_dems()関数が定義されています。この関数は以下の8つのファイルからdemsオブジェクトを生成します。
+merge_to_dems()関数が定義されています。この関数は以下の8つのファイルからDEMSオブジェクトを生成します。
 
  - DDBファイル(.fits.gz)
  - obsファイル(.obs)
@@ -180,7 +171,7 @@ merge_to_dems()関数が定義されています。この関数は以下の8つ�
  - cabinファイル(.cabin)
  - reduced readoutファイル(.fits)
 
-reduced readoutファイルはrun.shを実行することによって生成されます。DDBファイルはdmergeのパッケージに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
+reduced readoutファイルはrun.shを実行することによって生成されます。DDBファイルはdmergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
 
 merge_to_dems()関数は以下の必須引数とオプション引数をとることができます。
 

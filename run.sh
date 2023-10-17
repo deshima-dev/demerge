@@ -152,7 +152,7 @@ merge_to_dems                                                \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
-    "${OUT_DIR}/${OBSID}/${OBSID}.nc"
+    "${OUT_DIR}/${OBSID}/dems_${OBSID}.nc"
 
 if [ $? -ne 0 ]; then
     echo "失敗:merge_to_dems"

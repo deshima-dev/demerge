@@ -114,7 +114,7 @@ def merge_to_dems(
         lon_origin = obsinst_params['ra'] # 観測スクリプトに設定されているRA,DEC
         lat_origin = obsinst_params['dec']
     else:
-        raise KeyError('Invalid coodinate type: {}'.format(coodinate))
+        raise KeyError('Invalid coodinate type: {}'.format(coordinate))
 
     # 補間関数で扱うためにSCANTYPE(文字列)を適当な整数に対応させる
     states = np.array(antenna_table['type'])

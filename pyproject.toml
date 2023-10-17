@@ -24,6 +24,7 @@ sympy = "^1.10"
 ipython = "^8.15"
 
 [tool.poetry.scripts]
+dmerge = "dmerge:main"
 calc_resonance_params = "dmerge.calc_resonance_params:main"
 make_divided_data = "dmerge.make_divided_data:main"
 make_reduced_fits = "dmerge.make_reduced_fits:main"

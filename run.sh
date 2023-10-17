@@ -127,7 +127,7 @@ fi
 # 出力するnetCDFファイルへの相対パス
 #
 merge_to_dems                                                \
-    --ddb     "data/ddb/DDB_20180619.fits.gz"                    \
+    --ddb     "data/ddb/ddb_20180619.fits.gz"                    \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \

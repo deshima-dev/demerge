@@ -20,7 +20,7 @@
 #
 # 使用例
 # ------
-#  $ ./run.sh -d data/deshima2.0 20171103184836
+#  $ ./run.sh -d data/cosmos 20171103184836
 #
 #
 # 指定可能なオプション
@@ -29,6 +29,8 @@
 #  -c キャッシュディレクトリを指定
 #  -g グラフディレクトリを指定
 #  -d 観測データディレクトリの指定
+#  -b DDBファイルの指定
+#  -o 出力データディレクトリの指定
 #
 
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
@@ -39,13 +41,17 @@ NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 #  -c キャッシュディレクトリを指定
 #  -g グラフディレクトリを指定
 #  -d 観測データディレクトリの指定
+#  -b DDBファイルの指定
+#  -o 出力データディレクトリの指定
 #
-while getopts c:g:d: OPT
+while getopts c:g:d:b:o: OPT
 do
     case $OPT in
 	"c") CACHE_DIR="${OPTARG}";;
 	"g") GRAPH_DIR="${OPTARG}";;
 	"d") DATA_DIR="${OPTARG}";;
+	"b") DDB_FILE="${OPTARG}";;
+	"o") OUT_DIR="${OPTARG}";;
     esac
 done
 shift $((OPTIND - 1))
@@ -64,8 +70,13 @@ if [ -z $GRAPH_DIR ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
 if [ -z $DATA_DIR ]; then
-    #DATA_DIR="../raw_dataset/obs" # 観測データの場所の規定値
-    DATA_DIR="/home/deshima/desql/ASTE2017/data/ASTE2017/obs" # 観測データの場所の規定値
+    DATA_DIR="data/cosmos" # 観測データの場所の規定値
+fi
+if [ -z $DDB_FILE ]; then
+    DDB_FILE="data/ddb/ddb_20180619.fits.gz" # DDBファイルの規定値
+fi
+if [ -z $OUT_DIR ]; then
+    OUT_DIR="${CACHE_DIR}" # 出力ディレクトリの規定値
 fi
 
 # キャッシュやグラフを格納するディレクトリを作成する
@@ -77,6 +88,12 @@ if [ ! -d ${CACHE_DIR}/${OBSID} ]; then
 fi
 if [ ! -d ${GRAPH_DIR}/${OBSID} ]; then
     mkdir -p ${GRAPH_DIR}/${OBSID}
+    if [ $? -ne 0 ]; then
+	exit 1
+    fi
+fi
+if [ ! -d ${OUT_DIR}/${OBSID} ]; then
+    mkdir -p ${OUT_DIR}/${OBSID}
     if [ $? -ne 0 ]; then
 	exit 1
     fi
@@ -127,7 +144,7 @@ fi
 # 出力するnetCDFファイルへの相対パス
 #
 merge_to_dems                                                \
-    --ddb     "data/ddb/ddb_20180619.fits.gz"                    \
+    --ddb     "${DDB_FILE}"                                  \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \
@@ -135,7 +152,7 @@ merge_to_dems                                                \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
-    "${CACHE_DIR}/${OBSID}/${OBSID}.nc"
+    "${OUT_DIR}/${OBSID}/dems_${OBSID}.nc"
 
 if [ $? -ne 0 ]; then
     echo "失敗:merge_to_dems"

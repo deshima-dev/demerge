@@ -1,7 +1,7 @@
 # dmerge
 DEMSをASTE生データからマージするスクリプト
 
-MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新ではrun.shを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
+MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`dmerge`をPython環境にインストールすることで、同名のコマンド`dmerge`が利用可能となります（`dmerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 
 ## 動作環境
 
@@ -22,7 +22,7 @@ git clone --depth=1 https://github.com/deshima-dev/dmerge.git
 cd dmerge && git checkout v2.2.0
 ```
 
-run.shの実行には、加えてdmergeパッケージのPython環境へのインストールが必要です。
+続けて、`dmerge`パッケージのPython環境へのインストールを行います。
 
 ```shell
 cd /path/to/dmerge
@@ -34,20 +34,19 @@ $ pip install -e .
 $ poetry install
 ```
 
-インストール後、run.shの実行に必要なコマンドラインツールが利用可能になります。
+インストール後、`dmerge`コマンドが利用可能になります。
 
 ## 解析の実行例
 
 以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/cosmosに格納されているものとします。
 
 ```shell
-cd /path/to/dmerge
-./run.sh -d data/cosmos 20171103184436
+dmerge -d data/cosmos 20171103184436
 ```
 
-### run.shの引数
+### dmergeコマンドの引数
 
-以下の引数を指定するとrun.shのデータの取得ディレクトリと保存先を変更することができます。
+以下の引数を指定すると、データの取得ディレクトリや保存先などを変更することができます。
 
 | 引数 | 説明 | デフォルト |
 | --- | --- | --- |
@@ -86,7 +85,7 @@ data
 
 ### 解析結果の保存場所
 
-run.shを実行するとdmergeディレクトリ直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
+`dmerge`コマンドを実行すると、デフォルトでは直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
 
 以下にOBSID=20171103184436を解析した時のcache内のファイル構造を示します。
 ```
@@ -171,7 +170,7 @@ merge_to_dems()関数が定義されています。この関数は以下の8つ�
  - cabinファイル(.cabin)
  - reduced readoutファイル(.fits)
 
-reduced readoutファイルはrun.shを実行することによって生成されます。DDBファイルはdmergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
+reduced readoutファイルはdmerge/run.shを実行することによって生成されます。DDBファイルはdmergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
 
 merge_to_dems()関数は以下の必須引数とオプション引数をとることができます。
 
@@ -214,7 +213,7 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 --loadtypeはTsignalを指定できますが、現在の実装ではTsignal以外は指定できません。将来、loadtypeが増えた場合に備えた引数です。既定値はTsignalです。
 
-run.shでは上記オプション引数を指定していません。必要に応じてrun.shを編集してください。
+dmerge/run.shでは上記オプション引数を指定していません。必要に応じてdmerge/run.shを編集してください。
 
 ## tdmaker.pyについて
 

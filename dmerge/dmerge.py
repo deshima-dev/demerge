@@ -6,7 +6,7 @@ Python 3.7
 """
 import os
 import sys
-from warnings import catch_warnings, simplefilter
+from warnings import catch_warnings, simplefilter, warn
 import numpy as np
 import scipy
 import scipy.signal
@@ -901,9 +901,9 @@ def power_spectrum_density(data, dt, ndivide=1, window=scipy.signal.windows.hann
         size = step
     if bin(size).count("1") != 1:
         if overwrap_half:
-            warnings.warn('warning: ((length of data)/(ndivide+1))*2 is not power of 2: %d' % size)
+            warn('warning: ((length of data)/(ndivide+1))*2 is not power of 2: %d' % size)
         else:
-            warnings.warn('warning: (length of data)/ndivide is not power of 2: %d' % size)
+            warn('warning: (length of data)/ndivide is not power of 2: %d' % size)
     psd = np.zeros(size)
     T = (size - 1)*dt
     vs = 1/dt

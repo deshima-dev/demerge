@@ -141,7 +141,7 @@ fi
 # weaファイルへの相対パス
 # mistiファイルへの相対パス
 # cabinファイルへの相対パス
-# 出力するnetCDFファイルへの相対パス
+# 出力するZarrファイルへの相対パス
 #
 merge_to_dems                                                \
     --ddb     "${DDB_FILE}"                                  \
@@ -152,7 +152,7 @@ merge_to_dems                                                \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
-    "${OUT_DIR}/${OBSID}/dems_${OBSID}.nc"
+    "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then
     echo "失敗:merge_to_dems"

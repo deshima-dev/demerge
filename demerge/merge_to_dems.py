@@ -275,7 +275,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
 
     # 必須引数
-    parser.add_argument('filename',  type=str, help='出力ファイルへのパスを指定して下さい(.nc)')
+    parser.add_argument('filename',  type=str, help='出力ファイルへのパスを指定して下さい(.zarr.zip)')
     parser.add_argument('--ddb',     type=str, required=True, help='DDBファイルへのパスを指定して下さい(.fits.gz)')
     parser.add_argument('--obs',     type=str, required=True, help='obsファイルへのパスを指定して下さい(.obs)')
     parser.add_argument('--antenna', type=str, required=True, help='antennaファイルへのパスを指定して下さい(.antenna)')
@@ -333,7 +333,7 @@ def main() -> None:
         lon_max_on =a.lon_max_on,
     )
 
-    dems.to_netcdf(a.filename)
+    dems.to_zarr(a.filename, mode="w")
 
 if __name__ == '__main__':
     main()

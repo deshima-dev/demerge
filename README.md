@@ -3,6 +3,7 @@
 [![Release](https://img.shields.io/pypi/v/demerge?label=Release&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
 [![Python](https://img.shields.io/pypi/pyversions/demerge?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
 [![Downloads](https://img.shields.io/pypi/dm/demerge?label=Downloads&color=cornflowerblue&style=flat-square)](https://pepy.tech/project/demerge)
+[![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.10015892-cornflowerblue?style=flat-square)](https://doi.org/10.5281/zenodo.10015892)
 [![Tests](https://img.shields.io/github/actions/workflow/status/deshima-dev/demerge/tests.yaml?label=Tests&style=flat-square)](https://github.com/deshima-dev/demerge/actions)
 
 Merge DESHIMA datasets observed with ASTE
@@ -12,7 +13,7 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 ## 動作環境
 
 - CPython: 3.9-3.12
-- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.4.0/pyproject.toml)をご確認ください
+- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.5.0/pyproject.toml)をご確認ください
 
 ## インストール
 
@@ -21,8 +22,10 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 pipで[PyPI](https://pypi.org)からインストールしてください。
 
 ```shell
-pip install demerge==2.4.0
+pip install demerge==2.5.0
 ```
+
+インストール後、`demerge`コマンドが利用可能になります。
 
 ### 開発者
 
@@ -31,11 +34,11 @@ pip install demerge==2.4.0
 ```shell
 # テストデータを含める場合
 git clone --recursive https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.4.0
+cd demerge && git checkout v2.5.0
 
 # 最小構成でダウンロードする場合
 git clone --depth=1 https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.4.0
+cd demerge && git checkout v2.5.0
 ```
 
 続けて、`demerge`パッケージのPython環境へのインストールを行います。

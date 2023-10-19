@@ -1,5 +1,11 @@
 # demerge
-DEMSをASTE生データからマージするスクリプト
+
+[![Release](https://img.shields.io/pypi/v/demerge?label=Release&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
+[![Python](https://img.shields.io/pypi/pyversions/demerge?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
+[![Downloads](https://img.shields.io/pypi/dm/demerge?label=Downloads&color=cornflowerblue&style=flat-square)](https://pepy.tech/project/demerge)
+[![Tests](https://img.shields.io/github/actions/workflow/status/deshima-dev/demerge/tests.yaml?label=Tests&style=flat-square)](https://github.com/deshima-dev/demerge/actions)
+
+Merge DESHIMA datasets observed with ASTE
 
 MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`demerge`をPython環境にインストールすることで、同名のコマンド`demerge`が利用可能となります（`demerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 

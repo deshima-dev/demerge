@@ -28,6 +28,7 @@ matplotlib = "^3.7"
 numpy =	"^1.25"
 scipy = "^1.10"
 sympy = "^1.10"
+zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
 ipython = "^8.15"

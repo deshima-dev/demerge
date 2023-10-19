@@ -1,4 +1,4 @@
-# demerge
+# de:merge
 
 [![Release](https://img.shields.io/pypi/v/demerge?label=Release&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
 [![Python](https://img.shields.io/pypi/pyversions/demerge?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
@@ -7,7 +7,7 @@
 
 Merge DESHIMA datasets observed with ASTE
 
-MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`demerge`をPython環境にインストールすることで、同名のコマンド`demerge`が利用可能となります（`demerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
+MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`demerge`をPython環境にインストールすることで、同名のコマンド`demerge`が利用可能となります（`demerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったZarrファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 
 ## 動作環境
 
@@ -101,13 +101,13 @@ data
 
 ### 解析結果の保存場所
 
-`demerge`コマンドを実行すると、デフォルトでは直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
+`demerge`コマンドを実行すると、デフォルトでは直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のZarrファイルもcache/dems_((OBSID))/((OBSID)).zarr.zipというパスに保存されます。
 
 以下にOBSID=20171103184436を解析した時のcache内のファイル構造を示します。
 ```
 cache
 ├── 20171103184436
-│   ├── dems_20171103184436.nc <--- これがmerge_to_dems.pyで生成されるファイル
+│   ├── dems_20171103184436.zarr.zip <--- これがmerge_to_dems.pyで生成されるファイル
 │   ├── kid00000.pkl
 │   ├── kid00001.pkl
 │   ├── kid00002.pkl
@@ -194,7 +194,7 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 |引数名   |型    |説明                                                  |
 |---------|------|------------------------------------------------------|
-|filename |文字列|出力ファイルへのパスを指定して下さい(.nc)             |
+|filename |文字列|出力ファイルへのパスを指定して下さい(.zarr.zip)             |
 |--ddb    |文字列|DDBファイルへのパスを指定して下さい(.fits.gz)         |
 |--obs    |文字列|obsファイルへのパスを指定して下さい(.obs)             |
 |--antenna|文字列|antennaファイルへのパスを指定して下さい(.antenna)     |

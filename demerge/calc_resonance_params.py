@@ -13,7 +13,7 @@ Filename: calc_resonance_params.py
 import os
 import sys
 import pickle
-from . import dmerge
+from . import demerge
 
 def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     """1つのKIDに対するresonanceパラメータを求める
@@ -21,16 +21,16 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     ----
     dict  KIDに関する測定値などをまとめた辞書(divide_data()関数によって作成される)
     float FWHMを単位としたフィット範囲[オプション]
-    float qの最小値(フィットの良し悪しを判定する基準として利用する:dmerge.find_peaks()関数で利用)[オプション]
-    float フィットの良し悪しを判定する基準((bg-d)/bgの最大値:dmerge.find_peaks()関数で利用)[オプション]
+    float qの最小値(フィットの良し悪しを判定する基準として利用する:demerge.find_peaks()関数で利用)[オプション]
+    float フィットの良し悪しを判定する基準((bg-d)/bgの最大値:demerge.find_peaks()関数で利用)[オプション]
 
     戻り値
     ------
     dict フィットの結果を引数で与えられたkidに追加した辞書
     """
     fc = kid['tod'].frequency
-    peaks = dmerge.find_peaks(kid['localsweep'].x, kid['localsweep'].amplitude, fc, minq=minq, maxratio=maxratio)
-    result, fitrange = dmerge.fit_onepeak(kid['localsweep'], peaks, nfwhm=nfwhm)
+    peaks = demerge.find_peaks(kid['localsweep'].x, kid['localsweep'].amplitude, fc, minq=minq, maxratio=maxratio)
+    result, fitrange = demerge.fit_onepeak(kid['localsweep'], peaks, nfwhm=nfwhm)
 
     fr = result.params['fr'].value # GHz
     dfr = result.params['fr'].stderr # GHz

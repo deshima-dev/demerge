@@ -14,8 +14,8 @@ import unittest
 import numpy as np
 import xarray as xa
 
-from dmerge import merge_function as mf
-from dmerge import merge_to_dems as mtd
+from demerge import merge_function as mf
+from demerge import merge_to_dems as mtd
 
 from astropy.io import fits, ascii
 from datetime import datetime
@@ -23,7 +23,7 @@ from datetime import datetime
 
 # constants
 from dems import __version__ as DEMS_VERSION
-from dmerge import __version__ as DMERGE_VERSION
+from demerge import __version__ as DEMERGE_VERSION
 
 
 class MergeToDemsTestDrive(unittest.TestCase):
@@ -403,7 +403,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
         self.assertEqual(DEMS_VERSION, dems.d2_dems_version)
-        self.assertEqual(DMERGE_VERSION, dems.d2_dmerge_version)
+        self.assertEqual(DEMERGE_VERSION, dems.d2_demerge_version)
         return
 
     def test_retrieve_cabin_temps(self):

@@ -1,5 +1,5 @@
 {
-    "name": "dmerge",
+    "name": "demerge",
     "image":"python:3.11",
     "onCreateCommand": "pip install poetry==1.6.1",
     "postCreateCommand": "poetry install",

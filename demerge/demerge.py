@@ -1,6 +1,6 @@
 """DESHIMA解析プログラム
 
-File name: dmerge.py
+File name: demerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
@@ -24,7 +24,7 @@ def divide_data(kidslist, localsweep, tods):
     """KID毎にSweepデータやTODを分割して辞書に格納する
     引数
     ----
-    list dmerge.load_kidslist()関数で得られるタプル(info, kid_bins, blind_bins, powers)
+    list demerge.load_kidslist()関数で得られるタプル(info, kid_bins, blind_bins, powers)
     list SweepDataオブジェクトのリスト
     TODs TODsオブジェクト
 
@@ -57,7 +57,7 @@ def find_nearest_blind_tones(kidslist):
     """ KID信号の左右にある最も近いblind信号を探す
     引数
     ----
-    kidslist(dmerge.read_kidslist()関数の戻り値)
+    kidslist(demerge.read_kidslist()関数の戻り値)
 
     戻り値
     ------

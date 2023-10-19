@@ -1,5 +1,5 @@
 [tool.poetry]
-name = "dmerge"
+name = "demerge"
 version = "2.2.0"
 description = "Merge DESHIMA datasets observed with ASTE"
 authors = [
@@ -8,7 +8,7 @@ authors = [
     "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
 ]
 readme = "README.md"
-homepage = "https://github.com/deshima-dev/dmerge/"
+homepage = "https://github.com/deshima-dev/demerge/"
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
@@ -24,12 +24,12 @@ sympy = "^1.10"
 ipython = "^8.15"
 
 [tool.poetry.scripts]
-dmerge = "dmerge:main"
-calc_resonance_params = "dmerge.calc_resonance_params:main"
-make_divided_data = "dmerge.make_divided_data:main"
-make_reduced_fits = "dmerge.make_reduced_fits:main"
-merge_to_dems = "dmerge.merge_to_dems:main"
-plot = "dmerge.plot:main"
+demerge = "demerge:main"
+calc_resonance_params = "demerge.calc_resonance_params:main"
+make_divided_data = "demerge.make_divided_data:main"
+make_reduced_fits = "demerge.make_reduced_fits:main"
+merge_to_dems = "demerge.merge_to_dems:main"
+plot = "demerge.plot:main"
 
 [build-system]
 requires = ["poetry-core"]

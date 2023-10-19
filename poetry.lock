@@ -220,13 +220,13 @@ files = [
 
 [[package]]
 name = "dems"
-version = "0.5.0"
+version = "0.6.0"
 description = "DESHIMA measurement set"
 optional = false
 python-versions = ">=3.8,<3.13"
 files = [
-    {file = "dems-0.5.0-py3-none-any.whl", hash = "sha256:caba3a5ae59c935ac9ac759fccc7eca925f9dc5b0f3e903ba2d6729cbf3e27b5"},
-    {file = "dems-0.5.0.tar.gz", hash = "sha256:651417afe1bcf1a2a0987abdbf2926bebf9126e9753704ac97ac7041efb01759"},
+    {file = "dems-0.6.0-py3-none-any.whl", hash = "sha256:986b65ecafc630c3d63a6003db1d6ad708494c0342ae60e02db455a9e5a014b2"},
+    {file = "dems-0.6.0.tar.gz", hash = "sha256:c61eff792606c4ac8133871e320875f17c2f7dc1a233aa660f411533fbba299e"},
 ]
 
 [package.dependencies]
@@ -1236,13 +1236,13 @@ files = [
 
 [[package]]
 name = "xarray"
-version = "2023.9.0"
+version = "2023.10.0"
 description = "N-D labeled arrays and datasets in Python"
 optional = false
 python-versions = ">=3.9"
 files = [
-    {file = "xarray-2023.9.0-py3-none-any.whl", hash = "sha256:3fc4a558bd70968040a4e1cefc6ddb3f9a7a86ef6a48e67857156ffe655d3a66"},
-    {file = "xarray-2023.9.0.tar.gz", hash = "sha256:271955c05dc626dad37791a7807d920aaf9c64cac71d03b45ec7e402cc646603"},
+    {file = "xarray-2023.10.0-py3-none-any.whl", hash = "sha256:cae883c10913a081c58f38d0dc39e92cc87e0fbb43e869331c60fd0430e97fb4"},
+    {file = "xarray-2023.10.0.tar.gz", hash = "sha256:69ac225b073610672e2d9e77fe18709e3b0ac0220fc8154abef87e02d97c03cf"},
 ]
 
 [package.dependencies]
@@ -1291,4 +1291,4 @@ testing = ["big-O", "jaraco.functools", "jaraco.itertools", "more-itertools", "p
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.13"
-content-hash = "25076b09c0b2dd4fa16baa2f470de726951439e625f98dc586680ae12cd607dd"
+content-hash = "f2cffa3ff45c968d1f35d6bb12f3ffa26e887af53e689058116f8d30b4a94e7f"

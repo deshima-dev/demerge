@@ -7,8 +7,17 @@ authors = [
     "Daisuke Naito",
     "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
 ]
+keywords = [
+    "astronomy",
+    "radio-astronomy",
+    "submillimeter",
+    "spectroscopy",
+    "deshima",
+]
+license = "MIT"
 readme = "README.md"
 homepage = "https://github.com/deshima-dev/demerge/"
+repository = "https://github.com/deshima-dev/demerge/"
 
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"

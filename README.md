@@ -16,6 +16,16 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 
 ## インストール
 
+### 一般ユーザ
+
+pipで[PyPI](https://pypi.org)からインストールしてください。
+
+```shell
+pip install demerge==2.4.0
+```
+
+### 開発者
+
 以下のコマンドで実行環境にダウンロード（クローン）してください。
 
 ```shell
@@ -34,10 +44,10 @@ cd demerge && git checkout v2.2.0
 cd /path/to/demerge
 
 # pipでインストールする場合
-$ pip install -e .
+pip install -e .
 
 # Poetryでインストールする場合
-$ poetry install
+poetry install
 ```
 
 インストール後、`demerge`コマンドが利用可能になります。

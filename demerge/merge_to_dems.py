@@ -15,7 +15,7 @@ from dems.d2    import MS
 
 
 # constants
-from . import __version__ as DMERGE_VERSION
+from . import __version__ as DEMERGE_VERSION
 
 
 def merge_to_dems(
@@ -259,7 +259,7 @@ def merge_to_dems(
         d2_mkid_type            =kid_type,
         d2_mkid_frequency       =kid_freq,
         d2_skychopper_isblocking=skychop_state,
-        d2_dmerge_version       =DMERGE_VERSION,
+        d2_demerge_version       =DEMERGE_VERSION,
         beam_major              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_minor              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_pa                 =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた

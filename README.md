@@ -1,50 +1,66 @@
-# dmerge
-DEMSをASTE生データからマージするスクリプト
+# demerge
 
-MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`dmerge`をPython環境にインストールすることで、同名のコマンド`dmerge`が利用可能となります（`dmerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
+[![Release](https://img.shields.io/pypi/v/demerge?label=Release&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
+[![Python](https://img.shields.io/pypi/pyversions/demerge?label=Python&color=cornflowerblue&style=flat-square)](https://pypi.org/project/demerge/)
+[![Downloads](https://img.shields.io/pypi/dm/demerge?label=Downloads&color=cornflowerblue&style=flat-square)](https://pepy.tech/project/demerge)
+[![Tests](https://img.shields.io/github/actions/workflow/status/deshima-dev/demerge/tests.yaml?label=Tests&style=flat-square)](https://github.com/deshima-dev/demerge/actions)
+
+Merge DESHIMA datasets observed with ASTE
+
+MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`demerge`をPython環境にインストールすることで、同名のコマンド`demerge`が利用可能となります（`demerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったnetCDFファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 
 ## 動作環境
 
 - CPython: 3.9-3.12
-- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/dmerge/blob/v2.2.0/pyproject.toml)をご確認ください
+- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.3.0/pyproject.toml)をご確認ください
 
 ## インストール
+
+### 一般ユーザ
+
+pipで[PyPI](https://pypi.org)からインストールしてください。
+
+```shell
+pip install demerge==2.3.0
+```
+
+### 開発者
 
 以下のコマンドで実行環境にダウンロード（クローン）してください。
 
 ```shell
 # テストデータを含める場合
-git clone --recursive https://github.com/deshima-dev/dmerge.git
-cd dmerge && git checkout v2.2.0
+git clone --recursive https://github.com/deshima-dev/demerge.git
+cd demerge && git checkout v2.3.0
 
 # 最小構成でダウンロードする場合
-git clone --depth=1 https://github.com/deshima-dev/dmerge.git
-cd dmerge && git checkout v2.2.0
+git clone --depth=1 https://github.com/deshima-dev/demerge.git
+cd demerge && git checkout v2.3.0
 ```
 
-続けて、`dmerge`パッケージのPython環境へのインストールを行います。
+続けて、`demerge`パッケージのPython環境へのインストールを行います。
 
 ```shell
-cd /path/to/dmerge
+cd /path/to/demerge
 
 # pipでインストールする場合
-$ pip install -e .
+pip install -e .
 
 # Poetryでインストールする場合
-$ poetry install
+poetry install
 ```
 
-インストール後、`dmerge`コマンドが利用可能になります。
+インストール後、`demerge`コマンドが利用可能になります。
 
 ## 解析の実行例
 
 以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/cosmosに格納されているものとします。
 
 ```shell
-dmerge -d data/cosmos 20171103184436
+demerge -d data/cosmos 20171103184436
 ```
 
-### dmergeコマンドの引数
+### demergeコマンドの引数
 
 以下の引数を指定すると、データの取得ディレクトリや保存先などを変更することができます。
 
@@ -85,7 +101,7 @@ data
 
 ### 解析結果の保存場所
 
-`dmerge`コマンドを実行すると、デフォルトでは直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
+`demerge`コマンドを実行すると、デフォルトでは直下にcacheとgraphというディレクトリが作成されます。これらのディレクトリの中にはさらにobsidのディレクトリが作成され、そこに解析結果が保存されます。最終結果のnetCDFファイルもcache/dems_((OBSID))/((OBSID)).ncというパスに保存されます。
 
 以下にOBSID=20171103184436を解析した時のcache内のファイル構造を示します。
 ```
@@ -150,7 +166,7 @@ graph
 ## テストの実行方法
 
 ```shell
-cd /path/to/dmerge/test
+cd /path/to/demerge/test
 ./mktd.sh                    # テストに必要なダミーデータを生成します
 python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
 ```
@@ -170,7 +186,7 @@ merge_to_dems()関数が定義されています。この関数は以下の8つ�
  - cabinファイル(.cabin)
  - reduced readoutファイル(.fits)
 
-reduced readoutファイルはdmerge/run.shを実行することによって生成されます。DDBファイルはdmergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
+reduced readoutファイルはdemerge/run.shを実行することによって生成されます。DDBファイルはdemergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
 
 merge_to_dems()関数は以下の必須引数とオプション引数をとることができます。
 
@@ -213,7 +229,7 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 --loadtypeはTsignalを指定できますが、現在の実装ではTsignal以外は指定できません。将来、loadtypeが増えた場合に備えた引数です。既定値はTsignalです。
 
-dmerge/run.shでは上記オプション引数を指定していません。必要に応じてdmerge/run.shを編集してください。
+demerge/run.shでは上記オプション引数を指定していません。必要に応じてdemerge/run.shを編集してください。
 
 ## tdmaker.pyについて
 
@@ -230,7 +246,7 @@ tdmaker.pyにはTestDataMakerクラスが定義されています。このクラ
 |cabin         |60      |.cabin  |
 |dfits         |-       |.fits.gz|
 
-dfitsファイル(.fits.gz) (dfitsファイルはdeshima1.0のdmergeで生成されていたファイルです。
+dfitsファイル(.fits.gz) (dfitsファイルはdeshima1.0のdemergeで生成されていたファイルです。
 
 これらのファイルの測定開始時刻は同一時刻に設定されます。同じ時刻から始まり各ファイル毎の周期でデータが記録されます。
 

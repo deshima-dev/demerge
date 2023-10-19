@@ -29,4 +29,4 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install poetry && poetry install
       - run: cd test && ./mktd.sh && python test_merge_to_dems.py
-      - run: dmerge -d data/cosmos 20171103184436
+      - run: demerge -d data/cosmos 20171103184436

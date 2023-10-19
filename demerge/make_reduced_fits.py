@@ -20,12 +20,12 @@ import pickle
 import numpy as np
 from astropy.io import fits
 from scipy import interpolate
-from . import dmerge
+from . import demerge
 
 def make_reduced_fits(kidfiles, output_filename):
     fitinfo = [] # [[kidid, pread, fc, yfc, linyfc, fr, dfr, Qr, dQr, Qc, dQc, Qi, dQi], ...]
-    readout = dmerge.readout_dict()
-    kidsinfo = dmerge.kids_dict()
+    readout = demerge.readout_dict()
+    kidsinfo = demerge.kids_dict()
     readout['hdr_val_lis'][1] = 'fuga'
     kidsinfo['hdr_val_lis'][1] = 'localsweep.sweep'
     downsampling_rate = 1
@@ -36,7 +36,7 @@ def make_reduced_fits(kidfiles, output_filename):
         with open(kidfile, 'rb') as f:
             kid = pickle.load(f)
         timestamp = kid['tod_timestamp'][:-100] #データの最後の部分にはよくないデータが含まれる可能性があるので、最後の100個ぐらいを除外する。
-        ts = dmerge.rebin_array(timestamp, downsampling_rate) #1はdown samplingしないことを意味する
+        ts = demerge.rebin_array(timestamp, downsampling_rate) #1はdown samplingしないことを意味する
         fc = kid['tod'].frequency
 
         if kid['resonance_params'] is None:
@@ -70,9 +70,9 @@ def make_reduced_fits(kidfiles, output_filename):
             phi0 = kid['resonance_params']['phi0']
             c = kid['resonance_params']['c']
 
-            rewound_localsweep = dmerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
-            fitted_localsweep = dmerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
-            rewound_fitted_localsweep = dmerge.gaolinbg_rewind(kid['localsweep'].x, fitted_localsweep, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            rewound_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            fitted_localsweep = demerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            rewound_fitted_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, fitted_localsweep, arga, absa, tau, fr, Qr, Qc, phi0, c)
 
             phase_localsweep = -np.angle(-rewound_localsweep)
             phase_fitted_localsweep = -np.angle(-rewound_fitted_localsweep)
@@ -89,9 +89,9 @@ def make_reduced_fits(kidfiles, output_filename):
 
             # 抜粋:mkid_data.data.FixedData::calibrate_with_blind_tones()メソッド
             GHz = 1e9
-            calibrated = dmerge.calibrate_with_blind_tones(kid['tod'], kid['blind_tone_left'], kid['blind_tone_right'])
+            calibrated = demerge.calibrate_with_blind_tones(kid['tod'], kid['blind_tone_left'], kid['blind_tone_right'])
             #calibrated_tod = FixedData(kid['tod'].frequency*GHz, kid['tod'].t, np.real(calibrated), np.imag(calibrated), info=kid['tod'].info)
-            # calibrated_tod = dmerge.FixedData()
+            # calibrated_tod = demerge.FixedData()
             # calibrated_tod.timestamp = kid['tod'].t
             # calibrated_tod.i = np.real(calibrated)
             # calibrated_tod.q = np.imag(calibrated)
@@ -99,8 +99,8 @@ def make_reduced_fits(kidfiles, output_filename):
             # calibrated_tod.info = kid['tod'].info
 
             # 抜粋:mkid_data.kidfit.KidFitResult::rewound_ampl_phase()メソッド
-            rw = dmerge.gaolinbg_rewind(kid['tod'].frequency, calibrated, arga, absa, tau, fr, Qr, Qc, phi0, c)
-            #rw = dmerge.gaolinbg_rewind(calibrated_tod.frequency, calibrated_tod.iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            rw = demerge.gaolinbg_rewind(kid['tod'].frequency, calibrated, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            #rw = demerge.gaolinbg_rewind(calibrated_tod.frequency, calibrated_tod.iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
             ampl  = 2*np.abs(rw)
             phase = -np.angle(-rw)
             index_ar0 = np.where(abs(phase)>3.1)
@@ -118,27 +118,27 @@ def make_reduced_fits(kidfiles, output_filename):
 
             #rewound_tod = FixedFitData(calibrated_tod.frequency, calibrated_tod.t, ampl, phase, info=calibrated_tod.info)
             #rewound_tod = FixedFitData(kid['tod'].frequency, kid['tod'].t, ampl, phase, info=kid['tod'].info)
-            rewound_tod = dmerge.FixedFitData(kid['tod'].frequency, kid['tod'].t, ampl, phase, info=kid['tod'].info)
+            rewound_tod = demerge.FixedFitData(kid['tod'].frequency, kid['tod'].t, ampl, phase, info=kid['tod'].info)
 
             #ts, ampl, phase = k.get_cache('deglitch').unpack()
             baseline_thresh = 6.0
             glitch_thresh = 5.0
             clusterize_thresh = 2
             interp_offset = 0
-            bad = dmerge.find_glitch([rewound_tod.phase], baseline_thresh, glitch_thresh, clusterize_thresh, interp_offset)
+            bad = demerge.find_glitch([rewound_tod.phase], baseline_thresh, glitch_thresh, clusterize_thresh, interp_offset)
 
             # 抜粋:bbsweeplib.kids.KID::deglitch()
-            ampl = dmerge.interpolate_bad(rewound_tod.amplitude, bad)
-            phase = dmerge.interpolate_bad(rewound_tod.phase, bad)
-            d = dmerge.FixedFitData(rewound_tod.frequency*GHz, rewound_tod.t, ampl, phase)
+            ampl = demerge.interpolate_bad(rewound_tod.amplitude, bad)
+            phase = demerge.interpolate_bad(rewound_tod.phase, bad)
+            d = demerge.FixedFitData(rewound_tod.frequency*GHz, rewound_tod.t, ampl, phase)
             ts, ampl, phase = d.unpack()
 
             #tck = interpolate.splrep(phase_fitted_localsweep, kid['localsweep'].x, s=0)
             f = interpolate.splev(phase, tck, der=0)
             linphase = 4.0*Qr*(f - fr)/fr
-            ts = dmerge.rebin_array(ts, downsampling_rate)
-            ampl = dmerge.rebin_array(ampl, downsampling_rate)
-            phase = dmerge.rebin_array(phase, downsampling_rate)
+            ts = demerge.rebin_array(ts, downsampling_rate)
+            ampl = demerge.rebin_array(ampl, downsampling_rate)
+            phase = demerge.rebin_array(phase, downsampling_rate)
 
         fitinfo.append([kid['kidid'], kid['readpower'], fc, yfc, linyfc, fr, dfr, Qr, dQr, Qc, dQc, Qi, dQi])
 
@@ -195,11 +195,11 @@ def make_reduced_fits(kidfiles, output_filename):
 
     hdus = fits.HDUList()
     hdus.append(fits.PrimaryHDU())
-    hdus.append(dmerge.createBinTableHDU(kidsinfo))
+    hdus.append(demerge.createBinTableHDU(kidsinfo))
     hdus.writeto(output_filename)
     hdus.close()
 
-    readout_hdu = dmerge.createBinTableHDU(readout)
+    readout_hdu = demerge.createBinTableHDU(readout)
     fits.append(output_filename, readout_hdu.data, readout_hdu.header, memmap=True)
     return
 

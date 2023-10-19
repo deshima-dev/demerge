@@ -25,7 +25,7 @@ import os
 import sys
 import shutil
 import pickle
-from . import dmerge
+from . import demerge
 
 def main() -> None:
     """
@@ -37,10 +37,10 @@ def main() -> None:
     args[4] string 分割されたファイルの保管先ディレクトリ
     """
     args = sys.argv
-    kidslist = dmerge.load_kidslist(args[1])
-    localsweeps = dmerge.load_localsweep(args[2], framelen=kidslist[0]['framelen'])
-    tods = dmerge.TODs(args[3])
-    kids = dmerge.divide_data(kidslist, localsweeps, tods)
+    kidslist = demerge.load_kidslist(args[1])
+    localsweeps = demerge.load_localsweep(args[2], framelen=kidslist[0]['framelen'])
+    tods = demerge.TODs(args[3])
+    kids = demerge.divide_data(kidslist, localsweeps, tods)
     tods.close()
     if os.path.exists(args[4]):
         shutil.rmtree(args[4])

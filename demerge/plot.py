@@ -17,7 +17,7 @@ import pickle
 import matplotlib.pyplot as plt
 import numpy as np
 from scipy import interpolate
-from . import dmerge
+from . import demerge
 
 def plot(kid, oldkid=None):
     if kid['enabled'] == False:
@@ -34,14 +34,14 @@ def plot(kid, oldkid=None):
     c = kid['resonance_params']['c']
 
     fitrange = kid['fitrange']
-    rewound_localsweep = dmerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
-    fitted_localsweep = dmerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
-    limited_fitted_localsweep = dmerge.gaolinbg_function()(kid['localsweep'].x[fitrange], arga, absa, tau, fr, Qr, Qc, phi0, c)
-    rewound_fitted_localsweep = dmerge.gaolinbg_rewind(kid['localsweep'].x, fitted_localsweep, arga, absa, tau, fr, Qr, Qc, phi0, c)
-    fitted_background = dmerge.gaolinbg_bg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
-    limited_fitted_background = dmerge.gaolinbg_bg_function()(kid['localsweep'].x[fitrange], arga, absa, tau, fr, Qr, Qc, phi0, c)
-    rewound_tod = dmerge.gaolinbg_rewind(kid['tod'].frequency, kid['tod'].iq[::100], arga, absa, tau, fr, Qr, Qc, phi0, c)
-    fitted_peak = dmerge.gaolinbg_function()(fr, arga, absa, tau, fr, Qr, Qc, phi0, c)
+    rewound_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
+    fitted_localsweep = demerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
+    limited_fitted_localsweep = demerge.gaolinbg_function()(kid['localsweep'].x[fitrange], arga, absa, tau, fr, Qr, Qc, phi0, c)
+    rewound_fitted_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, fitted_localsweep, arga, absa, tau, fr, Qr, Qc, phi0, c)
+    fitted_background = demerge.gaolinbg_bg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
+    limited_fitted_background = demerge.gaolinbg_bg_function()(kid['localsweep'].x[fitrange], arga, absa, tau, fr, Qr, Qc, phi0, c)
+    rewound_tod = demerge.gaolinbg_rewind(kid['tod'].frequency, kid['tod'].iq[::100], arga, absa, tau, fr, Qr, Qc, phi0, c)
+    fitted_peak = demerge.gaolinbg_function()(fr, arga, absa, tau, fr, Qr, Qc, phi0, c)
 
     plt.ioff()
     fig1 = plt.figure(figsize=(16,10))
@@ -183,9 +183,9 @@ def plot(kid, oldkid=None):
     dt = 1/kid['framert']*rebin
     plot_tod_ratio = 0.25
     size = 2**int(np.floor(np.log2(len(ts)*plot_tod_ratio)))
-    f_, ampl_ = dmerge.power_spectrum_density(ampl[:size], dt, 7, window=None, overwrap_half=True)
-    f_, phase_ = dmerge.power_spectrum_density(phase[:size], dt, 7, window=None, overwrap_half=True)
-    f_, linphase_ = dmerge.power_spectrum_density(linphase[:size], dt, 7, window=None, overwrap_half=True)
+    f_, ampl_ = demerge.power_spectrum_density(ampl[:size], dt, 7, window=None, overwrap_half=True)
+    f_, phase_ = demerge.power_spectrum_density(phase[:size], dt, 7, window=None, overwrap_half=True)
+    f_, linphase_ = demerge.power_spectrum_density(linphase[:size], dt, 7, window=None, overwrap_half=True)
     ax3.semilogx(f_, np.log10(ampl_)*10.0, 'r', label='ampl. (from fits)')
     ax3.semilogx(f_, np.log10(linphase_)*10.0, 'b', label='linearized phase (from fits)')
     ax3.semilogx(f_, np.log10(phase_)*10.0, 'g', lw=3, alpha=0.3, label='phase (from fits)')

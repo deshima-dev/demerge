@@ -5,13 +5,17 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
+# standard library
 import argparse
-import numpy          as np
-import xarray         as xr
-from . import merge_function as mf
+from logging import DEBUG, basicConfig, getLogger
 
-from astropy.io import fits, ascii
-from dems.d2    import MS
+
+# dependencies
+import numpy as np
+import xarray as xr
+from astropy.io import ascii, fits
+from dems.d2 import MS
+from . import merge_function as mf
 
 
 # constants
@@ -302,9 +306,27 @@ def main() -> None:
     parser.add_argument('--lon_max_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最大値を実数で指定します')
     parser.add_argument('--lon_min_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
     parser.add_argument('--lon_max_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
+    parser.add_argument('--debug',       action='store_true',           help='指定された全ての引数の値をログに記録します')
 
+    # 引数の読み取り
     a = parser.parse_args()
 
+    # ロガーの設定
+    logger = getLogger('demerge')
+
+    if a.debug:
+        logger.setLevel(DEBUG)
+
+    basicConfig(
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='[%(asctime)s %(name)s %(levelname)s] %(message)s',
+    )
+
+    # 引数をログに記録
+    for key, val in vars(a).items():
+        logger.debug(f'{key}: {val!r}')
+
+    # マージの実行
     dems = merge_to_dems(
         ddbfits_path=a.ddb,
         obsinst_path=a.obs,

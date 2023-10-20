@@ -67,13 +67,14 @@ demerge -d data/cosmos 20171103184436
 
 以下の引数を指定すると、データの取得ディレクトリや保存先などを変更することができます。
 
-| 引数 | 説明 | デフォルト |
-| --- | --- | --- |
-| `-d` | 観測データディレクトリの指定 | `data/cosmos` |
-| `-c` | キャッシュディレクトリを指定 | `cache` |
-| `-g` | グラフディレクトリを指定 | `graph` |
-| `-b` | DDBファイルを指定 | `data/ddb/ddb_20180619.fits.gz` |
-| `-o` | 出力データディレクトリを指定 | `cache` |
+引数 | 説明 | デフォルト
+--- | --- | ---
+`-d` | 観測データディレクトリの指定 | `data/cosmos`
+`-c` | キャッシュディレクトリを指定 | `cache`
+`-g` | グラフディレクトリを指定 | `graph`
+`-b` | DDBファイルを指定 | `data/ddb/ddb_20180619.fits.gz`
+`-o` | 出力データディレクトリを指定 | `cache`
+`-m` | マージオプションを指定（例：`-m "--coordinate radec"`） | なし
 
 ### 観測データの保存先の構造
 
@@ -195,96 +196,83 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 ### 必須引数
 
-|引数名   |型    |説明                                                  |
-|---------|------|------------------------------------------------------|
-|filename |文字列|出力ファイルへのパスを指定して下さい(.zarr.zip)             |
-|--ddb    |文字列|DDBファイルへのパスを指定して下さい(.fits.gz)         |
-|--obs    |文字列|obsファイルへのパスを指定して下さい(.obs)             |
-|--antenna|文字列|antennaファイルへのパスを指定して下さい(.antenna)     |
-|--readout|文字列|reduced readoutファイルへのパスを指定して下さい(.fits)|
-|--skychop|文字列|skychopファイルへのパスを指定して下さい(.skychop)     |
-|--weather|文字列|weatherファイルへのパスを指定して下さい(.weather)     |
-|--misti  |文字列|mistiファイルへのパスを指定して下さい(.misti)         |
-|--cabin  |文字列|cabinファイルへのパスを指定して下さい(.cabin)         |
+引数名 | 型 | 説明
+--- | --- | ---
+`filename` | 文字列 | 出力ファイルへのパスを指定して下さい(.zarr.zip)
+`--ddb` | 文字列 | DDBファイルへのパスを指定して下さい(.fits.gz)
+`--obs` | 文字列 | obsファイルへのパスを指定して下さい(.obs)
+`--antenna` | 文字列 | antennaファイルへのパスを指定して下さい(.antenna)
+`--readout` | 文字列 | reduced readoutファイルへのパスを指定して下さい(.fits)
+`--skychop` | 文字列 | skychopファイルへのパスを指定して下さい(.skychop)
+`--weather` | 文字列 | weatherファイルへのパスを指定して下さい(.weather)
+`--misti` | 文字列 | mistiファイルへのパスを指定して下さい(.misti)
+`--cabin` | 文字列 | cabinファイルへのパスを指定して下さい(.cabin)
 
 ### オプション引数
 
-|引数名       |型    |既定値 |説明                                                                                          |
-|-------------|------|-------|----------------------------------------------------------------------------------------------|
-|--pixel_id   |整数  |0      |pixel_idを整数で指定します                                                                    |
-|--coordinate |文字列|azel   |座標系(azel/radec)を文字列で指定します                                                        |
-|--mode       |整数  |0      |座標の読み込み方法を整数で指定します(0:相対座標cos射影あり, 1:相対座標cos射影なし, 2:絶対座標)|
-|--loadtype   |文字列|Tsignal|読み込むデータを文字列で指定します(既定値: Tsignal)                                           |
-|--findR      |真理値|False  |findRにTrueを指定するとFindR, Skyを実行します                                                 |
-|--ch         |整数  |0      |findRに利用するチャネルを整数で指定します                                                     |
-|--Rth        |実数  |280.0  |R閾値を実数で指定します                                                                       |
-|--skyth      |実数  |150.0  |sky閾値を実数で指定します                                                                     |
-|--cutnum     |整数  |1      |findRでのカット数を整数で指定します                                                           |
-|--still      |真理値|False  |Trueに設定するとstill観測用の解析を行います                                                   |
-|--period     |整数  |2      |still観測の1/2周期(秒)を整数で指定します                                                      |
-|--shuttle    |真理値|False  |Trueを指定するとshuttle観測用の解析を行います                                                 |
-|--lon_min_off|実数  |0.0    |shuttle観測時のOFFにするlongitudeの最小値を実数で指定します                                   |
-|--lon_max_off|実数  |0.0    |shuttle観測時のOFFにするlongitudeの最大値を実数で指定します                                   |
-|--lon_min_on |実数  |0.0    |shuttle観測時のONにするlongitudeの最小値を実数で指定します                                    |
-|--lon_max_on |実数  |0.0    |shuttle観測時のONにするlongitudeの最大値を実数で指定します                                    |
+引数名 | 型 | 既定値 | 説明
+--- | --- | --- |---
+`--pixel_id` | 整数 | `0` | pixel_idを整数で指定します
+`--coordinate` | 文字列 | `'azel'` | 座標系(azel/radec)を文字列で指定します
+`--mode` | 整数 | 0 | 座標の読み込み方法を整数で指定します(0:相対座標cos射影あり, 1:相対座標cos射影なし, 2:絶対座標)
+`--loadtype` | 文字列 | `'Tsignal'` | 読み込むデータを文字列で指定します(既定値: Tsignal)
+`--findR` | フラグ | なし | 指定するとFindR, Skyを実行します
+`--ch` | 整数 | `0` | findRに利用するチャネルを整数で指定します
+`--Rth` | 実数 | `280.0` | R閾値を実数で指定します
+`--skyth` | 実数 | `150.0` | sky閾値を実数で指定します
+`--cutnum` | 整数 | `1` | findRでのカット数を整数で指定します
+`--still` | フラグ | なし | 指定するとstill観測用の解析を行います
+`--period` | 整数 | `2` | still観測の1/2周期(秒)を整数で指定します
+`--shuttle` | フラグ | なし | 指定するとshuttle観測用の解析を行います
+`--lon_min_off` | 実数 | `0.0` | shuttle観測時のOFFにするlongitudeの最小値を実数で指定します
+`--lon_max_off` | 実数 | `0.0` | shuttle観測時のOFFにするlongitudeの最大値を実数で指定します
+`--lon_min_on` | 実数 | `0.0` | shuttle観測時のONにするlongitudeの最小値を実数で指定します
+`--lon_max_on` | 実数 | `0.0` | shuttle観測時のONにするlongitudeの最大値を実数で指定します
+`--debug` | フラグ | なし | 指定すると全ての引数の値をログとして表示します
 
---modeのおすすめの設定は0(相対座標cos射影あり)です。0が既定値です。
-
---loadtypeはTsignalを指定できますが、現在の実装ではTsignal以外は指定できません。将来、loadtypeが増えた場合に備えた引数です。既定値はTsignalです。
-
-demerge/run.shでは上記オプション引数を指定していません。必要に応じてdemerge/run.shを編集してください。
+`--mode`のおすすめの設定は0(相対座標cos射影あり)です。0が既定値です。`--loadtype`はTsignalを指定できますが、現在の実装ではTsignal以外は指定できません。将来、loadtypeが増えた場合に備えた引数です。既定値はTsignalです。demerge/run.shでは上記オプション引数を文字列として`-m "--coordinate radec --findR --debug"`のように指定することができます。
 
 ## tdmaker.pyについて
 
 tdmaker.pyにはTestDataMakerクラスが定義されています。このクラスを利用するとmerge_to_dems()関数のテストに必要なダミーデータを生成することができます。以下のファイルを個別に生成することができます。
 
-|ファイルの種類|周期(秒)|拡張子  |
-|--------------|--------|--------|
-|ddb           |-       |.fits.gz|
-|antenna       |0.1     |.ant    |
-|readout       |0.00625 |.fits   |
-|skychop       |0.001   |.skychop|
-|weather       |10      |.wea    |
-|misti         |0.1     |.misti  |
-|cabin         |60      |.cabin  |
-|dfits         |-       |.fits.gz|
+ファイルの種類 | 周期(秒) | 拡張子
+--- | --- | ---
+ddb | - | .fits.gz
+antenna | 0.1 | .ant
+readout | 0.00625 | .fits
+skychop | 0.001 | .skychop
+weather | 10 | .wea
+misti | 0.1 | .misti
+cabin | 60 | .cabin
+dfits | - | .fits.gz
 
-dfitsファイル(.fits.gz) (dfitsファイルはdeshima1.0のdemergeで生成されていたファイルです。
-
-これらのファイルの測定開始時刻は同一時刻に設定されます。同じ時刻から始まり各ファイル毎の周期でデータが記録されます。
+dfitsファイル(.fits.gz) (dfitsファイルはdeshima1.0のdemergeで生成されていたファイルです。これらのファイルの測定開始時刻は同一時刻に設定されます。同じ時刻から始まり各ファイル毎の周期でデータが記録されます。
 
 TestDataMakerクラスはオプションを指定することで様々なデータを生成することができます。以下にtdmaker.pyで指定できる引数を示します。
 
-|引数名            |型    |既定値  |説明                                                                                          |
-|------------------|------|--------|----------------------------------------------------------------------------------------------|
-|data_name         |文字列|空      |個別にデータを生成する場合はデータ名を指定します。指定しない場合は全てのデータが生成されます。|
-|--time            |整数  |3       |観測時間(分)を整数で指定して下さい                                                            |
-|--p0              |実数  |1.0     |p0をfloatで指定して下さい                                                                     |
-|--etaf            |実数  |0.5     |etafをfloatで指定して下さい                                                                   |
-|--T0              |実数  |1.0     |T0をfloatで指定して下さい                                                                     |
-|--Qr              |実数  |1.1     |Qrをfloatで指定して下さい                                                                     |
-|--linyfc          |実数  |0.25    |linyfcをfloatで指定して下さい                                                                 |
-|--linear_readout  |文字列|空      |readoutの値を線形に変化させる場合はinc/decのいずれかを指定して下さい                          |
-|--linear_antenna  |真理値|False   |antennaのlonを線形に変化させる場合はTrueを指定して下さい                                      |
-|--all_grad        |真理値|False   |すべてのSCAN状態をGRADにする場合はTrueを指定して下さい                                        |
-|--lower_cabin_temp|実数  |15.0    |MainCabinの温度(degC)をfloatで指定して下さい                                                  |
-|--prefix          |文字列|testdata|生成されるファイル名のprefixを指定して下さい                                                  |
-|--measure_time    |整数  |None    |環境測定時間(分)を整数で指定して下さい                                                        |
+引数名 | 型 | 既定値 | 説明
+--- | --- | --- | ---
+`data_name` | 文字列 | - | 個別にデータを生成する場合はデータ名を指定します。指定しない場合は全てのデータが生成されます。
+`--time` | 整数 | `3` | 観測時間(分)を整数で指定して下さい
+`--p0` | 実数 | `1.0` | p0をfloatで指定して下さい
+`--etaf` | 実数 | `0.5` | etafをfloatで指定して下さい
+`--T0` | 実数 | `1.0` | T0をfloatで指定して下さい
+`--Qr` | 実数 | `1.1` | Qrをfloatで指定して下さい
+`--linyfc` | 実数 | `0.25` | linyfcをfloatで指定して下さい
+`--linear_readout` | 文字列 | - | readoutの値を線形に変化させる場合はinc/decのいずれかを指定して下さい
+`--linear_antenna` | 真理値 | `False` | antennaのlonを線形に変化させる場合はTrueを指定して下さい
+`--all_grad` | 真理値 | `False` | すべてのSCAN状態をGRADにする場合はTrueを指定して下さい
+`--lower_cabin_temp` | 実数 | `15.0` | MainCabinの温度(degC)をfloatで指定して下さい
+`--prefix` | 文字列 | `'testdata'` | 生成されるファイル名のprefixを指定して下さい
+`--measure_time` | 整数 | - | 環境測定時間(分)を整数で指定して下さい
 
-data_nameを指定すると指定されたデータだけが生成されます。指定しない場合は全ての種類のデータが生成されます。
+`data_name`を指定すると指定されたデータだけが生成されます。指定しない場合は全ての種類のデータが生成されます。`--time`は観測時間(分)を指定します。`--measure_time`を指定しなければ観測時間と環境測定時間は同じになります。観測時間とはreadoutの時間であり、環境測定時間はreadout以外のcabinやweatherなどの測定時間になります。通常`--time`だけを指定した場合、または`--time`も`--measure_time`も省略した場合は環境測定時間が観測時間よりも少し長くなるように生成されます。このようなデータではreadoutの時刻に合わせて環境測定時間を補間する場合に外挿処理は発生しません。外挿処理が発生した場合の振る舞いを調べる場合に`--measure_time`オプションで`--time`よりも短い時間を指定します。
 
---timeは観測時間(分)を指定します。--measure_timeを指定しなければ観測時間と環境測定時間は同じになります。観測時間とはreadoutの時間であり、環境測定時間はreadout以外のcabinやweatherなどの測定時間になります。通常--timeだけを指定した場合、または--timeも--measure_timeも省略した場合は環境測定時間が観測時間よりも少し長くなるように生成されます。このようなデータではreadoutの時刻に合わせて環境測定時間を補間する場合に外挿処理は発生しません。外挿処理が発生した場合の振る舞いを調べる場合に--measure_timeオプションで--timeよりも短い時間を指定します。
+`--p0`, `--etaf`, `--T0`, `--Qr`, `--linyfc`はmerge_function.pyで定義されているTlos_model()関数とcalibrate_to_power()関数で計算に利用される係数を設定します。mktd.shでは計算値のTsignalが定数になるように設定したり、0Kから300Kまで3分間で線形に変化するように係数を設定しています。
 
---p0, --etaf, --T0, --Qr, --linyfcはmerge_function.pyで定義されているTlos_model()関数とcalibrate_to_power()関数で計算に利用される係数を設定します。mktd.shでは計算値のTsignalが定数になるように設定したり、0Kから300Kまで3分間で線形に変化するように係数を設定しています。
+計算結果のTsignalを線形に変化させるためには`--linear_readout`にincまたはdecの文字列を指定します。incはTsignalが単調増加し、decは単調減少します。 同様にantennaのlongitudeも線形に変化させることができます。`--linear_antenna`にTrueを設定するとantennaのlongitudeが線形に増加します。
 
-計算結果のTsignalを線形に変化させるためには--linear_readoutにincまたはdecの文字列を指定します。incはTsignalが単調増加し、decは単調減少します。
-
-同様にantennaのlongitudeも線形に変化させることができます。--linear_antennaにTrueを設定するとantennaのlongitudeが線形に増加します。
-
---all_gradをTrueにするとSCAN状態が全てGRADのantennaデータができます。省略(Falseを設定すると)すると観測時間の半分でGRADからONに切り替わるデータとなります。
-
---lower_cabin_tempはMainCabinの温度を指定します。
-
---prefixには生成するデータの接頭語を指定します。用途に合わせてわかりやすい名前を付けます。
+`--all_grad`をTrueにするとSCAN状態が全てGRADのantennaデータができます。省略(Falseを設定すると)すると観測時間の半分でGRADからONに切り替わるデータとなります。`--lower_cabin_temp`はMainCabinの温度を指定します。`--prefix`には生成するデータの接頭語を指定します。用途に合わせてわかりやすい名前を付けます。
 
 TestDataMakerクラスの詳細な使い方はmktd.shスクリプトをご覧下さい。

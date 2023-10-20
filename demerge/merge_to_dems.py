@@ -5,13 +5,17 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
+# standard library
 import argparse
-import numpy          as np
-import xarray         as xr
-from . import merge_function as mf
+from logging import DEBUG, basicConfig, getLogger
 
-from astropy.io import fits, ascii
-from dems.d2    import MS
+
+# dependencies
+import numpy as np
+import xarray as xr
+from astropy.io import ascii, fits
+from dems.d2 import MS
+from . import merge_function as mf
 
 
 # constants
@@ -290,21 +294,39 @@ def main() -> None:
     parser.add_argument('--coordinate',  type=str,   default='azel',    help='座標系(azel/radec)を文字列で指定します')
     parser.add_argument('--mode',        type=int,   default=0,         help='座標の読み込み方法を整数で指定します(0:相対座標cos射影あり(おすすめ既定値), 1:相対座標cos射影なし, 2:絶対座標)')
     parser.add_argument('--loadtype',    type=str,   default='Tsignal', help='読み込むデータを文字列で指定します(既定値: Tsignal, 現在はTsignalの読み込みしかできません)')
-    parser.add_argument('--findR',       type=bool,  default=False,     help='findRにTrueを指定するとFindR, Skyを実行します')
+    parser.add_argument('--findR',       action='store_true',           help='指定するとFindR, Skyを実行します')
     parser.add_argument('--ch',          type=int,   default=0,         help='findRに利用するチャネルを整数で指定します')
     parser.add_argument('--Rth',         type=float, default=280.0,     help='R閾値を実数で指定します')
     parser.add_argument('--skyth',       type=float, default=150.0,     help='sky閾値を実数で指定します')
     parser.add_argument('--cutnum',      type=int,   default=1,         help='findRでのカット数を整数で指定します')
-    parser.add_argument('--still',       type=bool,  default=False,     help='Trueに設定するとstill観測用の解析を行います')
+    parser.add_argument('--still',       action='store_true',           help='指定するとstill観測用の解析を行います')
     parser.add_argument('--period',      type=int,   default=2,         help='still観測の1/2周期(秒)を整数で指定します')
-    parser.add_argument('--shuttle',     type=bool,  default=False,     help='Trueを指定するとshuttle観測用の解析を行います')
+    parser.add_argument('--shuttle',     action='store_true',           help='指定するとshuttle観測用の解析を行います')
     parser.add_argument('--lon_min_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最小値を実数で指定します')
     parser.add_argument('--lon_max_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最大値を実数で指定します')
     parser.add_argument('--lon_min_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
     parser.add_argument('--lon_max_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
+    parser.add_argument('--debug',       action='store_true',           help='指定すると全ての引数の値をログとして表示します')
 
+    # 引数の読み取り
     a = parser.parse_args()
 
+    # ロガーの設定
+    logger = getLogger('demerge')
+
+    if a.debug:
+        logger.setLevel(DEBUG)
+
+    basicConfig(
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='[%(asctime)s %(name)s %(levelname)s] %(message)s',
+    )
+
+    # 引数と値をロガーに記録
+    for key, val in vars(a).items():
+        logger.debug(f'{key}: {val!r}')
+
+    # マージの実行
     dems = merge_to_dems(
         ddbfits_path=a.ddb,
         obsinst_path=a.obs,

@@ -31,6 +31,7 @@
 #  -d 観測データディレクトリの指定
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
+#  -m マージオプションの指定
 #
 
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
@@ -43,8 +44,9 @@ NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 #  -d 観測データディレクトリの指定
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
+#  -m マージオプションの指定
 #
-while getopts c:g:d:b:o: OPT
+while getopts c:g:d:b:o:m: OPT
 do
     case $OPT in
 	"c") CACHE_DIR="${OPTARG}";;
@@ -52,6 +54,7 @@ do
 	"d") DATA_DIR="${OPTARG}";;
 	"b") DDB_FILE="${OPTARG}";;
 	"o") OUT_DIR="${OPTARG}";;
+    "m") MERGE_OPTS="${OPTARG}";;
     esac
 done
 shift $((OPTIND - 1))
@@ -63,20 +66,23 @@ if [ -z $OBSID ]; then
 fi
 
 # オプションの規定値を設定
-if [ -z $CACHE_DIR ]; then
+if [ -z "$CACHE_DIR" ]; then
     CACHE_DIR="cache" # 一時ファイルの場所の規定値
 fi
-if [ -z $GRAPH_DIR ]; then
+if [ -z "$GRAPH_DIR" ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
-if [ -z $DATA_DIR ]; then
+if [ -z "$DATA_DIR" ]; then
     DATA_DIR="data/cosmos" # 観測データの場所の規定値
 fi
-if [ -z $DDB_FILE ]; then
+if [ -z "$DDB_FILE" ]; then
     DDB_FILE="data/ddb/ddb_20180619.fits.gz" # DDBファイルの規定値
 fi
-if [ -z $OUT_DIR ]; then
+if [ -z "$OUT_DIR" ]; then
     OUT_DIR="${CACHE_DIR}" # 出力ディレクトリの規定値
+fi
+if [ -z "$MERGE_OPTS" ]; then
+    MERGE_OPTS="" # マージオプションの規定値
 fi
 
 # キャッシュやグラフを格納するディレクトリを作成する
@@ -152,6 +158,7 @@ merge_to_dems                                                \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
+    ${MERGE_OPTS}                                            \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then

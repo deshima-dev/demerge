@@ -121,7 +121,7 @@ def get_maskid_corresp(pixelid, ddb):
         masterids.append( masterid )
         kidids.append( i )
         kidtypes.append( attr )
-        kidfreqs.append( kidfilt[i][0] )
+        kidfreqs.append( kidfilt[i][0] * 1e9 )
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 

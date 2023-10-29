@@ -396,7 +396,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # DESHIMA 2.0 specific
         self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
         self.assertTrue(np.array(dems.d2_mkid_type != '').all())
-        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5).all(),           'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
+        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5e9).all(),           'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
         self.assertTrue(np.array(dems.d2_roomchopper_isblocking == False).all(), 'd2_roomchopper_isblockingの値が既定値であることを確認')
         self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
         self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(),   'd2_skychopper_isblockingの値が既定値で無いことを確認')

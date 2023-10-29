@@ -34,7 +34,7 @@ zarr = "^2.14"
 ipython = "^8.15"
 
 [tool.poetry.scripts]
-demerge = "demerge:main"
+demerge-sh = "demerge.cli:main_sh"
 calc_resonance_params = "demerge.calc_resonance_params:main"
 make_divided_data = "demerge.make_divided_data:main"
 make_reduced_fits = "demerge.make_reduced_fits:main"

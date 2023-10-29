@@ -10,6 +10,7 @@ Filename: calc_resonance_params.py
 例)
   $ python calc_resonance_params.py cache/kid00001.pkl
 """
+# fmt: off
 import os
 import sys
 import pickle

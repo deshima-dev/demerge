@@ -12,6 +12,7 @@ Filename: make_reduced_fits.py
 例) カレントディレクトリにあるcacheディレクトリの中身をhoge.fitsへまとめる。
   $ python make_reduced_fits.py ./cache hoge.fits
 """
+# fmt: off
 import os
 import sys
 import glob

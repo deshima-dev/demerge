@@ -5,6 +5,7 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
+# fmt: off
 # standard library
 import argparse
 from logging import DEBUG, basicConfig, getLogger

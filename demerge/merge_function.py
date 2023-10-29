@@ -8,6 +8,7 @@
      2021         NAITO systems modfied.
      2023         NAITO systems modfied.
 """
+# fmt: off
 from __future__ import print_function
 
 __all__ = [

@@ -10,6 +10,7 @@ dems   0.4.0
 
 (C) 2023 内藤システムズ
 """
+# fmt: off
 import unittest
 import numpy as np
 import xarray as xa

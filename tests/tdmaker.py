@@ -4,6 +4,7 @@ python 3.9
 
 (C) 内藤システムズ
 """
+# fmt: off
 from datetime      import datetime, timedelta, timezone
 from astropy.io    import fits, ascii
 from astropy.table import Table

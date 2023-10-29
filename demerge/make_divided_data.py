@@ -21,6 +21,7 @@ KID毎に分割されたファイル(*.pkl)はcacheディレクトリ内に作�
                                 ../raw_dataset/obs/cosmos_20171103184836/20171103184836.fits \
                                 cache/20171103184836
 """
+# fmt: off
 import os
 import sys
 import shutil

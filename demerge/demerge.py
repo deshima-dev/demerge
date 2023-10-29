@@ -4,6 +4,7 @@ File name: demerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
+# fmt: off
 import os
 import sys
 from warnings import catch_warnings, simplefilter, warn

@@ -138,6 +138,12 @@ def merge_to_dems(
     wind_direction_xr         = xr.DataArray(data=weather_table['aux2'],           coords={'time': times_weather})
     skychop_state_xr          = xr.DataArray(data=states_skychop,                  coords={'time': times_skychop})
     aste_cabin_temperature_xr = xr.DataArray(data=lower_cabin_temp,                coords={'time': times_cabin})
+    aste_subref_x_xr          = xr.DataArray(data=antenna_table['x'],              coords={'time': times_antenna})
+    aste_subref_y_xr          = xr.DataArray(data=antenna_table['y'],              coords={'time': times_antenna})
+    aste_subref_z_xr          = xr.DataArray(data=antenna_table['z'],              coords={'time': times_antenna})
+    aste_subref_xt_xr         = xr.DataArray(data=antenna_table['xt'],             coords={'time': times_antenna})
+    aste_subref_yt_xr         = xr.DataArray(data=antenna_table['yt'],             coords={'time': times_antenna})
+    aste_subref_zt_xr         = xr.DataArray(data=antenna_table['zt'],             coords={'time': times_antenna})
     aste_misti_lon_xr         = xr.DataArray(data=az_misti,                        coords={'time': times_misti})
     aste_misti_lat_xr         = xr.DataArray(data=el_misti,                        coords={'time': times_misti})
     aste_misti_pwv_xr         = xr.DataArray(data=pwv_misti,                       coords={'time': times_misti})
@@ -152,6 +158,12 @@ def merge_to_dems(
     wind_speed             =             wind_speed_xr.interp_like(response_xr)
     wind_direction         =         wind_direction_xr.interp_like(response_xr)
     aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
+    aste_subref_x          =          aste_subref_x_xr.interp_like(response_xr)
+    aste_subref_y          =          aste_subref_y_xr.interp_like(response_xr)
+    aste_subref_z          =          aste_subref_z_xr.interp_like(response_xr)
+    aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
+    aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
+    aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
     aste_misti_lon         =         aste_misti_lon_xr.interp_like(response_xr)
     aste_misti_lat         =         aste_misti_lat_xr.interp_like(response_xr)
     aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(response_xr)
@@ -256,6 +268,12 @@ def merge_to_dems(
         wind_speed              =wind_speed,
         wind_direction          =wind_direction,
         aste_cabin_temperature  =aste_cabin_temperature,
+        aste_subref_x           =aste_subref_x,
+        aste_subref_y           =aste_subref_y,
+        aste_subref_z           =aste_subref_z,
+        aste_subref_xt          =aste_subref_xt,
+        aste_subref_yt          =aste_subref_yt,
+        aste_subref_zt          =aste_subref_zt,
         aste_misti_lon          =aste_misti_lon,
         aste_misti_lat          =aste_misti_lat,
         aste_misti_pwv          =aste_misti_pwv,

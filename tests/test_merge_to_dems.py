@@ -388,6 +388,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # ASTE Specific
         self.assertTrue((dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
+        self.assertTrue((dems.aste_subref_x.values  == 1.1           ).all(), 'MS::aste_subref_xが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_y.values  == 1.1           ).all(), 'MS::aste_subref_yが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_z.values  == 1.1           ).all(), 'MS::aste_subref_zが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_xt.values  == 1.1          ).all(), 'MS::aste_subref_xtが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_yt.values  == 1.1          ).all(), 'MS::aste_subref_ytが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_zt.values  == 1.1          ).all(), 'MS::aste_subref_ztが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_lon.values  == 180          ).all(), 'MS::aste_misti_lonが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_lat.values  == 90           ).all(), 'MS::aste_misti_latが既定値で無いことを確認')
         self.assertTrue((dems.aste_misti_pwv.values  == 0.61         ).all(), 'MS::aste_misti_pwvが既定値で無いことを確認')

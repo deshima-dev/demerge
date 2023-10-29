@@ -22,7 +22,7 @@ repository = "https://github.com/deshima-dev/demerge/"
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
 astropy = "^5.2"
-dems = "^0.6"
+dems = "^0.7"
 lmfit = "^1.2"
 matplotlib = "^3.7"
 numpy =	"^1.25"
@@ -31,7 +31,7 @@ sympy = "^1.10"
 zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
-ipython = "^8.15"
+ipython = "^8.16"
 
 [tool.poetry.scripts]
 demerge = "demerge:main"

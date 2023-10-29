@@ -1,5 +1,6 @@
 __all__ = [
     "calc_resonance_params",
+    "cli",
     "demerge",
     "make_divided_data",
     "make_reduced_fits",
@@ -12,6 +13,7 @@ __version__ = "2.6.0"
 
 # submodules
 from . import calc_resonance_params
+from . import cli
 from . import demerge
 from . import make_divided_data
 from . import make_reduced_fits

@@ -35,7 +35,7 @@ black = "^23.10"
 ipython = "^8.16"
 
 [tool.poetry.scripts]
-demerge-sh = "demerge.cli:main_sh"
+demerge-sh = "demerge.cli:demerge_sh"
 calc_resonance_params = "demerge.calc_resonance_params:main"
 make_divided_data = "demerge.make_divided_data:main"
 make_reduced_fits = "demerge.make_reduced_fits:main"

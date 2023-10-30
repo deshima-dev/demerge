@@ -111,16 +111,9 @@ def get_maskid_corresp(pixelid, ddb):
         else:
             kind = kidname[masterid]
 
-        if kind=='wideband': attr = 0
-        elif kind=='filter': attr = 1
-        elif kind=='blind':  attr = 2
-        elif kind=='Al':     attr = 3
-        elif kind=='NbTiN':  attr = 4
-        else:                attr = -1
-
         masterids.append( masterid )
         kidids.append( i )
-        kidtypes.append( attr )
+        kidtypes.append( kind )
         kidfreqs.append( kidfilt[i][0] * 1e9 )
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs

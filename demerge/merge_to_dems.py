@@ -64,8 +64,6 @@ def merge_to_dems(
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
 
-    times_misti, az_misti, el_misti, pwv_misti = mf.retrieve_misti_log(misti_path)
-
     times_cabin, upper_cabin_temp, lower_cabin_temp = mf.retrieve_cabin_temps(cabin_path)
     lower_cabin_temp = lower_cabin_temp + 273.15 # 度CからKへ変換
 
@@ -144,9 +142,6 @@ def merge_to_dems(
     aste_subref_xt_xr         = xr.DataArray(data=antenna_table['xt'],             coords={'time': times_antenna})
     aste_subref_yt_xr         = xr.DataArray(data=antenna_table['yt'],             coords={'time': times_antenna})
     aste_subref_zt_xr         = xr.DataArray(data=antenna_table['zt'],             coords={'time': times_antenna})
-    aste_misti_lon_xr         = xr.DataArray(data=az_misti,                        coords={'time': times_misti})
-    aste_misti_lat_xr         = xr.DataArray(data=el_misti,                        coords={'time': times_misti})
-    aste_misti_pwv_xr         = xr.DataArray(data=pwv_misti,                       coords={'time': times_misti})
     state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,              coords={'time': times_antenna})
 
     # Tsignalsの時刻に合わせて補間する
@@ -164,9 +159,6 @@ def merge_to_dems(
     aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
     aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
     aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
-    aste_misti_lon         =         aste_misti_lon_xr.interp_like(response_xr)
-    aste_misti_lat         =         aste_misti_lat_xr.interp_like(response_xr)
-    aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(response_xr)
     skychop_state          =          skychop_state_xr.interp_like(response_xr, method='nearest')
     state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, method='nearest')
 
@@ -274,9 +266,6 @@ def merge_to_dems(
         aste_subref_xt          =aste_subref_xt,
         aste_subref_yt          =aste_subref_yt,
         aste_subref_zt          =aste_subref_zt,
-        aste_misti_lon          =aste_misti_lon,
-        aste_misti_lat          =aste_misti_lat,
-        aste_misti_pwv          =aste_misti_pwv,
         d2_mkid_id              =kid_id,
         d2_mkid_type            =kid_type,
         d2_mkid_frequency       =kid_freq,

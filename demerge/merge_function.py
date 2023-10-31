@@ -104,7 +104,7 @@ def get_maskid_corresp(pixelid, ddb):
         kidname[i] = j
 
     masterids, kidids, kidtypes, kidfreqs, kidQs = [], [], [], [], []
-    for i in range(nkid):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
         if masterid < 0:
             kind = 'unknown'
@@ -136,7 +136,7 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
     #---- Responsivity curve
     (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
     Tsignal = []
-    for i in range(nkid):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
         if masterid<0:
             Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )

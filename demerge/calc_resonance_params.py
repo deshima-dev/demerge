@@ -64,9 +64,13 @@ def main() -> None:
     filename = args[1]
     with open(filename, 'rb') as f:
         kid = pickle.load(f)
-    kid = calc_resonance_params(kid)
-    with open(filename, 'wb') as f:
-        pickle.dump(kid, f)
+
+    try:
+        kid = calc_resonance_params(kid)
+        with open(filename, 'wb') as f:
+            pickle.dump(kid, f)
+    except Exception:
+        pass
 
 if __name__=='__main__':
     main()

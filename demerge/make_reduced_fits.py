@@ -39,7 +39,7 @@ def make_reduced_fits(kidfiles, output_filename):
         ts = demerge.rebin_array(timestamp, downsampling_rate) #1はdown samplingしないことを意味する
         fc = kid['tod'].frequency
 
-        if kid['resonance_params'] is None:
+        if kid.get('resonance_params') is None:
             fr = np.nan
             dfr = np.nan
             Qr = np.nan

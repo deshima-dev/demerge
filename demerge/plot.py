@@ -22,7 +22,7 @@ from . import demerge
 def plot(kid, oldkid=None):
     if kid['enabled'] == False:
         return None, None
-    if kid['resonance_params'] is None:
+    if kid.get('resonance_params') is None:
         return None, None
     arga = kid['resonance_params']['arga']
     absa = kid['resonance_params']['absa']

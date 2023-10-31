@@ -133,8 +133,6 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
     Qr       = rhdus['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
     fshift = np.array((linphase - linyfc)/ (4.*Qr)).T
     fshift_err = np.zeros( len(fshift) )
-    #---- Responsivity curve
-    (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
     Tsignal = []
     for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]

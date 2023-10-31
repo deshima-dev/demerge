@@ -64,9 +64,6 @@ def merge_to_dems(
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
 
-    times_cabin, upper_cabin_temp, lower_cabin_temp = mf.retrieve_cabin_temps(cabin_path)
-    lower_cabin_temp = lower_cabin_temp + 273.15 # 度CからKへ変換
-
     times_weather = mf.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_weather = np.array(times_weather).astype('datetime64[ns]')
 
@@ -78,7 +75,7 @@ def merge_to_dems(
         # T_signalsを計算する
         master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
         T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-        T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
+        T_signals = mf.calibrate_to_power(pixel_id, T_amb, T_amb, readout_hdul, ddbfits_hdul)
         response  = T_signals
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
@@ -130,7 +127,6 @@ def merge_to_dems(
     pressure_xr               = xr.DataArray(data=weather_table['presure'],        coords={'time': times_weather})
     wind_speed_xr             = xr.DataArray(data=weather_table['aux1'],           coords={'time': times_weather})
     wind_direction_xr         = xr.DataArray(data=weather_table['aux2'],           coords={'time': times_weather})
-    aste_cabin_temperature_xr = xr.DataArray(data=lower_cabin_temp,                coords={'time': times_cabin})
     aste_subref_x_xr          = xr.DataArray(data=antenna_table['x'],              coords={'time': times_antenna})
     aste_subref_y_xr          = xr.DataArray(data=antenna_table['y'],              coords={'time': times_antenna})
     aste_subref_z_xr          = xr.DataArray(data=antenna_table['z'],              coords={'time': times_antenna})
@@ -147,7 +143,6 @@ def merge_to_dems(
     pressure               =               pressure_xr.interp_like(response_xr)
     wind_speed             =             wind_speed_xr.interp_like(response_xr)
     wind_direction         =         wind_direction_xr.interp_like(response_xr)
-    aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
     aste_subref_x          =          aste_subref_x_xr.interp_like(response_xr)
     aste_subref_y          =          aste_subref_y_xr.interp_like(response_xr)
     aste_subref_z          =          aste_subref_z_xr.interp_like(response_xr)
@@ -253,7 +248,6 @@ def merge_to_dems(
         humidity                =humidity,
         wind_speed              =wind_speed,
         wind_direction          =wind_direction,
-        aste_cabin_temperature  =aste_cabin_temperature,
         aste_subref_x           =aste_subref_x,
         aste_subref_y           =aste_subref_y,
         aste_subref_z           =aste_subref_z,

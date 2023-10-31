@@ -70,10 +70,6 @@ def merge_to_dems(
     times_weather = mf.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_weather = np.array(times_weather).astype('datetime64[ns]')
 
-    times_skychop, states_skychop = mf.retrieve_skychop_states(skychop_path)
-    times_skychop = mf.convert_timestamp(times_skychop)
-    times_skychop = np.array(times_skychop).astype('datetime64[ns]')
-
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]')
 
@@ -134,7 +130,6 @@ def merge_to_dems(
     pressure_xr               = xr.DataArray(data=weather_table['presure'],        coords={'time': times_weather})
     wind_speed_xr             = xr.DataArray(data=weather_table['aux1'],           coords={'time': times_weather})
     wind_direction_xr         = xr.DataArray(data=weather_table['aux2'],           coords={'time': times_weather})
-    skychop_state_xr          = xr.DataArray(data=states_skychop,                  coords={'time': times_skychop})
     aste_cabin_temperature_xr = xr.DataArray(data=lower_cabin_temp,                coords={'time': times_cabin})
     aste_subref_x_xr          = xr.DataArray(data=antenna_table['x'],              coords={'time': times_antenna})
     aste_subref_y_xr          = xr.DataArray(data=antenna_table['y'],              coords={'time': times_antenna})
@@ -159,7 +154,6 @@ def merge_to_dems(
     aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
     aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
     aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
-    skychop_state          =          skychop_state_xr.interp_like(response_xr, method='nearest')
     state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, method='nearest')
 
     # 補間後のSTATETYPEを文字列に戻す
@@ -269,7 +263,6 @@ def merge_to_dems(
         d2_mkid_id              =kid_id,
         d2_mkid_type            =kid_type,
         d2_mkid_frequency       =kid_freq,
-        d2_skychopper_isblocking=skychop_state,
         d2_demerge_version       =DEMERGE_VERSION,
         beam_major              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_minor              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた

@@ -32,6 +32,7 @@
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
+#  -p プロット実行オプションの指定
 #
 
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
@@ -45,8 +46,9 @@ NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
+#  -p プロット実行オプションの指定
 #
-while getopts c:g:d:b:o:m: OPT
+while getopts c:g:d:b:o:m:p: OPT
 do
     case $OPT in
 	"c") CACHE_DIR="${OPTARG}";;
@@ -55,6 +57,7 @@ do
 	"b") DDB_FILE="${OPTARG}";;
 	"o") OUT_DIR="${OPTARG}";;
     "m") MERGE_OPTS="${OPTARG}";;
+    "p") PLOT="${OPTARG}";;
     esac
 done
 shift $((OPTIND - 1))
@@ -177,15 +180,17 @@ fi
 # これをxargsにパイプで渡す。
 # xargsには各コマンドの引数が2個であることを示す「-n2」オプションをつける。
 #
-FILENAMES=""
-for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
-do
-    FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
-done
-echo $FILENAMES | xargs -P${NCPU} -n2 plot
-if [ $? -ne 0 ]; then
-    echo "失敗:plot"
-    exit 1
+if [ -n "$PLOT" ]; then
+    FILENAMES=""
+    for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
+    do
+        FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
+    done
+    echo $FILENAMES | xargs -P${NCPU} -n2 plot
+    if [ $? -ne 0 ]; then
+        echo "失敗:plot"
+        exit 1
+    fi
 fi
 
 END_TIME=`date +%s`

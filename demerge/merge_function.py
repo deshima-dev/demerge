@@ -142,7 +142,7 @@ def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
             Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )
             continue
         #---- Convert to power
-        Tsignal.append(Tlos_model(fshift[i], p0[i], etaf[i], T0[i], Troom, Tamb))
+        Tsignal.append(fshift[i])
     return np.array(Tsignal).T
 
 def convert_asciitime(asciitime, form_fitstime):

@@ -110,7 +110,7 @@ START_TIME=`date +%s`
 make_divided_data                                     \
        "${DATA_DIR}/cosmos_${OBSID}/kids.list"        \
        "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" \
+       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits" \
        "${CACHE_DIR}/${OBSID}"
 if [ $? -ne 0 ]; then
     echo "失敗:make_divided_data"

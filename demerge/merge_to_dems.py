@@ -68,7 +68,7 @@ def merge_to_dems(
     times_weather = np.array(times_weather).astype('datetime64[ns]')
 
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
-    times_antenna = np.array(times_antenna).astype('datetime64[ns]')
+    times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(20, "ms")
 
     response = None
     if loadtype == 'Tsignal':

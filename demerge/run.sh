@@ -157,7 +157,7 @@ merge_to_dems                                                \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \
-    --skychop "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
+    --skychop "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychopper.dat.xz" \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \

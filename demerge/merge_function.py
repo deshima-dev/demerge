@@ -30,6 +30,7 @@ from astropy.io import fits, ascii
 import numpy as np
 import scipy.interpolate
 import sys
+import lzma
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -202,7 +203,14 @@ def retrieve_skychop_states(filename):
     2列目 0/1による状態
     "#"から始まるコメントがファイル冒頭に数行ある。
     """
-    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
+    if filename.endswith(".xz"):
+        with lzma.open(filename, "rt") as f:
+            data = f.read()
+    else:
+        with open(filename) as f:
+            data = f.read()
+
+    table = ascii.read(data, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
 
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)

@@ -161,6 +161,9 @@ def merge_to_dems(
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
 
+    # Sky chopper状態からビームラベルを割り当てる
+    beam = np.where(skychop_state, "B", "A")
+
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still:
         seconds = (times - times[0])/np.timedelta64(1, 's')
@@ -243,6 +246,7 @@ def merge_to_dems(
         data                    =response,
         time                    =times,
         chan                    =kid_id,
+        beam                    =beam,
         state                   =state,
         lon                     =lon,
         lat                     =lat,

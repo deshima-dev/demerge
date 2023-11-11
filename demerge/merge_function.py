@@ -119,6 +119,22 @@ def get_maskid_corresp(pixelid, ddb):
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
 def fshift(readout_hdul, pixelid):
+    """fshiftを計算する
+
+    Args:
+        HDUL   : 開かれたreduced fitsファイルのHDULオブジェクト
+        integer: ピクセルID
+
+    Keyword Args:
+        なし
+
+    Returns:
+        fshiftの計算結果を格納したnumpy.array
+
+    経緯:
+        DEMSのresponseにfshiftを格納する場合があるため、
+        calibrate_to_power()関数に含まれていたfshiftの計算を分離した。
+    """
     nkid     = readout_hdul['READOUT'].header['NKID%d' %pixelid]
     linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
     linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
@@ -129,21 +145,31 @@ def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (dx + p0*np.sqrt(Troom+T0))**2 / (p0**2 * etaf) - T0/etaf - (1-etaf)/etaf*Tamb
 
-def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
-    nkid = rhdus['READOUT'].header['NKID%d' %pixelid]
+def calibrate_to_power(Troom, Tamb, fshift, ddb):
+    """Tlos_modelを利用して応答を計算する
+
+    Args:
+        float      : キャビン温度
+        float      : 外気温
+        numpy.array: fshift()関数の計算結果
+        HDUL       : 開かれたDDBファイルのHDULオブジェクト
+
+    Keyword Args:
+        なし
+
+    Returns:
+        計算結果を格納したnumpy.array
+
+    """
     kiddict = {}
     for (i, j) in zip(ddb['KIDFILT'].data['kidid'], ddb['KIDFILT'].data['masterid']):
         kiddict[i] = j
 
-    linphase = np.transpose([rhdus['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
-    linyfc   = rhdus['KIDSINFO'].data['yfc, linyfc'].T[1]
-    Qr       = rhdus['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
-    fshift = np.array((linphase - linyfc)/ (4.*Qr)).T
-    fshift_err = np.zeros( len(fshift) )
+    #fshift_err = np.zeros( len(fshift) )
     #---- Responsivity curve
     (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
     Tsignal = []
-    for i in range(nkid):
+    for i in range(len(fshift)):
         masterid = kiddict[i]
         if masterid<0:
             Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )

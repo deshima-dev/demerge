@@ -156,6 +156,8 @@ fi
 # weaファイルへの相対パス
 # mistiファイルへの相対パス
 # cabinファイルへの相対パス
+# その他のmergeに関するオプション
+# TODデータとAntennaログの時刻のずれの補正値(ms)
 # 出力するZarrファイルへの相対パス
 #
 merge_to_dems                                                \
@@ -168,6 +170,7 @@ merge_to_dems                                                \
     --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
     --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
     ${MERGE_OPTS}                                            \
+    --offset_time_antenna 20                                 \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then

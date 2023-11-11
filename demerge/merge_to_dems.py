@@ -52,6 +52,8 @@ def merge_to_dems(
     lon_max_off = kwargs.pop("lon_max_off", 0)
     lon_min_on  = kwargs.pop("lon_min_on",  0)
     lon_max_on  = kwargs.pop("lon_max_on",  0)
+    # その他一時的な補正
+    offset_time_antenna = kwargs.pop("offset_time_antenna", 0) # ms(integerでないとnp.timedeltaに変換できないので注意)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -76,7 +78,7 @@ def merge_to_dems(
     times_skychop = np.array(times_skychop).astype('datetime64[ns]')
 
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
-    times_antenna = np.array(times_antenna).astype('datetime64[ns]')
+    times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
     fshift = mf.fshift(readout_hdul, pixel_id)
     master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
@@ -333,6 +335,8 @@ def main() -> None:
     parser.add_argument('--lon_max_on',  type=float, default=0.0,      help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
     parser.add_argument('--debug',       action='store_true',          help='指定すると全ての引数の値をログとして表示します')
 
+    parser.add_argument('--offset_time_antenna', type=int, default=0, help='TODとAntennaログの時刻のずれの補正値(ms)')
+
     # 引数の読み取り
     a = parser.parse_args()
 
@@ -377,6 +381,8 @@ def main() -> None:
         lon_max_off=a.lon_max_off,
         lon_min_on =a.lon_min_on,
         lon_max_on =a.lon_max_on,
+
+        offset_time_antenna=a.offset_time_antenna
     )
 
     dems.to_zarr(a.filename, mode="w")

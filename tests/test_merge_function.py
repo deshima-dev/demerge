@@ -27,9 +27,23 @@ from demerge import __version__ as DEMERGE_VERSION
 class MergeFunctionTestDrive(unittest.TestCase):
     """merge_function.pyモジュールの単体テスト"""
     def setUp(self):
+        
         return
 
     def test_fshift(self):
+        readout_hdul = fits.open('testdata_reduced_readout.fits')
+        pixelid      = 0
+
+        result   = mf.fshift(readout_hdul, pixelid)
+        expected = np.array([(1.0 - 0.25)/(4*1.1)]).astype('float32')
+        self.assertEqual(result[0][0],   expected[0],                                    'fshiftの計算値')
+        self.assertEqual(len(result),    63,                                             'fshiftのKID数')
+        self.assertEqual(len(result[0]), len(readout_hdul['READOUT'].data['timestamp']), 'fshiftのデータ点数')
+
+        readout_hdul.close()
+        return
+
+    def test_calibrate_to_power(self):
         
         return
 

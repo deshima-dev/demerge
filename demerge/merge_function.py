@@ -118,6 +118,13 @@ def get_maskid_corresp(pixelid, ddb):
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
+def fshift(readout_hdul, pixelid):
+    nkid     = readout_hdul['READOUT'].header['NKID%d' %pixelid]
+    linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
+    linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
+    Qr       = readout_hdul['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
+    return np.array((linphase - linyfc)/(4.*Qr)).T
+
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (dx + p0*np.sqrt(Troom+T0))**2 / (p0**2 * etaf) - T0/etaf - (1-etaf)/etaf*Tamb

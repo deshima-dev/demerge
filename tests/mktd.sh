@@ -36,6 +36,16 @@ PARAMS="
 $CMD skychop $PARAMS
 
 #
+# gzで圧縮されたreadoutファイル
+#
+PARAMS="
+     --time         3 \
+     --measure_time 4 \
+     --gz           1
+"
+$CMD readout $PARAMS
+
+#
 # find R, skyで利用するダミーデータ
 # calibrate_to_power()関数で計算すると時間とともに線形に増加するTsignalを出力するためのダミーデータ
 # Tsignalは0から300まで増加する

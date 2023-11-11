@@ -35,7 +35,6 @@ class MergeFunctionTestDrive(unittest.TestCase):
         pixelid      = 0
 
         result   = mf.fshift(readout_hdul, pixelid)
-        print(result)
         expected = np.array([(1.0 - 0.25)/(4*1.1)]).astype('float32')
         self.assertEqual(result[0][0],   expected[0],                                    'fshiftの計算値')
         self.assertEqual(len(result),    readout_hdul['READOUT'].header['NKID0'],        'fshiftのKID数')

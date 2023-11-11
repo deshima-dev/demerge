@@ -413,6 +413,7 @@ if __name__ == '__main__':
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
     parser.add_argument('--measure_time',     type=int,   default=None,       help='環境測定時間(分)を整数で指定して下さい')
     parser.add_argument('--xz',               type=bool,  default=False,      help='Trueを指定するとskychopファイルをxzで圧縮する')
+    parser.add_argument('--gz',               type=bool,  default=False,      help='Trueを指定するとreadoutファイルをgzで圧縮する')
     a = parser.parse_args()
 
     if a.measure_time == None:
@@ -458,7 +459,10 @@ if __name__ == '__main__':
         tdm.ddb.writeto('{}_DDB.fits.gz'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'readout'):
-        tdm.readout.writeto('{}_reduced_readout.fits'.format(a.prefix), overwrite=True)
+        if (a.gz):
+            tdm.readout.writeto('{}_reduced_readout.fits.gz'.format(a.prefix), overwrite=True)
+        else:
+            tdm.readout.writeto('{}_reduced_readout.fits'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'dfits'):
         tdm.dfits.writeto('{}_dfits.fits.gz'.format(a.prefix), overwrite=True)

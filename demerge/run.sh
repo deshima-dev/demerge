@@ -105,12 +105,21 @@ if [ ! -d ${OUT_DIR}/${OBSID} ]; then
     fi
 fi
 
-START_TIME=`date +%s`
+START_TIME=`/bin/date +%s`
+
+# 圧縮でも非圧縮でもTODファイルを扱えるようにする
+TOD_FILE=""
+if [ -f "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" ]; then
+    TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz"
+else
+    TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits"
+    echo $TOD_FILE 'SELECTED'
+fi
 
 make_divided_data                                     \
        "${DATA_DIR}/cosmos_${OBSID}/kids.list"        \
        "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
-       "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" \
+       "${TOD_FILE}"                                  \
        "${CACHE_DIR}/${OBSID}"
 if [ $? -ne 0 ]; then
     echo "失敗:make_divided_data"
@@ -188,7 +197,6 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
-END_TIME=`date +%s`
+END_TIME=`/bin/date +%s`
 RUN_TIME=`expr ${END_TIME} - ${START_TIME}`
-
 echo "実行時間: ${RUN_TIME}秒"

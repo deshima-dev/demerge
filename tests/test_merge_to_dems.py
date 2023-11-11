@@ -323,7 +323,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # MS::beam (既定値)
         self.assertEqual(n_time, len(dems.beam),         'MS::beamの打点数が打刻数に一致することを確認')
-        self.assertTrue(np.array(dems.beam == '').all(), 'MS::beamに既定値が格納されていることを確認')
+        self.assertTrue(np.array(dems.beam != '').all(), 'MS::beamに既定値が格納されていることを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.beam == 'A')/n_time, 1), 'MS::beamのおよそ半数がAであることを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.beam == 'B')/n_time, 1), 'MS::beamのおよそ半数がBであることを確認')
+        self.assertEqual('B', dems.beam[0],  'MS::beamの最初の要素がGRADであることを確認')
+        self.assertEqual('A', dems.beam[-1], 'MS::beamの最後の要素がONであることを確認')
 
         # MS::scan (既定値)
         self.assertEqual(n_time, len(dems.scan),         'MS::scanの打点数が打刻数に一致することを確認')

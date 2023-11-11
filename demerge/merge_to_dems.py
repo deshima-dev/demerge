@@ -1,7 +1,7 @@
 """demsオブジェクトを生成する
 
 python 3.9
-dems   0.4.0
+dems   0.8.0
 
 (C) 2023 内藤システムズ
 """
@@ -151,30 +151,32 @@ def merge_to_dems(
     state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,              coords={'time': times_antenna})
 
     # Tsignalsの時刻に合わせて補間する
-    lon                    =                    lon_xr.interp_like(response_xr)
-    lat                    =                    lat_xr.interp_like(response_xr)
-    lon_origin             =             lon_origin_xr.interp_like(response_xr)
-    lat_origin             =             lat_origin_xr.interp_like(response_xr)
-    temperature            =            temperature_xr.interp_like(response_xr)
-    humidity               =               humidity_xr.interp_like(response_xr)
-    pressure               =               pressure_xr.interp_like(response_xr)
-    wind_speed             =             wind_speed_xr.interp_like(response_xr)
-    wind_direction         =         wind_direction_xr.interp_like(response_xr)
-    aste_subref_x          =          aste_subref_x_xr.interp_like(response_xr)
-    aste_subref_y          =          aste_subref_y_xr.interp_like(response_xr)
-    aste_subref_z          =          aste_subref_z_xr.interp_like(response_xr)
-    aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
-    aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
-    aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
-    skychop_state          =          skychop_state_xr.interp_like(response_xr, method='nearest')
-    state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, method='nearest')
+    lon                =                lon_xr.interp_like(response_xr)
+    lat                =                lat_xr.interp_like(response_xr)
+    lon_origin         =         lon_origin_xr.interp_like(response_xr)
+    lat_origin         =         lat_origin_xr.interp_like(response_xr)
+    temperature        =        temperature_xr.interp_like(response_xr)
+    humidity           =           humidity_xr.interp_like(response_xr)
+    pressure           =           pressure_xr.interp_like(response_xr)
+    wind_speed         =         wind_speed_xr.interp_like(response_xr)
+    wind_direction     =     wind_direction_xr.interp_like(response_xr)
+    aste_subref_x      =      aste_subref_x_xr.interp_like(response_xr)
+    aste_subref_y      =      aste_subref_y_xr.interp_like(response_xr)
+    aste_subref_z      =      aste_subref_z_xr.interp_like(response_xr)
+    aste_subref_xt     =     aste_subref_xt_xr.interp_like(response_xr)
+    aste_subref_yt     =     aste_subref_yt_xr.interp_like(response_xr)
+    aste_subref_zt     =     aste_subref_zt_xr.interp_like(response_xr)
+    skychop_state      =      skychop_state_xr.interp_like(response_xr, method='nearest')
+    state_type_numbers = state_type_numbers_xr.interp_like(response_xr, method='nearest')
 
     aste_cabin_temperature = np.nan
     aste_misti_lon         = np.nan
     aste_misti_lat         = np.nan
     aste_misti_pwv         = np.nan
+
     if cabin_path != '' and cabin_path != None:
         aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
+
     if misti_path != '' and misti_path != None:
         aste_misti_lon = aste_misti_lon_xr.interp_like(response_xr)
         aste_misti_lat = aste_misti_lat_xr.interp_like(response_xr)
@@ -185,6 +187,9 @@ def merge_to_dems(
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
 
+    # Sky chopperの状態からビームラベルを割り当てる(1 -> B, 0 -> A)
+    beam = np.where(skychop_state, 'B', 'A')
+        
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still:
         seconds = (times - times[0])/np.timedelta64(1, 's')
@@ -267,6 +272,7 @@ def merge_to_dems(
         data                    =response,
         time                    =times,
         chan                    =kid_id,
+        beam                    =beam,
         state                   =state,
         lon                     =lon,
         lat                     =lat,

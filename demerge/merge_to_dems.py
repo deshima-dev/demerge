@@ -80,7 +80,7 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
-    fshift = mf.fshift(readout_hdul, pixel_id)
+    fshift = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixel_id)
     master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
     response = None
     if loadtype == 'Tsignal':

@@ -113,7 +113,6 @@ if [ -f "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" ]; then
     TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz"
 else
     TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits"
-    echo $TOD_FILE 'SELECTED'
 fi
 
 make_divided_data                                     \
@@ -145,6 +144,23 @@ if [ $? -ne 0 ]; then
     exit 1
 fi
 
+# ファイルの存在を確認する
+MISTI_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"
+CABIN_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"
+SKYCHOP_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychopper.dat.xz"
+if [ ! -f $MISTI_FILE ]; then
+    MISTI_FILE=""
+fi
+if [ ! -f $CABIN_FILE ]; then
+    CABIN_FILE=""
+fi
+if [ ! -f $SKYCHOP_FILE ]; then
+    SKYCHOP_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop"
+    if [ ! -f $SKYCHOP_FILE ]; then
+        SKYCHOP_FILE=""
+    fi
+fi
+
 #
 # 引数(上から順に)
 # ================
@@ -165,10 +181,10 @@ merge_to_dems                                                \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \
-    --skychop "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.skychop" \
+    --skychop "${SKYCHOP_FILE}"                              \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
-    --misti   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.misti"   \
-    --cabin   "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.cabin"   \
+    --misti   "${MISTI_FILE}"                                \
+    --cabin   "${CABIN_FILE}"                                \
     ${MERGE_OPTS}                                            \
     --offset_time_antenna 20                                 \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"

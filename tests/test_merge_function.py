@@ -32,14 +32,18 @@ class MergeFunctionTestDrive(unittest.TestCase):
 
     def test_fshift(self):
         readout_hdul = fits.open('testdata_reduced_readout.fits')
+        ddbfits_hdul = fits.open('testdata_DDB.fits.gz')
         pixelid      = 0
 
-        result   = mf.fshift(readout_hdul, pixelid)
+        print(ddbfits_hdul['KIDFILT'].data['kidid'])
+        
+        result   = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixelid)
         expected = np.array([(1.0 - 0.25)/(4*1.1)]).astype('float32')
         self.assertEqual(result[0][0],   expected[0],                                    'fshiftの計算値')
         self.assertEqual(len(result),    readout_hdul['READOUT'].header['NKID0'],        'fshiftのKID数')
         self.assertEqual(len(result[0]), len(readout_hdul['READOUT'].data['timestamp']), 'fshiftのデータ数')
 
+        ddbfits_hdul.close()
         readout_hdul.close()
         return
 
@@ -61,7 +65,7 @@ class MergeFunctionTestDrive(unittest.TestCase):
         Tlos_model = (fshift + p0*np.sqrt(T_cabin + T0))**2/(p0*p0*etaf) - (T0/etaf) - ((1 - etaf)/etaf)*T_amb
         Tlos_model = np.array([Tlos_model]).astype('float32')[0]
         
-        fshift = mf.fshift(readout_hdul, pixelid)
+        fshift = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixelid)
         result = mf.calibrate_to_power(T_cabin, T_amb, fshift, ddbfits_hdul)
         self.assertEqual(result[0][0],   Tlos_model,                                     'calibrate_to_powerの計算値')
         self.assertEqual(len(result),    len(readout_hdul['READOUT'].data['timestamp']), 'データ数')

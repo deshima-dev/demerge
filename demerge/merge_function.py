@@ -105,7 +105,7 @@ def get_maskid_corresp(pixelid, ddb):
         kidname[i] = j
 
     masterids, kidids, kidtypes, kidfreqs, kidQs = [], [], [], [], []
-    for i in range(nkid):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
         if masterid < 0:
             kind = 'unknown'
@@ -119,11 +119,12 @@ def get_maskid_corresp(pixelid, ddb):
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
-def fshift(readout_hdul, pixelid):
+def fshift(readout_hdul, kidids, pixelid):
     """fshiftを計算する
 
     Args:
         HDUL   : 開かれたreduced fitsファイルのHDULオブジェクト
+        array  : DDBのKIDFILTに格納されているkididの配列
         integer: ピクセルID
 
     Keyword Args:
@@ -140,7 +141,8 @@ def fshift(readout_hdul, pixelid):
     linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
     linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
     Qr       = readout_hdul['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
-    return np.array((linphase - linyfc)/(4.*Qr)).T
+    fshift   = np.array((linphase - linyfc)/(4.*Qr)).T
+    return np.array([fshift[i] for i in kidids]) # kididsの数に合わせる(たぶんnkid >= kidids)
 
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
@@ -170,9 +172,9 @@ def calibrate_to_power(Troom, Tamb, fshift, ddb):
     #---- Responsivity curve
     (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
     Tsignal = []
-    for i in range(len(fshift)):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
-        if masterid<0:
+        if masterid < 0:
             Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )
             continue
         #---- Convert to power

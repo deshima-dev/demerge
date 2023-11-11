@@ -9,6 +9,7 @@ from astropy.io    import fits, ascii
 from astropy.table import Table
 
 import numpy as np
+import lzma
 import math
 import sys
 import argparse
@@ -411,6 +412,7 @@ if __name__ == '__main__':
     parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
     parser.add_argument('--measure_time',     type=int,   default=None,       help='環境測定時間(分)を整数で指定して下さい')
+    parser.add_argument('--xz',               type=bool,  default=False,      help='Trueを指定するとskychopファイルをxzで圧縮する')
     a = parser.parse_args()
 
     if a.measure_time == None:
@@ -437,7 +439,11 @@ if __name__ == '__main__':
         tdm.antenna.write('{}.ant'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'skychop'):
-        tdm.skychop.write('{}.skychop'.format(a.prefix), format='ascii.commented_header', overwrite=True)
+        if (a.xz):
+            with lzma.open('{}.skychop.dat.xz'.format(a.prefix), 'wt') as f:
+                tdm.skychop.write(f, format='ascii.commented_header', overwrite=True)
+        else:
+            tdm.skychop.write('{}.skychop'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'weather'):
         tdm.weather.write('{}.wea'.format(a.prefix), format='ascii.commented_header', overwrite=True)

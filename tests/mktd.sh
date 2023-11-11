@@ -14,7 +14,7 @@ date --iso-8601=seconds
 # デフォルトで利用するダミーデータ
 #
 PARAMS="
-     --time 3 \
+     --time         3 \
      --measure_time 4
 "
 $CMD readout $PARAMS
@@ -23,6 +23,16 @@ $CMD cabin   $PARAMS
 $CMD antenna $PARAMS
 $CMD weather $PARAMS
 $CMD misti   $PARAMS
+$CMD skychop $PARAMS
+
+#
+# xzで圧縮されたskychopファイル
+#
+PARAMS="
+     --time         3 \
+     --measure_time 4 \
+     --xz           1
+"
 $CMD skychop $PARAMS
 
 #

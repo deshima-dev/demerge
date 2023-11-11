@@ -27,6 +27,7 @@ from datetime import datetime
 from datetime import timedelta
 from calendar import timegm
 from astropy.io import fits, ascii
+import lzma
 import numpy as np
 import scipy.interpolate
 import sys
@@ -224,28 +225,35 @@ def retrieve_cabin_temps(filename=None):
     return (datetimes, upper_cabin_temps, lower_cabin_temps)
 
 def retrieve_skychop_states(filename):
-    """skychopファイルからskychopの時系列状態を取得する
-    引数
-    ====
-    str ファイル名
+    """skychopファイル(text file)からskychopの時系列状態を取得する
 
-    戻り値
-    ======
-    tuple (timestames, states)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名(xzで圧縮されていても読める)
 
-    時刻について
-    ============
-    skychopファイルに記録されている時刻はUNIX時間。
+    Returns:
+        tuple (timestames, states)
+          tupleの各要素はnumpy.array。要素数は同じ。
 
-    ファイル形式
-    ============
-    1列目 UNIX時刻
-    2列目 0/1による状態
-    "#"から始まるコメントがファイル冒頭に数行ある。
+    説明:
+        時刻について
+        ============
+        skychopファイルに記録されている時刻はUNIX時間。
+
+        ファイル形式
+        ============
+        1列目 UNIX時刻
+        2列目 0/1による状態
+        "#"から始まるコメントがファイル冒頭に数行ある。
     """
-    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
-
+    data = None
+    if filename.endswith('.xz'):
+        with lzma.open(filename, 'rt') as f:
+            data = f.read()
+    else:
+        with open(filename, 'rt') as f:
+            data = f.read()
+        
+    table = ascii.read(data, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)
     return (datetimes, states)

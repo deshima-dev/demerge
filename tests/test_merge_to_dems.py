@@ -479,6 +479,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(1,                 states[0])
         self.assertEqual(1,                 states[1])
         self.assertEqual(1,                 states[2])
+
+        datetimes, states = mf.retrieve_skychop_states('testdata.skychop.dat.xz')
+        self.assertEqual(240000,       len(datetimes))
+        self.assertEqual(240000,       len(states))
+        self.assertEqual(1695373200.0, datetimes[0])
+        self.assertEqual(1,            states[0])
         return
 
     def test_retrieve_misti_log(self):

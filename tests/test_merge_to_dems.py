@@ -343,6 +343,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         #     prev = state
         # self.assertEqual(1, n_state_change, 'MS::stateの切り替えが1回だけ発生していることを確認')
 
+        
         # Telescope Pointing
         self.assertTrue((dems.lon        == -1.1).all(), 'MS::lonの全ての値が正しいことを確認')
         self.assertTrue((dems.lat        == -1.1).all(), 'MS::latの全ての値が正しいことを確認')

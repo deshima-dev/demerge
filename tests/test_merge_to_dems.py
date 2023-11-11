@@ -412,6 +412,39 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(DEMERGE_VERSION, dems.d2_demerge_version)
         return
 
+    def test_no_cabin_file(self):
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='',
+        )
+        self.assertTrue((np.isnan(dems.aste_cabin_temperature)).all(), 'MS::aste_cabin_temperatureがNaNであることを確認')
+        return
+
+    def test_no_misti_file(self):
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='',
+            cabin_path='',
+        )
+        self.assertTrue((np.isnan(dems.aste_cabin_temperature)).all(), 'MS::aste_cabin_temperatureがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_lon)).all(), 'MS::aste_misti_lonがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_lat)).all(), 'MS::aste_misti_latがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_pwv)).all(), 'MS::aste_misti_pwvがNaNであることを確認')
+        return
+
     def test_retrieve_cabin_temps(self):
         """cabinの温度をロードする"""
         datetimes, upper, lower = mf.retrieve_cabin_temps('../data/cosmos/cosmos_20171103184436/20171103184436.cabin')

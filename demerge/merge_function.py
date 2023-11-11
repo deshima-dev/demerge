@@ -252,25 +252,33 @@ def retrieve_skychop_states(filename):
 
 def retrieve_misti_log(filename):
     """mistiファイルからの時系列データを取得する
-    引数
-    ====
-    str ファイル名
 
-    戻り値
-    ======
-    tuple (timestames, az, el, pwv)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名
 
-    ファイル形式
-    ============
-    1列目 年/月/日
-    2列目 時:分:6列目 秒(小数点以下2桁も含む)
-    3列目 az(deg)
-    4列目 el(deg)
-    5列目 pwv(um)
-    6列目 Tground(K)
-    "#"から始まるコメントがファイル冒頭に数行ある。
+    Returns:
+        tuple (timestames, az, el, pwv)
+            tupleの各要素はnumpy.array。要素数は同じ。
+            また、ファイル名が空の場合はNaNが1つだけ入った配列を返す。
+
+
+    説明:
+        ファイル形式:
+        1列目 年/月/日
+        2列目 時:分:6列目 秒(小数点以下2桁も含む)
+        3列目 az(deg)
+        4列目 el(deg)
+        5列目 pwv(um)
+        6列目 Tground(K)
+        "#"から始まるコメントがファイル冒頭に数行ある。
+    
     """
+    if filename=='' or filename==None:
+        return (np.array([np.nan]).astype('datetime64[ns]'),
+                np.array([np.nan]).astype(np.float64),
+                np.array([np.nan]).astype(np.float64),
+                np.array([np.nan]).astype(np.float64))
+
     column_names = [
         'date',
         'time',

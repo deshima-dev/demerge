@@ -78,16 +78,16 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]')
 
-    response = None
     fshift = mf.fshift(readout_hdul, pixel_id)
+    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
+    response = None
     if loadtype == 'Tsignal':
         # T_signalsを計算する
-        master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
         T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
         T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
         response  = T_signals
     elif loadtype == 'fshift':
-        response  = fshift
+        response  = fshift.T
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 
@@ -158,18 +158,25 @@ def merge_to_dems(
     pressure               =               pressure_xr.interp_like(response_xr)
     wind_speed             =             wind_speed_xr.interp_like(response_xr)
     wind_direction         =         wind_direction_xr.interp_like(response_xr)
-    aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
     aste_subref_x          =          aste_subref_x_xr.interp_like(response_xr)
     aste_subref_y          =          aste_subref_y_xr.interp_like(response_xr)
     aste_subref_z          =          aste_subref_z_xr.interp_like(response_xr)
     aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
     aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
     aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
-    aste_misti_lon         =         aste_misti_lon_xr.interp_like(response_xr)
-    aste_misti_lat         =         aste_misti_lat_xr.interp_like(response_xr)
-    aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(response_xr)
     skychop_state          =          skychop_state_xr.interp_like(response_xr, method='nearest')
     state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, method='nearest')
+
+    aste_cabin_temperature = np.nan
+    aste_misti_lon         = np.nan
+    aste_misti_lat         = np.nan
+    aste_misti_pwv         = np.nan
+    if cabin_path != '' and cabin_path != None:
+        aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
+    if misti_path != '' and misti_path != None:
+        aste_misti_lon = aste_misti_lon_xr.interp_like(response_xr)
+        aste_misti_lat = aste_misti_lat_xr.interp_like(response_xr)
+        aste_misti_pwv = aste_misti_pwv_xr.interp_like(response_xr)
 
     # 補間後のSTATETYPEを文字列に戻す
     state = np.full_like(state_type_numbers, 'GRAD', dtype='<U8')

@@ -312,10 +312,10 @@ def main() -> None:
     parser.add_argument('--readout', type=str, required=True, help='reduced readoutファイルへのパスを指定して下さい(.fits)')
     parser.add_argument('--skychop', type=str, required=True, help='skychopファイルへのパスを指定して下さい(.skychop)')
     parser.add_argument('--weather', type=str, required=True, help='weatherファイルへのパスを指定して下さい(.weather)')
-    parser.add_argument('--misti',   type=str, required=True, help='mistiファイルへのパスを指定して下さい(.misti)')
-    parser.add_argument('--cabin',   type=str, required=True, help='cabinファイルへのパスを指定して下さい(.cabin)')
 
     # オプション引数
+    parser.add_argument('--misti',       type=str,   default='',       help='mistiファイルへのパスを指定して下さい(.misti)')
+    parser.add_argument('--cabin',       type=str,   default='',       help='cabinファイルへのパスを指定して下さい(.cabin)')
     parser.add_argument('--pixel_id',    type=int,   default=0,        help='pixel_idを整数で指定します')
     parser.add_argument('--coordinate',  type=str,   default='azel',   help='座標系(azel/radec)を文字列で指定します')
     parser.add_argument('--loadtype',    type=str,   default='fshift', help='読み込むデータを文字列で指定します(既定値: fshift, fshiftかTsignalを指定できます)')

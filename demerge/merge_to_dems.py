@@ -36,7 +36,6 @@ def merge_to_dems(
     # その他の引数の処理と既定値の設定
     pixel_id   = kwargs.pop('pixel_id',   0)
     coordinate = kwargs.pop('coordinate', 'azel')
-    mode       = kwargs.pop('mode',   0)
     loadtype   = kwargs.pop('loadtype',   'fshift')
     # find R, sky
     findR  = kwargs.pop("findR",  False)
@@ -312,7 +311,6 @@ def main() -> None:
     # オプション引数
     parser.add_argument('--pixel_id',    type=int,   default=0,        help='pixel_idを整数で指定します')
     parser.add_argument('--coordinate',  type=str,   default='azel',   help='座標系(azel/radec)を文字列で指定します')
-    parser.add_argument('--mode',        type=int,   default=0,        help='座標の読み込み方法を整数で指定します(0:相対座標cos射影あり(おすすめ既定値), 1:相対座標cos射影なし, 2:絶対座標)')
     parser.add_argument('--loadtype',    type=str,   default='fshift', help='読み込むデータを文字列で指定します(既定値: fshift, fshiftかTsignalを指定できます)')
     parser.add_argument('--findR',       action='store_true',          help='指定するとFindR, Skyを実行します')
     parser.add_argument('--ch',          type=int,   default=0,        help='findRに利用するチャネルを整数で指定します')

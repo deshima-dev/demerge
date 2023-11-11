@@ -190,17 +190,23 @@ def convert_timestamp(timestamp):
     timestamp = [datetime.strftime(t, FORM_FITSTIME_P) for t in timestamp]
     return np.array(timestamp)
 
-def retrieve_cabin_temps(filename):
+def retrieve_cabin_temps(filename=None):
     """キャビン内温度を取得する
-    引数
-    ====
-    str ファイル名
 
-    戻り値
-    ======
-    tuple (timestames, upperCabinTemps, lowerCabinTemps)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名
+
+    Keyword Args:
+        なし
+
+    Returns:
+        tuple (timestames, upperCabinTemps, lowerCabinTemps)
+               tupleの各要素はnumpy.array。要素数は同じ。
+               また、ファイル名が空の場合はNaNが入った配列が返される。
     """
+    if filename=='' or filename==None:
+        return (np.array([np.nan]).astype('datetime64[ns]'), np.array([np.nan]).astype(np.float64), np.array([np.nan]).astype(np.float64))
+    
     table = ascii.read(filename, format='no_header')
 
     # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
@@ -210,7 +216,8 @@ def retrieve_cabin_temps(filename):
         s = '{}T{}'.format(date, time)
         s = s.replace('/', '-')
         datetimes.append(s)
-    datetimes       = np.array(datetimes).astype('datetime64[ns]')
+
+    datetimes         = np.array(datetimes).astype('datetime64[ns]')
     upper_cabin_temps = np.array(table['col3']).astype(np.float64)
     lower_cabin_temps = np.array(table['col4']).astype(np.float64)
 

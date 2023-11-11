@@ -426,6 +426,16 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(expected[0], datetimes[3])
         self.assertEqual(13.2,        upper[3])
         self.assertEqual(16.6,        lower[3])
+
+        datetimes, upper, lower = mf.retrieve_cabin_temps()
+        self.assertTrue(np.isnan(datetimes[0]), '時刻がNaT(filename=None)')
+        self.assertTrue(np.isnan(upper[0]),     '温度がNaT(upper)(filename=None)')
+        self.assertTrue(np.isnan(lower[0]),     '温度がNaT(lower)(filename=None)')
+
+        datetimes, upper, lower = mf.retrieve_cabin_temps('')
+        self.assertTrue(np.isnan(datetimes[0]), '時刻がNaT')
+        self.assertTrue(np.isnan(upper[0]),     '温度がNaT(upper)')
+        self.assertTrue(np.isnan(lower[0]),     '温度がNaT(lower)')
         return
 
     def test_retrieve_skychop_states(self):

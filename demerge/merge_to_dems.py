@@ -104,22 +104,17 @@ def merge_to_dems(
             az_prg  = antenna_table['az-prg(no-col)']
             el_prog = antenna_table['el-prog(no-col)']
         else:
-            raise KeyError('{}ファイルにaz-prg(no-cor)列とaz-prg(no-col)列がありません。どちらか片方が存在する必要があります。ANTENNAファイルの形式を確認してください。'.format(antenna_path))
+            raise KeyError('{}ファイルにaz-prg(no-cor)列またはaz-prg(no-col)列がありません。'.format(antenna_path))
 
         lon        = az_prg  + antenna_table['az-real'] - antenna_table['az-prg']
         lat        = el_prog + antenna_table['el-real'] - antenna_table['el-prg']
-        lon_origin = np.median(antenna_table['az-prog(center)'])
-        lat_origin = np.median(antenna_table['el-prog(center)'])
-        if mode in [0, 1]:
-            lon -= antenna_table['az-prog(center)']
-            lat -= antenna_table['el-prog(center)']
-            if mode == 0:
-                lon *= np.cos(np.deg2rad(lat))
+        lon_origin = antenna_table['az-prog(center)']
+        lat_origin = antenna_table['el-prog(center)']
     elif coordinate == 'radec':
         lon        = antenna_table['ra-prg']
         lat        = antenna_table['dec-prg']
-        lon_origin = obsinst_params['ra'] # 観測スクリプトに設定されているRA,DEC
-        lat_origin = obsinst_params['dec']
+        lon_origin = np.full_like(lon, obsinst_params['ra']) # 観測スクリプトに設定されているRA,DEC
+        lat_origin = np.full_like(lat, obsinst_params['dec'])
     else:
         raise KeyError('Invalid coodinate type: {}'.format(coordinate))
 
@@ -134,6 +129,8 @@ def merge_to_dems(
     response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, kid_id])
     lon_xr                    = xr.DataArray(data=lon,                             coords={'time': times_antenna})
     lat_xr                    = xr.DataArray(data=lat,                             coords={'time': times_antenna})
+    lon_origin_xr             = xr.DataArray(data=lon_origin,                      coords={'time': times_antenna})
+    lat_origin_xr             = xr.DataArray(data=lat_origin,                      coords={'time': times_antenna})
     temperature_xr            = xr.DataArray(data=weather_table['tmperature'],     coords={'time': times_weather})
     humidity_xr               = xr.DataArray(data=weather_table['vapor-pressure'], coords={'time': times_weather})
     pressure_xr               = xr.DataArray(data=weather_table['presure'],        coords={'time': times_weather})
@@ -155,6 +152,8 @@ def merge_to_dems(
     # Tsignalsの時刻に合わせて補間する
     lon                    =                    lon_xr.interp_like(response_xr)
     lat                    =                    lat_xr.interp_like(response_xr)
+    lon_origin             =             lon_origin_xr.interp_like(response_xr)
+    lat_origin             =             lat_origin_xr.interp_like(response_xr)
     temperature            =            temperature_xr.interp_like(response_xr)
     humidity               =               humidity_xr.interp_like(response_xr)
     pressure               =               pressure_xr.interp_like(response_xr)

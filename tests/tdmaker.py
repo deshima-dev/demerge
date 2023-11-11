@@ -95,7 +95,7 @@ class TestDataMaker():
         antenna_table = Table()
         # ANTENNA時刻は秒が少数第一桁まで。そのため下2桁から6桁までを[:-5]を用いて文字列として削除している。
         antenna_table['time'] = [(self.begin_time + timedelta(milliseconds=self.T_antenna*1e3*i)).strftime('%Y%m%d%H%M%S.%f')[:-5] for i in range(self.n_antenna)]
-        bias = 2.1
+        bias = 2.2
         dummy = np.array([1.1 for i in range(self.n_antenna)])
         antenna_table['ra-prg']          = dummy
         antenna_table['dec-prg']         = dummy

@@ -149,8 +149,8 @@ def calibrate_to_power(Troom, Tamb, fshift, ddb):
     """Tlos_modelを利用して応答を計算する
 
     Args:
-        float      : キャビン温度
-        float      : 外気温
+        float      : キャビン温度(K)
+        float      : 外気温(K)
         numpy.array: fshift()関数の計算結果
         HDUL       : 開かれたDDBファイルのHDULオブジェクト
 

@@ -344,15 +344,10 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # self.assertEqual(1, n_state_change, 'MS::stateの切り替えが1回だけ発生していることを確認')
 
         # Telescope Pointing
-        #
-        # coordinate = azel, loadmode = 0 の場合:
-        #   lon = -2.1*cos(deg2rad(lat))
-        #   lat = -2.1
-        #
-        self.assertTrue((dems.lon        == -2.1*np.cos(np.deg2rad(-2.1))).all(), 'MS::lonの全ての計算値が正しいことを確認')
-        self.assertTrue((dems.lat        == -2.1                         ).all(), 'MS::latの全ての値が正しいことを確認')
-        self.assertTrue((dems.lon_origin ==  1.1                         ).all(), 'MS::lon_originの全ての値が正しいことを確認')
-        self.assertTrue((dems.lat_origin ==  1.1                         ).all(), 'MS::lat_originの全ての値が正しいことを確認')
+        self.assertTrue((dems.lon        == -1.1).all(), 'MS::lonの全ての値が正しいことを確認')
+        self.assertTrue((dems.lat        == -1.1).all(), 'MS::latの全ての値が正しいことを確認')
+        self.assertTrue((dems.lon_origin ==  1.1).all(), 'MS::lon_originの全ての値が正しいことを確認')
+        self.assertTrue((dems.lat_origin ==  1.1).all(), 'MS::lat_originの全ての値が正しいことを確認')
         self.assertEqual('altaz', dems.frame, 'MS::frameが既定値であることを確認')
 
         # Weather Informations

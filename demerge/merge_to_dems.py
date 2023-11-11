@@ -80,12 +80,15 @@ def merge_to_dems(
     times_antenna = np.array(times_antenna).astype('datetime64[ns]')
 
     response = None
+    fshift = mf.fshift(readout_hdul, pixel_id)
     if loadtype == 'Tsignal':
         # T_signalsを計算する
         master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
         T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-        T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
+        T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
         response  = T_signals
+    elif loadtype == 'fshift':
+        response  = fshift
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 

@@ -357,7 +357,6 @@ def main() -> None:
 
         pixel_id   =a.pixel_id,
         coordinate =a.coordinate,
-        mode       =a.mode,
         loadtype   =a.loadtype,
         findR      =a.findR,
         ch         =a.ch,

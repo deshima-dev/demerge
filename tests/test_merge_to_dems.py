@@ -46,6 +46,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
+            loadtype='Tsignal'
         )
         times_skychop, states_skychop = mf.retrieve_skychop_states('{}.skychop'.format(prefix))
         times_skychop = mf.convert_timestamp(times_skychop)
@@ -111,7 +112,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             lon_max_off=lon_max_off,
             lon_min_on=lon_min_on,
             lon_max_on=lon_max_on,
-            mode=2,
+            loadtype='Tsignal'
         )
         state = dems.state
         time  = dems.time
@@ -146,7 +147,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
             still=True,
-            period=period
+            period=period,
+            loadtype='Tsignal'
         )
         state = dems.state
         time  = dems.time
@@ -180,6 +182,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
+            loadtype='Tsignal',
         )
         response = dems.data.T[0]
         state    = dems.state
@@ -216,6 +219,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
+            loadtype='Tsignal',
         )
         response = dems.data.T[0]
         state    = dems.state
@@ -259,6 +263,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
+            loadtype='Tsignal',
         )
         self.assertEqual(xa.DataArray, type(dems), 'demsオブジェクトの型の確認')
 

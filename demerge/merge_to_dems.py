@@ -283,6 +283,7 @@ def merge_to_dems(
         humidity                =humidity,
         wind_speed              =wind_speed,
         wind_direction          =wind_direction,
+        frequency               =kid_freq,
         aste_cabin_temperature  =aste_cabin_temperature,
         aste_subref_x           =aste_subref_x,
         aste_subref_y           =aste_subref_y,

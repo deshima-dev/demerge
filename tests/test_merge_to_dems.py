@@ -373,7 +373,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # MergeToDfits()クラスでも固定値が指定されていた。
         #
         self.assertTrue(np.array(dems.bandwidth  == 0.0  ).all(), 'MS::bandwidthが既定値であることを確認')
-        self.assertTrue(np.array(dems.frequency  == 0.0  ).all(), 'MS::frequencyが既定値であることを確認')
+        self.assertTrue(np.array(dems.frequency  == 1.5e9).all(), 'MS::frequencyが既定値であることを確認')
         self.assertTrue(np.array(dems.beam_major == 0.005).all(), 'MS::beam_majorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_minor == 0.005).all(), 'MS::beam_minorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_pa    == 0.005).all(), 'MS::beam_paが既定値で無いことを確認')
@@ -392,9 +392,9 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # ASTE Specific
         self.assertTrue((dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
-        self.assertTrue((dems.aste_subref_x.values  == 1.1           ).all(), 'MS::aste_subref_xが既定値で無いことを確認')
-        self.assertTrue((dems.aste_subref_y.values  == 1.1           ).all(), 'MS::aste_subref_yが既定値で無いことを確認')
-        self.assertTrue((dems.aste_subref_z.values  == 1.1           ).all(), 'MS::aste_subref_zが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_x.values   == 1.1          ).all(), 'MS::aste_subref_xが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_y.values   == 1.1          ).all(), 'MS::aste_subref_yが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_z.values   == 1.1          ).all(), 'MS::aste_subref_zが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_xt.values  == 1.1          ).all(), 'MS::aste_subref_xtが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_yt.values  == 1.1          ).all(), 'MS::aste_subref_ytが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_zt.values  == 1.1          ).all(), 'MS::aste_subref_ztが既定値で無いことを確認')
@@ -404,15 +404,15 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual('altaz', dems.aste_misti_frame,                      'MS::aste_misti_frameが既定値であることを確認')
 
         # DESHIMA 2.0 specific
-        self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
-        self.assertTrue(np.array(dems.d2_mkid_type != '').all())
-        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5e9).all(),           'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
+        self.assertTrue(np.array(dems.d2_mkid_id                != 0).any())
+        self.assertTrue(np.array(dems.d2_mkid_type              != '').all())
+        self.assertTrue(np.array(dems.d2_mkid_frequency         == 1.5e9).all(), 'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
         self.assertTrue(np.array(dems.d2_roomchopper_isblocking == False).all(), 'd2_roomchopper_isblockingの値が既定値であることを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(),   'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking  == False).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking  == True).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
-        self.assertEqual(DEMS_VERSION, dems.d2_dems_version)
+        self.assertEqual(DEMS_VERSION,    dems.d2_dems_version)
         self.assertEqual(DEMERGE_VERSION, dems.d2_demerge_version)
         return
 

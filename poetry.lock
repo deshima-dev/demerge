@@ -231,7 +231,7 @@ files = [
 
 [[package]]
 name = "dems"
-version = "0.7.0"
+version = "0.8.0"
 description = "DESHIMA measurement set by DataArray"
 optional = false
 python-versions = ">=3.8,<3.13"

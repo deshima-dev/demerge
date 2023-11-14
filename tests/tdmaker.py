@@ -9,6 +9,7 @@ from astropy.io    import fits, ascii
 from astropy.table import Table
 
 import numpy as np
+import lzma
 import math
 import sys
 import argparse
@@ -95,7 +96,7 @@ class TestDataMaker():
         antenna_table = Table()
         # ANTENNA時刻は秒が少数第一桁まで。そのため下2桁から6桁までを[:-5]を用いて文字列として削除している。
         antenna_table['time'] = [(self.begin_time + timedelta(milliseconds=self.T_antenna*1e3*i)).strftime('%Y%m%d%H%M%S.%f')[:-5] for i in range(self.n_antenna)]
-        bias = 2.1
+        bias = 2.2
         dummy = np.array([1.1 for i in range(self.n_antenna)])
         antenna_table['ra-prg']          = dummy
         antenna_table['dec-prg']         = dummy
@@ -411,6 +412,8 @@ if __name__ == '__main__':
     parser.add_argument('--lower_cabin_temp', type=float, default=15,         help='MainCabinの温度(degC)をfloatで指定して下さい')
     parser.add_argument('--prefix',           type=str,   default='testdata', help='生成されるファイル名のprefixを指定して下さい')
     parser.add_argument('--measure_time',     type=int,   default=None,       help='環境測定時間(分)を整数で指定して下さい')
+    parser.add_argument('--xz',               type=bool,  default=False,      help='Trueを指定するとskychopファイルをxzで圧縮する')
+    parser.add_argument('--gz',               type=bool,  default=False,      help='Trueを指定するとreadoutファイルをgzで圧縮する')
     a = parser.parse_args()
 
     if a.measure_time == None:
@@ -437,7 +440,11 @@ if __name__ == '__main__':
         tdm.antenna.write('{}.ant'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'skychop'):
-        tdm.skychop.write('{}.skychop'.format(a.prefix), format='ascii.commented_header', overwrite=True)
+        if (a.xz):
+            with lzma.open('{}.skychop.dat.xz'.format(a.prefix), 'wt') as f:
+                tdm.skychop.write(f, format='ascii.commented_header', overwrite=True)
+        else:
+            tdm.skychop.write('{}.skychop'.format(a.prefix), format='ascii.commented_header', overwrite=True)
         sys.exit(0)
     if (a.data_name == 'weather'):
         tdm.weather.write('{}.wea'.format(a.prefix), format='ascii.commented_header', overwrite=True)
@@ -452,7 +459,10 @@ if __name__ == '__main__':
         tdm.ddb.writeto('{}_DDB.fits.gz'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'readout'):
-        tdm.readout.writeto('{}_reduced_readout.fits'.format(a.prefix), overwrite=True)
+        if (a.gz):
+            tdm.readout.writeto('{}_reduced_readout.fits.gz'.format(a.prefix), overwrite=True)
+        else:
+            tdm.readout.writeto('{}_reduced_readout.fits'.format(a.prefix), overwrite=True)
         sys.exit(0)
     if (a.data_name == 'dfits'):
         tdm.dfits.writeto('{}_dfits.fits.gz'.format(a.prefix), overwrite=True)

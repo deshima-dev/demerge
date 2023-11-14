@@ -23,58 +23,59 @@ from scipy import interpolate
 from . import demerge
 
 def make_reduced_fits(kidfiles, output_filename):
-    fitinfo = [] # [[kidid, pread, fc, yfc, linyfc, fr, dfr, Qr, dQr, Qc, dQc, Qi, dQi], ...]
-    readout = demerge.readout_dict()
+    fitinfo  = [] # [[kidid, pread, fc, yfc, linyfc, fr, dfr, Qr, dQr, Qc, dQc, Qi, dQi], ...]
+    readout  = demerge.readout_dict()
     kidsinfo = demerge.kids_dict()
-    readout['hdr_val_lis'][1] = 'fuga'
+    readout['hdr_val_lis'][1]  = 'hoge'
     kidsinfo['hdr_val_lis'][1] = 'localsweep.sweep'
-    downsampling_rate = 1
+    downsampling_rate          = 1
 
     framert = None
     npoints = None
     for kidfile in kidfiles:
         with open(kidfile, 'rb') as f:
             kid = pickle.load(f)
-        timestamp = kid['tod_timestamp'][:-100] #データの最後の部分にはよくないデータが含まれる可能性があるので、最後の100個ぐらいを除外する。
-        ts = demerge.rebin_array(timestamp, downsampling_rate) #1はdown samplingしないことを意味する
-        fc = kid['tod'].frequency
 
-        if kid['resonance_params'] is None:
-            fr = np.nan
-            dfr = np.nan
-            Qr = np.nan
-            dQr = np.nan
-            Qc = np.nan
-            dQc = np.nan
-            Qi = np.nan
-            dQi = np.nan
-            yfc = np.nan
-            linyfc = np.nan
-            ampl = np.array([np.nan for j in range(len(ts))])
-            phase = np.array([np.nan for j in range(len(ts))])
-            linphase = np.array([np.nan for j in range(len(ts))])
+        timestamp = kid['tod_timestamp'][:-100] #データの最後の部分にはよくないデータが含まれる可能性があるので、最後の100個ぐらいを除外する。
+        ts        = demerge.rebin_array(timestamp, downsampling_rate) #1はdown samplingしないことを意味する
+        fc        = kid['tod'].frequency
+
+        if kid.get('resonance_params') is None:
+            fr          = np.nan
+            dfr         = np.nan
+            Qr          = np.nan
+            dQr         = np.nan
+            Qc          = np.nan
+            dQc         = np.nan
+            Qi          = np.nan
+            dQi         = np.nan
+            yfc         = np.nan
+            linyfc      = np.nan
+            ampl        = np.array([np.nan for j in range(len(ts))])
+            phase       = np.array([np.nan for j in range(len(ts))])
+            linphase    = np.array([np.nan for j in range(len(ts))])
             rewound_tod = None
         else:
-            fr = kid['resonance_params']['fr'].value # GHz
+            fr  = kid['resonance_params']['fr'].value # GHz
             dfr = kid['resonance_params']['fr'].stderr # GHz
-            Qr = kid['resonance_params']['Qr'].value
+            Qr  = kid['resonance_params']['Qr'].value
             dQr = kid['resonance_params']['Qr'].stderr
-            Qc = kid['resonance_params']['Qc'].value
+            Qc  = kid['resonance_params']['Qc'].value
             dQc = kid['resonance_params']['Qc'].stderr
-            Qi = kid['resonance_params']['Qi'].value
+            Qi  = kid['resonance_params']['Qi'].value
             dQi = kid['resonance_params']['Qi'].stderr
 
             arga = kid['resonance_params']['arga']
             absa = kid['resonance_params']['absa']
-            tau = kid['resonance_params']['tau']
+            tau  = kid['resonance_params']['tau']
             phi0 = kid['resonance_params']['phi0']
             c = kid['resonance_params']['c']
 
-            rewound_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
-            fitted_localsweep = demerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            rewound_localsweep        = demerge.gaolinbg_rewind(kid['localsweep'].x, kid['localsweep'].iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
+            fitted_localsweep         = demerge.gaolinbg_function()(kid['localsweep'].x, arga, absa, tau, fr, Qr, Qc, phi0, c)
             rewound_fitted_localsweep = demerge.gaolinbg_rewind(kid['localsweep'].x, fitted_localsweep, arga, absa, tau, fr, Qr, Qc, phi0, c)
 
-            phase_localsweep = -np.angle(-rewound_localsweep)
+            phase_localsweep        = -np.angle(-rewound_localsweep)
             phase_fitted_localsweep = -np.angle(-rewound_fitted_localsweep)
 
             ## spline interpolation
@@ -83,8 +84,8 @@ def make_reduced_fits(kidfiles, output_filename):
             #yfr = interpolate.splev(fr, tck, der=0) # phase of resonance f
 
             ## linphaseの計算(linyfc = k.convert_to_fshift(yfc, opt='linphase'))
-            tck = interpolate.splrep(phase_fitted_localsweep, kid['localsweep'].x, s=0)
-            f = interpolate.splev(yfc, tck, der=0)
+            tck    = interpolate.splrep(phase_fitted_localsweep, kid['localsweep'].x, s=0)
+            f      = interpolate.splev(yfc, tck, der=0)
             linyfc = 4.0*Qr*(f - fr)/fr
 
             # 抜粋:mkid_data.data.FixedData::calibrate_with_blind_tones()メソッド
@@ -101,18 +102,18 @@ def make_reduced_fits(kidfiles, output_filename):
             # 抜粋:mkid_data.kidfit.KidFitResult::rewound_ampl_phase()メソッド
             rw = demerge.gaolinbg_rewind(kid['tod'].frequency, calibrated, arga, absa, tau, fr, Qr, Qc, phi0, c)
             #rw = demerge.gaolinbg_rewind(calibrated_tod.frequency, calibrated_tod.iq, arga, absa, tau, fr, Qr, Qc, phi0, c)
-            ampl  = 2*np.abs(rw)
-            phase = -np.angle(-rw)
+            ampl      = 2*np.abs(rw)
+            phase     = -np.angle(-rw)
             index_ar0 = np.where(abs(phase)>3.1)
             if len(index_ar0[0])>0:
-                index0 = index_ar0[0][0]
+                index0  = index_ar0[0][0]
                 initial = phase[index0]
                 if initial>0.:
                     index_ar1 = np.where(phase<0.)
-                    factor = 2.*np.pi
+                    factor    = 2.*np.pi
                 else:
                     index_ar1 = np.where(phase>0.)
-                    factor = -2.*np.pi
+                    factor    = -2.*np.pi
                 for index in index_ar1[0]:
                     if index>index0: phase[index] += factor
 
@@ -121,24 +122,24 @@ def make_reduced_fits(kidfiles, output_filename):
             rewound_tod = demerge.FixedFitData(kid['tod'].frequency, kid['tod'].t, ampl, phase, info=kid['tod'].info)
 
             #ts, ampl, phase = k.get_cache('deglitch').unpack()
-            baseline_thresh = 6.0
-            glitch_thresh = 5.0
+            baseline_thresh   = 6.0
+            glitch_thresh     = 5.0
             clusterize_thresh = 2
-            interp_offset = 0
+            interp_offset     = 0
             bad = demerge.find_glitch([rewound_tod.phase], baseline_thresh, glitch_thresh, clusterize_thresh, interp_offset)
 
             # 抜粋:bbsweeplib.kids.KID::deglitch()
-            ampl = demerge.interpolate_bad(rewound_tod.amplitude, bad)
+            ampl  = demerge.interpolate_bad(rewound_tod.amplitude, bad)
             phase = demerge.interpolate_bad(rewound_tod.phase, bad)
-            d = demerge.FixedFitData(rewound_tod.frequency*GHz, rewound_tod.t, ampl, phase)
+            d     = demerge.FixedFitData(rewound_tod.frequency*GHz, rewound_tod.t, ampl, phase)
             ts, ampl, phase = d.unpack()
 
             #tck = interpolate.splrep(phase_fitted_localsweep, kid['localsweep'].x, s=0)
-            f = interpolate.splev(phase, tck, der=0)
+            f        = interpolate.splev(phase, tck, der=0)
             linphase = 4.0*Qr*(f - fr)/fr
-            ts = demerge.rebin_array(ts, downsampling_rate)
-            ampl = demerge.rebin_array(ampl, downsampling_rate)
-            phase = demerge.rebin_array(phase, downsampling_rate)
+            ts       = demerge.rebin_array(ts, downsampling_rate)
+            ampl     = demerge.rebin_array(ampl, downsampling_rate)
+            phase    = demerge.rebin_array(phase, downsampling_rate)
 
         fitinfo.append([kid['kidid'], kid['readpower'], fc, yfc, linyfc, fr, dfr, Qr, dQr, Qc, dQc, Qi, dQi])
 
@@ -155,11 +156,11 @@ def make_reduced_fits(kidfiles, output_filename):
         readout['tunit'].append(None)
 
         # plot.pyのtodのプロットで使うために保存
-        kid['amp'] = ampl
-        kid['ph'] = phase
-        kid['linph'] = linphase
-        kid['yfc'] = yfc
-        kid['linyfc'] = linyfc
+        kid['amp']         = ampl
+        kid['ph']          = phase
+        kid['linph']       = linphase
+        kid['yfc']         = yfc
+        kid['linyfc']      = linyfc
         kid['rewound_tod'] = rewound_tod
         with open(kidfile, 'wb') as f:
             pickle.dump(kid, f)
@@ -210,10 +211,12 @@ def main() -> None:
     args[1] string pklファイルが格納されているcacheディレクトリへのパス
     args[2] string 出力ファイル名
     """
-    args = sys.argv
-    cache_dir = args[1]
+    args            = sys.argv
+    cache_dir       = args[1]
     output_filename = args[2]
+
     kidfiles = sorted(glob.glob(cache_dir + '/kid*.pkl')) #ファイル名で昇順で並べ替える
+
     make_reduced_fits(kidfiles, output_filename)
 
 if __name__=='__main__':

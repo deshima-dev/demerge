@@ -30,15 +30,22 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     """
     fc = kid['tod'].frequency
     peaks = demerge.find_peaks(kid['localsweep'].x, kid['localsweep'].amplitude, fc, minq=minq, maxratio=maxratio)
+    if len(peaks) == 0:
+        print('calc_resonance_params(): no peaks')
+        kid['resonance_params'] = None
+        kid['fitrange']         = None
+        return kid
+
     result, fitrange = demerge.fit_onepeak(kid['localsweep'], peaks, nfwhm=nfwhm)
 
-    fr = result.params['fr'].value # GHz
+
+    fr  = result.params['fr'].value # GHz
     dfr = result.params['fr'].stderr # GHz
-    Qr = result.params['Qr'].value
+    Qr  = result.params['Qr'].value
     dQr = result.params['Qr'].stderr
-    Qc = result.params['Qc'].value
+    Qc  = result.params['Qc'].value
     dQc = result.params['Qc'].stderr
-    Qi = result.params['Qi'].value
+    Qi  = result.params['Qi'].value
     dQi = result.params['Qi'].stderr
     if dfr/fr<0. or dQr/Qr<0. or dQc/Qc<0. or dQi/Qi<0.:
         kid['enabled'] = False
@@ -65,6 +72,9 @@ def main() -> None:
     with open(filename, 'rb') as f:
         kid = pickle.load(f)
     kid = calc_resonance_params(kid)
+    if kid == None:
+        return
+
     with open(filename, 'wb') as f:
         pickle.dump(kid, f)
 

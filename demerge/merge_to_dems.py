@@ -1,7 +1,7 @@
 """demsオブジェクトを生成する
 
 python 3.9
-dems   0.4.0
+dems   0.8.0
 
 (C) 2023 内藤システムズ
 """
@@ -36,8 +36,7 @@ def merge_to_dems(
     # その他の引数の処理と既定値の設定
     pixel_id   = kwargs.pop('pixel_id',   0)
     coordinate = kwargs.pop('coordinate', 'azel')
-    mode       = kwargs.pop('mode',   0)
-    loadtype   = kwargs.pop('loadtype',   'Tsignal')
+    loadtype   = kwargs.pop('loadtype',   'fshift')
     # find R, sky
     findR  = kwargs.pop("findR",  False)
     ch     = kwargs.pop("ch",     0)
@@ -53,6 +52,8 @@ def merge_to_dems(
     lon_max_off = kwargs.pop("lon_max_off", 0)
     lon_min_on  = kwargs.pop("lon_min_on",  0)
     lon_max_on  = kwargs.pop("lon_max_on",  0)
+    # その他一時的な補正
+    offset_time_antenna = kwargs.pop("offset_time_antenna", 0) # ms(integerでないとnp.timedeltaに変換できないので注意)
 
     # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
     readout_hdul   = fits.open(readout_path)
@@ -77,15 +78,18 @@ def merge_to_dems(
     times_skychop = np.array(times_skychop).astype('datetime64[ns]')
 
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
-    times_antenna = np.array(times_antenna).astype('datetime64[ns]')
+    times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
+    fshift = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixel_id)
+    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
     response = None
     if loadtype == 'Tsignal':
         # T_signalsを計算する
-        master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
         T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-        T_signals = mf.calibrate_to_power(pixel_id, lower_cabin_temp[0], T_amb, readout_hdul, ddbfits_hdul)
+        T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
         response  = T_signals
+    elif loadtype == 'fshift':
+        response  = fshift.T
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 
@@ -101,22 +105,17 @@ def merge_to_dems(
             az_prg  = antenna_table['az-prg(no-col)']
             el_prog = antenna_table['el-prog(no-col)']
         else:
-            raise KeyError('{}ファイルにaz-prg(no-cor)列とaz-prg(no-col)列がありません。どちらか片方が存在する必要があります。ANTENNAファイルの形式を確認してください。'.format(antenna_path))
+            raise KeyError('{}ファイルにaz-prg(no-cor)列またはaz-prg(no-col)列がありません。'.format(antenna_path))
 
         lon        = az_prg  + antenna_table['az-real'] - antenna_table['az-prg']
         lat        = el_prog + antenna_table['el-real'] - antenna_table['el-prg']
-        lon_origin = np.median(antenna_table['az-prog(center)'])
-        lat_origin = np.median(antenna_table['el-prog(center)'])
-        if mode in [0, 1]:
-            lon -= antenna_table['az-prog(center)']
-            lat -= antenna_table['el-prog(center)']
-            if mode == 0:
-                lon *= np.cos(np.deg2rad(lat))
+        lon_origin = antenna_table['az-prog(center)']
+        lat_origin = antenna_table['el-prog(center)']
     elif coordinate == 'radec':
         lon        = antenna_table['ra-prg']
         lat        = antenna_table['dec-prg']
-        lon_origin = obsinst_params['ra'] # 観測スクリプトに設定されているRA,DEC
-        lat_origin = obsinst_params['dec']
+        lon_origin = np.full_like(lon, obsinst_params['ra']) # 観測スクリプトに設定されているRA,DEC
+        lat_origin = np.full_like(lat, obsinst_params['dec'])
     else:
         raise KeyError('Invalid coodinate type: {}'.format(coordinate))
 
@@ -131,6 +130,8 @@ def merge_to_dems(
     response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, kid_id])
     lon_xr                    = xr.DataArray(data=lon,                             coords={'time': times_antenna})
     lat_xr                    = xr.DataArray(data=lat,                             coords={'time': times_antenna})
+    lon_origin_xr             = xr.DataArray(data=lon_origin,                      coords={'time': times_antenna})
+    lat_origin_xr             = xr.DataArray(data=lat_origin,                      coords={'time': times_antenna})
     temperature_xr            = xr.DataArray(data=weather_table['tmperature'],     coords={'time': times_weather})
     humidity_xr               = xr.DataArray(data=weather_table['vapor-pressure'], coords={'time': times_weather})
     pressure_xr               = xr.DataArray(data=weather_table['presure'],        coords={'time': times_weather})
@@ -150,31 +151,45 @@ def merge_to_dems(
     state_type_numbers_xr     = xr.DataArray(data=state_type_numbers,              coords={'time': times_antenna})
 
     # Tsignalsの時刻に合わせて補間する
-    lon                    =                    lon_xr.interp_like(response_xr)
-    lat                    =                    lat_xr.interp_like(response_xr)
-    temperature            =            temperature_xr.interp_like(response_xr)
-    humidity               =               humidity_xr.interp_like(response_xr)
-    pressure               =               pressure_xr.interp_like(response_xr)
-    wind_speed             =             wind_speed_xr.interp_like(response_xr)
-    wind_direction         =         wind_direction_xr.interp_like(response_xr)
-    aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
-    aste_subref_x          =          aste_subref_x_xr.interp_like(response_xr)
-    aste_subref_y          =          aste_subref_y_xr.interp_like(response_xr)
-    aste_subref_z          =          aste_subref_z_xr.interp_like(response_xr)
-    aste_subref_xt         =         aste_subref_xt_xr.interp_like(response_xr)
-    aste_subref_yt         =         aste_subref_yt_xr.interp_like(response_xr)
-    aste_subref_zt         =         aste_subref_zt_xr.interp_like(response_xr)
-    aste_misti_lon         =         aste_misti_lon_xr.interp_like(response_xr)
-    aste_misti_lat         =         aste_misti_lat_xr.interp_like(response_xr)
-    aste_misti_pwv         =         aste_misti_pwv_xr.interp_like(response_xr)
-    skychop_state          =          skychop_state_xr.interp_like(response_xr, method='nearest')
-    state_type_numbers     =     state_type_numbers_xr.interp_like(response_xr, method='nearest')
+    lon                =                lon_xr.interp_like(response_xr)
+    lat                =                lat_xr.interp_like(response_xr)
+    lon_origin         =         lon_origin_xr.interp_like(response_xr)
+    lat_origin         =         lat_origin_xr.interp_like(response_xr)
+    temperature        =        temperature_xr.interp_like(response_xr)
+    humidity           =           humidity_xr.interp_like(response_xr)
+    pressure           =           pressure_xr.interp_like(response_xr)
+    wind_speed         =         wind_speed_xr.interp_like(response_xr)
+    wind_direction     =     wind_direction_xr.interp_like(response_xr)
+    aste_subref_x      =      aste_subref_x_xr.interp_like(response_xr)
+    aste_subref_y      =      aste_subref_y_xr.interp_like(response_xr)
+    aste_subref_z      =      aste_subref_z_xr.interp_like(response_xr)
+    aste_subref_xt     =     aste_subref_xt_xr.interp_like(response_xr)
+    aste_subref_yt     =     aste_subref_yt_xr.interp_like(response_xr)
+    aste_subref_zt     =     aste_subref_zt_xr.interp_like(response_xr)
+    skychop_state      =      skychop_state_xr.interp_like(response_xr, method='nearest')
+    state_type_numbers = state_type_numbers_xr.interp_like(response_xr, method='nearest')
+
+    aste_cabin_temperature = np.nan
+    aste_misti_lon         = np.nan
+    aste_misti_lat         = np.nan
+    aste_misti_pwv         = np.nan
+
+    if cabin_path != '' and cabin_path != None:
+        aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
+
+    if misti_path != '' and misti_path != None:
+        aste_misti_lon = aste_misti_lon_xr.interp_like(response_xr)
+        aste_misti_lat = aste_misti_lat_xr.interp_like(response_xr)
+        aste_misti_pwv = aste_misti_pwv_xr.interp_like(response_xr)
 
     # 補間後のSTATETYPEを文字列に戻す
     state = np.full_like(state_type_numbers, 'GRAD', dtype='<U8')
     for state_type, i in state_types.items():
         state[state_type_numbers == i] = state_type
 
+    # Sky chopperの状態からビームラベルを割り当てる(1 -> B, 0 -> A)
+    beam = np.where(skychop_state, 'B', 'A')
+        
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still:
         seconds = (times - times[0])/np.timedelta64(1, 's')
@@ -257,6 +272,7 @@ def merge_to_dems(
         data                    =response,
         time                    =times,
         chan                    =kid_id,
+        beam                    =beam,
         state                   =state,
         lon                     =lon,
         lat                     =lat,
@@ -267,6 +283,7 @@ def merge_to_dems(
         humidity                =humidity,
         wind_speed              =wind_speed,
         wind_direction          =wind_direction,
+        frequency               =kid_freq,
         aste_cabin_temperature  =aste_cabin_temperature,
         aste_subref_x           =aste_subref_x,
         aste_subref_y           =aste_subref_y,
@@ -304,27 +321,28 @@ def main() -> None:
     parser.add_argument('--readout', type=str, required=True, help='reduced readoutファイルへのパスを指定して下さい(.fits)')
     parser.add_argument('--skychop', type=str, required=True, help='skychopファイルへのパスを指定して下さい(.skychop)')
     parser.add_argument('--weather', type=str, required=True, help='weatherファイルへのパスを指定して下さい(.weather)')
-    parser.add_argument('--misti',   type=str, required=True, help='mistiファイルへのパスを指定して下さい(.misti)')
-    parser.add_argument('--cabin',   type=str, required=True, help='cabinファイルへのパスを指定して下さい(.cabin)')
 
     # オプション引数
-    parser.add_argument('--pixel_id',    type=int,   default=0,         help='pixel_idを整数で指定します')
-    parser.add_argument('--coordinate',  type=str,   default='azel',    help='座標系(azel/radec)を文字列で指定します')
-    parser.add_argument('--mode',        type=int,   default=0,         help='座標の読み込み方法を整数で指定します(0:相対座標cos射影あり(おすすめ既定値), 1:相対座標cos射影なし, 2:絶対座標)')
-    parser.add_argument('--loadtype',    type=str,   default='Tsignal', help='読み込むデータを文字列で指定します(既定値: Tsignal, 現在はTsignalの読み込みしかできません)')
-    parser.add_argument('--findR',       action='store_true',           help='指定するとFindR, Skyを実行します')
-    parser.add_argument('--ch',          type=int,   default=0,         help='findRに利用するチャネルを整数で指定します')
-    parser.add_argument('--Rth',         type=float, default=280.0,     help='R閾値を実数で指定します')
-    parser.add_argument('--skyth',       type=float, default=150.0,     help='sky閾値を実数で指定します')
-    parser.add_argument('--cutnum',      type=int,   default=1,         help='findRでのカット数を整数で指定します')
-    parser.add_argument('--still',       action='store_true',           help='指定するとstill観測用の解析を行います')
-    parser.add_argument('--period',      type=int,   default=2,         help='still観測の1/2周期(秒)を整数で指定します')
-    parser.add_argument('--shuttle',     action='store_true',           help='指定するとshuttle観測用の解析を行います')
-    parser.add_argument('--lon_min_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最小値を実数で指定します')
-    parser.add_argument('--lon_max_off', type=float, default=0.0,       help='shuttle観測時のOFFにするlongitudeの最大値を実数で指定します')
-    parser.add_argument('--lon_min_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
-    parser.add_argument('--lon_max_on',  type=float, default=0.0,       help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
-    parser.add_argument('--debug',       action='store_true',           help='指定すると全ての引数の値をログとして表示します')
+    parser.add_argument('--misti',       type=str,   default='',       help='mistiファイルへのパスを指定して下さい(.misti)')
+    parser.add_argument('--cabin',       type=str,   default='',       help='cabinファイルへのパスを指定して下さい(.cabin)')
+    parser.add_argument('--pixel_id',    type=int,   default=0,        help='pixel_idを整数で指定します')
+    parser.add_argument('--coordinate',  type=str,   default='azel',   help='座標系(azel/radec)を文字列で指定します')
+    parser.add_argument('--loadtype',    type=str,   default='fshift', help='読み込むデータを文字列で指定します(既定値: fshift, fshiftかTsignalを指定できます)')
+    parser.add_argument('--findR',       action='store_true',          help='指定するとFindR, Skyを実行します')
+    parser.add_argument('--ch',          type=int,   default=0,        help='findRに利用するチャネルを整数で指定します')
+    parser.add_argument('--Rth',         type=float, default=280.0,    help='R閾値を実数で指定します')
+    parser.add_argument('--skyth',       type=float, default=150.0,    help='sky閾値を実数で指定します')
+    parser.add_argument('--cutnum',      type=int,   default=1,        help='findRでのカット数を整数で指定します')
+    parser.add_argument('--still',       action='store_true',          help='指定するとstill観測用の解析を行います')
+    parser.add_argument('--period',      type=int,   default=2,        help='still観測の1/2周期(秒)を整数で指定します')
+    parser.add_argument('--shuttle',     action='store_true',          help='指定するとshuttle観測用の解析を行います')
+    parser.add_argument('--lon_min_off', type=float, default=0.0,      help='shuttle観測時のOFFにするlongitudeの最小値を実数で指定します')
+    parser.add_argument('--lon_max_off', type=float, default=0.0,      help='shuttle観測時のOFFにするlongitudeの最大値を実数で指定します')
+    parser.add_argument('--lon_min_on',  type=float, default=0.0,      help='shuttle観測時のONにするlongitudeの最小値を実数で指定します')
+    parser.add_argument('--lon_max_on',  type=float, default=0.0,      help='shuttle観測時のONにするlongitudeの最大値を実数で指定します')
+    parser.add_argument('--debug',       action='store_true',          help='指定すると全ての引数の値をログとして表示します')
+
+    parser.add_argument('--offset_time_antenna', type=int, default=0, help='TODとAntennaログの時刻のずれの補正値(ms)')
 
     # 引数の読み取り
     a = parser.parse_args()
@@ -357,7 +375,6 @@ def main() -> None:
 
         pixel_id   =a.pixel_id,
         coordinate =a.coordinate,
-        mode       =a.mode,
         loadtype   =a.loadtype,
         findR      =a.findR,
         ch         =a.ch,
@@ -371,6 +388,8 @@ def main() -> None:
         lon_max_off=a.lon_max_off,
         lon_min_on =a.lon_min_on,
         lon_max_on =a.lon_max_on,
+
+        offset_time_antenna=a.offset_time_antenna
     )
 
     dems.to_zarr(a.filename, mode="w")

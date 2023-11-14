@@ -46,6 +46,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
+            loadtype='Tsignal'
         )
         times_skychop, states_skychop = mf.retrieve_skychop_states('{}.skychop'.format(prefix))
         times_skychop = mf.convert_timestamp(times_skychop)
@@ -111,7 +112,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             lon_max_off=lon_max_off,
             lon_min_on=lon_min_on,
             lon_max_on=lon_max_on,
-            mode=2,
+            loadtype='Tsignal'
         )
         state = dems.state
         time  = dems.time
@@ -146,7 +147,8 @@ class MergeToDemsTestDrive(unittest.TestCase):
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
             still=True,
-            period=period
+            period=period,
+            loadtype='Tsignal'
         )
         state = dems.state
         time  = dems.time
@@ -180,6 +182,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
+            loadtype='Tsignal',
         )
         response = dems.data.T[0]
         state    = dems.state
@@ -216,6 +219,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             cabin_path='{}.cabin'.format(prefix),
             findR=True,
             cutnum=cutnum,
+            loadtype='Tsignal',
         )
         response = dems.data.T[0]
         state    = dems.state
@@ -259,6 +263,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
             weather_path='{}.wea'.format(prefix),
             misti_path='{}.misti'.format(prefix),
             cabin_path='{}.cabin'.format(prefix),
+            loadtype='Tsignal',
         )
         self.assertEqual(xa.DataArray, type(dems), 'demsオブジェクトの型の確認')
 
@@ -318,7 +323,11 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # MS::beam (既定値)
         self.assertEqual(n_time, len(dems.beam),         'MS::beamの打点数が打刻数に一致することを確認')
-        self.assertTrue(np.array(dems.beam == '').all(), 'MS::beamに既定値が格納されていることを確認')
+        self.assertTrue(np.array(dems.beam != '').all(), 'MS::beamに既定値が格納されていることを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.beam == 'A')/n_time, 1), 'MS::beamのおよそ半数がAであることを確認')
+        self.assertEqual(0.5, round(np.count_nonzero(dems.beam == 'B')/n_time, 1), 'MS::beamのおよそ半数がBであることを確認')
+        self.assertEqual('B', dems.beam[0],  'MS::beamの最初の要素がGRADであることを確認')
+        self.assertEqual('A', dems.beam[-1], 'MS::beamの最後の要素がONであることを確認')
 
         # MS::scan (既定値)
         self.assertEqual(n_time, len(dems.scan),         'MS::scanの打点数が打刻数に一致することを確認')
@@ -344,15 +353,10 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # self.assertEqual(1, n_state_change, 'MS::stateの切り替えが1回だけ発生していることを確認')
 
         # Telescope Pointing
-        #
-        # coordinate = azel, loadmode = 0 の場合:
-        #   lon = -2.1*cos(deg2rad(lat))
-        #   lat = -2.1
-        #
-        self.assertTrue((dems.lon        == -2.1*np.cos(np.deg2rad(-2.1))).all(), 'MS::lonの全ての計算値が正しいことを確認')
-        self.assertTrue((dems.lat        == -2.1                         ).all(), 'MS::latの全ての値が正しいことを確認')
-        self.assertTrue((dems.lon_origin ==  1.1                         ).all(), 'MS::lon_originの全ての値が正しいことを確認')
-        self.assertTrue((dems.lat_origin ==  1.1                         ).all(), 'MS::lat_originの全ての値が正しいことを確認')
+        self.assertTrue((dems.lon        == -1.1).all(), 'MS::lonの全ての値が正しいことを確認')
+        self.assertTrue((dems.lat        == -1.1).all(), 'MS::latの全ての値が正しいことを確認')
+        self.assertTrue((dems.lon_origin ==  1.1).all(), 'MS::lon_originの全ての値が正しいことを確認')
+        self.assertTrue((dems.lat_origin ==  1.1).all(), 'MS::lat_originの全ての値が正しいことを確認')
         self.assertEqual('altaz', dems.frame, 'MS::frameが既定値であることを確認')
 
         # Weather Informations
@@ -369,7 +373,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         # MergeToDfits()クラスでも固定値が指定されていた。
         #
         self.assertTrue(np.array(dems.bandwidth  == 0.0  ).all(), 'MS::bandwidthが既定値であることを確認')
-        self.assertTrue(np.array(dems.frequency  == 0.0  ).all(), 'MS::frequencyが既定値であることを確認')
+        self.assertTrue(np.array(dems.frequency  == 1.5e9).all(), 'MS::frequencyが既定値であることを確認')
         self.assertTrue(np.array(dems.beam_major == 0.005).all(), 'MS::beam_majorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_minor == 0.005).all(), 'MS::beam_minorが既定値で無いことを確認')
         self.assertTrue(np.array(dems.beam_pa    == 0.005).all(), 'MS::beam_paが既定値で無いことを確認')
@@ -388,9 +392,9 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # ASTE Specific
         self.assertTrue((dems.aste_cabin_temperature == 15.0 + 273.15).all(), 'MS::aste_cabin_temperatureが既定値でないことを確認')
-        self.assertTrue((dems.aste_subref_x.values  == 1.1           ).all(), 'MS::aste_subref_xが既定値で無いことを確認')
-        self.assertTrue((dems.aste_subref_y.values  == 1.1           ).all(), 'MS::aste_subref_yが既定値で無いことを確認')
-        self.assertTrue((dems.aste_subref_z.values  == 1.1           ).all(), 'MS::aste_subref_zが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_x.values   == 1.1          ).all(), 'MS::aste_subref_xが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_y.values   == 1.1          ).all(), 'MS::aste_subref_yが既定値で無いことを確認')
+        self.assertTrue((dems.aste_subref_z.values   == 1.1          ).all(), 'MS::aste_subref_zが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_xt.values  == 1.1          ).all(), 'MS::aste_subref_xtが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_yt.values  == 1.1          ).all(), 'MS::aste_subref_ytが既定値で無いことを確認')
         self.assertTrue((dems.aste_subref_zt.values  == 1.1          ).all(), 'MS::aste_subref_ztが既定値で無いことを確認')
@@ -400,16 +404,49 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual('altaz', dems.aste_misti_frame,                      'MS::aste_misti_frameが既定値であることを確認')
 
         # DESHIMA 2.0 specific
-        self.assertTrue(np.array(dems.d2_mkid_id != 0).any())
-        self.assertTrue(np.array(dems.d2_mkid_type != '').all())
-        self.assertTrue(np.array(dems.d2_mkid_frequency == 1.5e9).all(),           'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
+        self.assertTrue(np.array(dems.d2_mkid_id                != 0).any())
+        self.assertTrue(np.array(dems.d2_mkid_type              != '').all())
+        self.assertTrue(np.array(dems.d2_mkid_frequency         == 1.5e9).all(), 'd2_mkid_frequencyの値を確認(DDB.KIDDES.F_filter)')
         self.assertTrue(np.array(dems.d2_roomchopper_isblocking == False).all(), 'd2_roomchopper_isblockingの値が既定値であることを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == False).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
-        self.assertTrue(np.array(dems.d2_skychopper_isblocking == True).any(),   'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking  == False).any(), 'd2_skychopper_isblockingの値が既定値で無いことを確認')
+        self.assertTrue(np.array(dems.d2_skychopper_isblocking  == True).any(),  'd2_skychopper_isblockingの値が既定値で無いことを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == False)/n_time, 1), 'MS::d2_skychopper_isblockingのおよそ半数がFalseであることを確認')
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
-        self.assertEqual(DEMS_VERSION, dems.d2_dems_version)
+        self.assertEqual(DEMS_VERSION,    dems.d2_dems_version)
         self.assertEqual(DEMERGE_VERSION, dems.d2_demerge_version)
+        return
+
+    def test_no_cabin_file(self):
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='{}.misti'.format(prefix),
+            cabin_path='',
+        )
+        self.assertTrue((np.isnan(dems.aste_cabin_temperature)).all(), 'MS::aste_cabin_temperatureがNaNであることを確認')
+        return
+
+    def test_no_misti_file(self):
+        prefix = 'testdata'
+        dems = mtd.merge_to_dems(
+            ddbfits_path='{}_DDB.fits.gz'.format(prefix),
+            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            antenna_path='{}.ant'.format(prefix),
+            readout_path='{}_reduced_readout.fits'.format(prefix),
+            skychop_path='{}.skychop'.format(prefix),
+            weather_path='{}.wea'.format(prefix),
+            misti_path='',
+            cabin_path='',
+        )
+        self.assertTrue((np.isnan(dems.aste_cabin_temperature)).all(), 'MS::aste_cabin_temperatureがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_lon)).all(), 'MS::aste_misti_lonがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_lat)).all(), 'MS::aste_misti_latがNaNであることを確認')
+        self.assertTrue((np.isnan(dems.aste_misti_pwv)).all(), 'MS::aste_misti_pwvがNaNであることを確認')
         return
 
     def test_retrieve_cabin_temps(self):
@@ -426,6 +463,16 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(expected[0], datetimes[3])
         self.assertEqual(13.2,        upper[3])
         self.assertEqual(16.6,        lower[3])
+
+        datetimes, upper, lower = mf.retrieve_cabin_temps()
+        self.assertTrue(np.isnan(datetimes[0]), '時刻がNaT(filename=None)')
+        self.assertTrue(np.isnan(upper[0]),     '温度がNaT(upper)(filename=None)')
+        self.assertTrue(np.isnan(lower[0]),     '温度がNaT(lower)(filename=None)')
+
+        datetimes, upper, lower = mf.retrieve_cabin_temps('')
+        self.assertTrue(np.isnan(datetimes[0]), '時刻がNaT')
+        self.assertTrue(np.isnan(upper[0]),     '温度がNaT(upper)')
+        self.assertTrue(np.isnan(lower[0]),     '温度がNaT(lower)')
         return
 
     def test_retrieve_skychop_states(self):
@@ -436,6 +483,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(1,                 states[0])
         self.assertEqual(1,                 states[1])
         self.assertEqual(1,                 states[2])
+
+        datetimes, states = mf.retrieve_skychop_states('testdata.skychop.dat.xz')
+        self.assertEqual(240000,       len(datetimes))
+        self.assertEqual(240000,       len(states))
+        self.assertEqual(1695373200.0, datetimes[0])
+        self.assertEqual(1,            states[0])
         return
 
     def test_retrieve_misti_log(self):

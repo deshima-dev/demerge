@@ -27,6 +27,7 @@ from datetime import datetime
 from datetime import timedelta
 from calendar import timegm
 from astropy.io import fits, ascii
+import lzma
 import numpy as np
 import scipy.interpolate
 import sys
@@ -104,7 +105,7 @@ def get_maskid_corresp(pixelid, ddb):
         kidname[i] = j
 
     masterids, kidids, kidtypes, kidfreqs, kidQs = [], [], [], [], []
-    for i in range(nkid):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
         if masterid < 0:
             kind = 'unknown'
@@ -118,27 +119,62 @@ def get_maskid_corresp(pixelid, ddb):
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
+def fshift(readout_hdul, kidids, pixelid):
+    """fshiftを計算する
+
+    Args:
+        HDUL   : 開かれたreduced fitsファイルのHDULオブジェクト
+        array  : DDBのKIDFILTに格納されているkididの配列
+        integer: ピクセルID
+
+    Keyword Args:
+        なし
+
+    Returns:
+        fshiftの計算結果を格納したnumpy.array
+
+    経緯:
+        DEMSのresponseにfshiftを格納する場合があるため、
+        calibrate_to_power()関数に含まれていたfshiftの計算を分離した。
+    """
+    nkid     = readout_hdul['READOUT'].header['NKID%d' %pixelid]
+    linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
+    linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
+    Qr       = readout_hdul['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
+    fshift   = np.array((linphase - linyfc)/(4.*Qr)).T
+    return np.array([fshift[i] for i in kidids]) # kididsの数に合わせる(たぶんnkid >= kidids)
+
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (dx + p0*np.sqrt(Troom+T0))**2 / (p0**2 * etaf) - T0/etaf - (1-etaf)/etaf*Tamb
 
-def calibrate_to_power(pixelid, Troom, Tamb, rhdus, ddb):
-    nkid = rhdus['READOUT'].header['NKID%d' %pixelid]
+def calibrate_to_power(Troom, Tamb, fshift, ddb):
+    """Tlos_modelを利用して応答を計算する
+
+    Args:
+        float      : キャビン温度(K)
+        float      : 外気温(K)
+        numpy.array: fshift()関数の計算結果
+        HDUL       : 開かれたDDBファイルのHDULオブジェクト
+
+    Keyword Args:
+        なし
+
+    Returns:
+        計算結果を格納したnumpy.array
+
+    """
     kiddict = {}
     for (i, j) in zip(ddb['KIDFILT'].data['kidid'], ddb['KIDFILT'].data['masterid']):
         kiddict[i] = j
 
-    linphase = np.transpose([rhdus['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
-    linyfc   = rhdus['KIDSINFO'].data['yfc, linyfc'].T[1]
-    Qr       = rhdus['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
-    fshift = np.array((linphase - linyfc)/ (4.*Qr)).T
-    fshift_err = np.zeros( len(fshift) )
+    #fshift_err = np.zeros( len(fshift) )
     #---- Responsivity curve
     (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
     Tsignal = []
-    for i in range(nkid):
+    for i in map(int, ddb['KIDFILT'].data['kidid']):
         masterid = kiddict[i]
-        if masterid<0:
+        if masterid < 0:
             Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )
             continue
         #---- Convert to power
@@ -157,17 +193,23 @@ def convert_timestamp(timestamp):
     timestamp = [datetime.strftime(t, FORM_FITSTIME_P) for t in timestamp]
     return np.array(timestamp)
 
-def retrieve_cabin_temps(filename):
+def retrieve_cabin_temps(filename=None):
     """キャビン内温度を取得する
-    引数
-    ====
-    str ファイル名
 
-    戻り値
-    ======
-    tuple (timestames, upperCabinTemps, lowerCabinTemps)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名
+
+    Keyword Args:
+        なし
+
+    Returns:
+        tuple (timestames, upperCabinTemps, lowerCabinTemps)
+               tupleの各要素はnumpy.array。要素数は同じ。
+               また、ファイル名が空の場合はNaNが入った配列が返される。
     """
+    if filename=='' or filename==None:
+        return (np.array([np.nan]).astype('datetime64[ns]'), np.array([np.nan]).astype(np.float64), np.array([np.nan]).astype(np.float64))
+    
     table = ascii.read(filename, format='no_header')
 
     # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
@@ -177,60 +219,76 @@ def retrieve_cabin_temps(filename):
         s = '{}T{}'.format(date, time)
         s = s.replace('/', '-')
         datetimes.append(s)
-    datetimes       = np.array(datetimes).astype('datetime64[ns]')
+
+    datetimes         = np.array(datetimes).astype('datetime64[ns]')
     upper_cabin_temps = np.array(table['col3']).astype(np.float64)
     lower_cabin_temps = np.array(table['col4']).astype(np.float64)
 
     return (datetimes, upper_cabin_temps, lower_cabin_temps)
 
 def retrieve_skychop_states(filename):
-    """skychopファイルからskychopの時系列状態を取得する
-    引数
-    ====
-    str ファイル名
+    """skychopファイル(text file)からskychopの時系列状態を取得する
 
-    戻り値
-    ======
-    tuple (timestames, states)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名(xzで圧縮されていても読める)
 
-    時刻について
-    ============
-    skychopファイルに記録されている時刻はUNIX時間。
+    Returns:
+        tuple (timestames, states)
+          tupleの各要素はnumpy.array。要素数は同じ。
 
-    ファイル形式
-    ============
-    1列目 UNIX時刻
-    2列目 0/1による状態
-    "#"から始まるコメントがファイル冒頭に数行ある。
+    説明:
+        時刻について
+        ============
+        skychopファイルに記録されている時刻はUNIX時間。
+
+        ファイル形式
+        ============
+        1列目 UNIX時刻
+        2列目 0/1による状態
+        "#"から始まるコメントがファイル冒頭に数行ある。
     """
-    table = ascii.read(filename, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
-
+    data = None
+    if filename.endswith('.xz'):
+        with lzma.open(filename, 'rt') as f:
+            data = f.read()
+    else:
+        with open(filename, 'rt') as f:
+            data = f.read()
+        
+    table = ascii.read(data, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)
     return (datetimes, states)
 
 def retrieve_misti_log(filename):
     """mistiファイルからの時系列データを取得する
-    引数
-    ====
-    str ファイル名
 
-    戻り値
-    ======
-    tuple (timestames, az, el, pwv)
-      tupleの各要素はnumpy.array。要素数は同じ。
+    Args:
+        str ファイル名
 
-    ファイル形式
-    ============
-    1列目 年/月/日
-    2列目 時:分:6列目 秒(小数点以下2桁も含む)
-    3列目 az(deg)
-    4列目 el(deg)
-    5列目 pwv(um)
-    6列目 Tground(K)
-    "#"から始まるコメントがファイル冒頭に数行ある。
+    Returns:
+        tuple (timestames, az, el, pwv)
+            tupleの各要素はnumpy.array。要素数は同じ。
+            また、ファイル名が空の場合はNaNが1つだけ入った配列を返す。
+
+
+    説明:
+        ファイル形式:
+        1列目 年/月/日
+        2列目 時:分:6列目 秒(小数点以下2桁も含む)
+        3列目 az(deg)
+        4列目 el(deg)
+        5列目 pwv(um)
+        6列目 Tground(K)
+        "#"から始まるコメントがファイル冒頭に数行ある。
+    
     """
+    if filename=='' or filename==None:
+        return (np.array([np.nan]).astype('datetime64[ns]'),
+                np.array([np.nan]).astype(np.float64),
+                np.array([np.nan]).astype(np.float64),
+                np.array([np.nan]).astype(np.float64))
+
     column_names = [
         'date',
         'time',

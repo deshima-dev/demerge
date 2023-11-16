@@ -477,7 +477,11 @@ def fitLorentzian(freq, ampl, f0, q0):
     c = 2.0 * q0 / f0
     d = f0
     x0 = np.array([a, b, c, d])
-    x1 = scipy.optimize.leastsq(f, x0)[0]
+
+    with catch_warnings():
+        simplefilter("ignore")
+        x1 = scipy.optimize.leastsq(f, x0)[0]
+
     (a, b, c, d) = x1
     fc = d
     q = abs(c * d / 2.0)

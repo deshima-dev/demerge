@@ -57,10 +57,22 @@ poetry install
 
 ## 解析の実行例
 
-以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdata/cosmosに格納されているものとします。
+以下のコマンドでOBSID=20171103184436の解析を行います。観測データはdataに格納されているものとします。
 
 ```shell
-demerge -d data/cosmos 20171103184436
+demerge -d data 20171103184436
+```
+
+以下のコマンドでテスト用のデータをダウンロードすることができます。
+
+```shell
+deshima-rawdata download 20171103184436 -d data -e
+```
+
+どのデータがダウンロードできるかは、データリストをご確認ください。
+
+```shell
+deshima-rawdata list
 ```
 
 ### demergeコマンドの引数
@@ -69,7 +81,7 @@ demerge -d data/cosmos 20171103184436
 
 引数 | 説明 | デフォルト
 --- | --- | ---
-`-d` | 観測データディレクトリの指定 | `data/cosmos`
+`-d` | 観測データディレクトリの指定 | `data`
 `-c` | キャッシュディレクトリを指定 | `cache`
 `-g` | グラフディレクトリを指定 | `graph`
 `-b` | DDBファイルを指定 | `data/ddb/ddb_20180619.fits.gz`
@@ -80,25 +92,24 @@ demerge -d data/cosmos 20171103184436
 
 ```
 data
-├── cosmos
-│   ├── cosmos_20171103184436
-│   │   ├── 20171103184436_info.txt
-│   │   ├── 20171103184436.ant
-│   │   ├── 20171103184436.cabin
-│   │   ├── 20171103184436.fits.gz
-│   │   ├── 20171103184436.misti
-│   │   ├── 20171103184436.obs
-│   │   ├── 20171103184436.roomchop
-│   │   ├── 20171103184436.skychop
-│   │   ├── 20171103184436.tsky
-│   │   ├── 20171103184436.wea
-│   │   ├── kids.list
-│   │   ├── localsweep_info.txt
-│   │   ├── localsweep.sweep
-│   │   └── pretune
-│   │       ├── kids.list
-│   │       ├── localsweep_info.txt
-│   │       └── localsweep.sweep
+├── cosmos_20171103184436
+│   ├── 20171103184436_info.txt
+│   ├── 20171103184436.ant
+│   ├── 20171103184436.cabin
+│   ├── 20171103184436.fits.gz
+│   ├── 20171103184436.misti
+│   ├── 20171103184436.obs
+│   ├── 20171103184436.roomchop
+│   ├── 20171103184436.skychop
+│   ├── 20171103184436.tsky
+│   ├── 20171103184436.wea
+│   ├── kids.list
+│   ├── localsweep_info.txt
+│   ├── localsweep.sweep
+│   └── pretune
+│       ├── kids.list
+│       ├── localsweep_info.txt
+│       └── localsweep.sweep
 
 ((( 続く )))
 ```
@@ -175,7 +186,7 @@ cd /path/to/demerge/test
 python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
 ```
 
-test_merge_to_dems.pyを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdata/cosmos/cosmos_20171103184436/の中のものを使います。
+test_merge_to_dems.pyを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdata/cosmos_20171103184436/の中のものを使います。
 
 ## merge_to_dems.pyについて
 

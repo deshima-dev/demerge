@@ -1,5 +1,7 @@
 # Created by package authors
 cache/
+data/*
+!/data/.gitkeep
 graph/
 tests/testdata*
 *~

@@ -20,7 +20,7 @@
 #
 # 使用例
 # ------
-#  $ ./run.sh -d data/cosmos 20171103184836
+#  $ ./run.sh -d data 20171103184836
 #
 #
 # 指定可能なオプション
@@ -35,6 +35,8 @@
 #  -p プロット実行オプションの指定
 #
 
+DEMERGE="$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"
+DEFAULT_DDB="${DEMERGE}/ddb_20231029.fits.gz"
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 
 # ==================
@@ -76,10 +78,10 @@ if [ -z "$GRAPH_DIR" ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
 if [ -z "$DATA_DIR" ]; then
-    DATA_DIR="data/cosmos" # 観測データの場所の規定値
+    DATA_DIR="data" # 観測データの場所の規定値
 fi
 if [ -z "$DDB_FILE" ]; then
-    DDB_FILE="data/ddb/ddb_20180619.fits.gz" # DDBファイルの規定値
+    DDB_FILE="${DEFAULT_DDB}" # DDBファイルの既定値
 fi
 if [ -z "$OUT_DIR" ]; then
     OUT_DIR="${CACHE_DIR}" # 出力ディレクトリの規定値

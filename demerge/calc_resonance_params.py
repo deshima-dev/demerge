@@ -38,7 +38,6 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
 
     result, fitrange = demerge.fit_onepeak(kid['localsweep'], peaks, nfwhm=nfwhm)
 
-
     fr  = result.params['fr'].value # GHz
     dfr = result.params['fr'].stderr # GHz
     Qr  = result.params['Qr'].value
@@ -47,18 +46,23 @@ def calc_resonance_params(kid, nfwhm=5, minq=100, maxratio=1.0):
     dQc = result.params['Qc'].stderr
     Qi  = result.params['Qi'].value
     dQi = result.params['Qi'].stderr
-    if dfr/fr<0. or dQr/Qr<0. or dQc/Qc<0. or dQi/Qi<0.:
+
+    if dfr is None or dQr is None or dQc is None or dQi is None:
+        kid['enabled'] = False
+    elif dfr/fr<0. or dQr/Qr<0. or dQc/Qc<0. or dQi/Qi<0.:
         kid['enabled'] = False
     elif fr!=fr or dfr!=dfr or Qr!=Qr or dQr!=dQr: # reject Nan
         kid['enabled'] = False
     elif abs(Qr)==float('inf') or abs(dQr)==float('inf'): # reject +/-inf
         kid['enabled'] = False
+
     if kid['enabled']:
         kid['resonance_params'] = result.params
         kid['fitrange'] = fitrange
     else:
         kid['resonance_params'] = None
         kid['fitrange'] = None
+
     return kid
 
 def main() -> None:
@@ -69,11 +73,11 @@ def main() -> None:
     """
     args = sys.argv
     filename = args[1]
+
     with open(filename, 'rb') as f:
         kid = pickle.load(f)
+
     kid = calc_resonance_params(kid)
-    if kid == None:
-        return
 
     with open(filename, 'wb') as f:
         pickle.dump(kid, f)

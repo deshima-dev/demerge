@@ -4,8 +4,6 @@ File name: demerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
-import os
-import sys
 from warnings import catch_warnings, simplefilter, warn
 import numpy as np
 import scipy
@@ -240,7 +238,7 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
     """
     if len(peaks) == 0:
         return (None, None)
-    
+
     initial_params = gaolinbg_guess(sweepdata, peaks) #params = guess(data)
     gaolinbg_param_names = initial_params.keys()
     s = slice(None)
@@ -477,7 +475,11 @@ def fitLorentzian(freq, ampl, f0, q0):
     c = 2.0 * q0 / f0
     d = f0
     x0 = np.array([a, b, c, d])
-    x1 = scipy.optimize.leastsq(f, x0)[0]
+
+    with catch_warnings():
+        simplefilter("ignore")
+        x1 = scipy.optimize.leastsq(f, x0)[0]
+
     (a, b, c, d) = x1
     fc = d
     q = abs(c * d / 2.0)

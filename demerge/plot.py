@@ -11,7 +11,6 @@ Filename: plot.py
 例)
   $ python plot.py cache/kid00001.pkl graph
 """
-import os
 import sys
 import pickle
 import matplotlib.pyplot as plt

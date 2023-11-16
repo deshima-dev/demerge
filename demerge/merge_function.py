@@ -24,13 +24,9 @@ __all__ = [
 ]
 
 from datetime import datetime
-from datetime import timedelta
-from calendar import timegm
 from astropy.io import fits, ascii
 import lzma
 import numpy as np
-import scipy.interpolate
-import sys
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -209,7 +205,7 @@ def retrieve_cabin_temps(filename=None):
     """
     if filename=='' or filename==None:
         return (np.array([np.nan]).astype('datetime64[ns]'), np.array([np.nan]).astype(np.float64), np.array([np.nan]).astype(np.float64))
-    
+
     table = ascii.read(filename, format='no_header')
 
     # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
@@ -254,7 +250,7 @@ def retrieve_skychop_states(filename):
     else:
         with open(filename, 'rt') as f:
             data = f.read()
-        
+
     table = ascii.read(data, guess=False, format='no_header', delimiter=' ', names=['datetime', 'state'])
     datetimes = np.array(table['datetime']).astype(np.float64)
     states    = np.array(table['state']).astype(np.int8)
@@ -281,7 +277,7 @@ def retrieve_misti_log(filename):
         5列目 pwv(um)
         6列目 Tground(K)
         "#"から始まるコメントがファイル冒頭に数行ある。
-    
+
     """
     if filename=='' or filename==None:
         return (np.array([np.nan]).astype('datetime64[ns]'),

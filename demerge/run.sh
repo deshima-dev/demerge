@@ -32,6 +32,7 @@
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
+#  -p プロット実行オプションの指定
 #
 
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
@@ -45,16 +46,18 @@ NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
+#  -p プロット実行オプションの指定
 #
-while getopts c:g:d:b:o:m: OPT
+while getopts c:g:d:b:o:m:p: OPT
 do
     case $OPT in
-	"c") CACHE_DIR="${OPTARG}";;
-	"g") GRAPH_DIR="${OPTARG}";;
-	"d") DATA_DIR="${OPTARG}";;
-	"b") DDB_FILE="${OPTARG}";;
-	"o") OUT_DIR="${OPTARG}";;
+    "c") CACHE_DIR="${OPTARG}";;
+    "g") GRAPH_DIR="${OPTARG}";;
+    "d") DATA_DIR="${OPTARG}";;
+    "b") DDB_FILE="${OPTARG}";;
+    "o") OUT_DIR="${OPTARG}";;
     "m") MERGE_OPTS="${OPTARG}";;
+    "p") PLOT="${OPTARG}";;
     esac
 done
 shift $((OPTIND - 1))
@@ -89,19 +92,19 @@ fi
 if [ ! -d ${CACHE_DIR}/${OBSID} ]; then
     mkdir -p ${CACHE_DIR}/${OBSID}
     if [ $? -ne 0 ]; then
-	exit 1
+    exit 1
     fi
 fi
 if [ ! -d ${GRAPH_DIR}/${OBSID} ]; then
     mkdir -p ${GRAPH_DIR}/${OBSID}
     if [ $? -ne 0 ]; then
-	exit 1
+    exit 1
     fi
 fi
 if [ ! -d ${OUT_DIR}/${OBSID} ]; then
     mkdir -p ${OUT_DIR}/${OBSID}
     if [ $? -ne 0 ]; then
-	exit 1
+    exit 1
     fi
 fi
 
@@ -185,8 +188,8 @@ merge_to_dems                                                \
     --weather "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.wea"     \
     --misti   "${MISTI_FILE}"                                \
     --cabin   "${CABIN_FILE}"                                \
-    ${MERGE_OPTS}                                            \
     --offset_time_antenna 20                                 \
+    ${MERGE_OPTS}                                            \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then
@@ -205,15 +208,17 @@ fi
 # これをxargsにパイプで渡す。
 # xargsには各コマンドの引数が2個であることを示す「-n2」オプションをつける。
 #
-FILENAMES=""
-for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
-do
-    FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
-done
-echo $FILENAMES | xargs -P${NCPU} -n2 plot
-if [ $? -ne 0 ]; then
-    echo "失敗:plot"
-    exit 1
+if [ -n "$PLOT" ]; then
+    FILENAMES=""
+    for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
+    do
+        FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
+    done
+    echo $FILENAMES | xargs -P${NCPU} -n2 plot
+    if [ $? -ne 0 ]; then
+        echo "失敗:plot"
+        exit 1
+    fi
 fi
 
 END_TIME=`/bin/date +%s`

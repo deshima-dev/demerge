@@ -88,8 +88,12 @@ def merge_to_dems(
         T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
         T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
         response  = T_signals
+        long_name = "Brightness"
+        units = "K"
     elif loadtype == 'fshift':
         response  = fshift.T
+        long_name = "df/f"
+        units = "dimensionless"
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 
@@ -189,7 +193,7 @@ def merge_to_dems(
 
     # Sky chopperの状態からビームラベルを割り当てる(1 -> B, 0 -> A)
     beam = np.where(skychop_state, 'B', 'A')
-        
+
     # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
     if still:
         seconds = (times - times[0])/np.timedelta64(1, 's')
@@ -270,6 +274,8 @@ def merge_to_dems(
 
     return MS.new(
         data                    =response,
+        long_name               =long_name,
+        units                   =units,
         time                    =times,
         chan                    =kid_id,
         beam                    =beam,

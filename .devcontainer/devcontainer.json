@@ -18,10 +18,10 @@
             "settings": {
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
-                "python.languageServer": "Pylance",
                 "[python]": {
                     "editor.insertSpaces": true,
-                    "editor.tabSize": 4
+                    "editor.tabSize": 4,
+                    "python.languageServer": "Pylance"
                 }
             }
         }

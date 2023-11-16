@@ -311,6 +311,12 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(1.0, dems.weight[-1][0 ], 'weightに既定値が格納されていることを確認[-1, 0]')
         self.assertTrue(np.array(dems.weight == 1.0).all(), '全weightに既定値が格納されていることを確認')
 
+        # MS::long_name (既定値)
+        self.assertEqual('Brightness', dems.attrs['long_name'], 'long_nameに既定値が確認されていることを確認')
+
+        # MS::units (既定値)
+        self.assertEqual('K', dems.attrs['units'], 'unitsに既定値が確認されていることを確認')
+
         # MS::time
         self.assertEqual(n_time, len(dems.time),            'MS::timeの打点数の確認')
         self.assertTrue(np.array(times == dems.time).all(), '時刻がREADOUTの打刻と一致することを確認')

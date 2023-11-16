@@ -13,7 +13,7 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 ## 動作環境
 
 - CPython: 3.9-3.12
-- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.7.0/pyproject.toml)をご確認ください
+- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.8.0/pyproject.toml)をご確認ください
 
 ## インストール
 
@@ -22,7 +22,7 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 pipで[PyPI](https://pypi.org)からインストールしてください。
 
 ```shell
-pip install demerge==2.7.0
+pip install demerge==2.8.0
 ```
 
 インストール後、`demerge`コマンドが利用可能になります。
@@ -34,11 +34,11 @@ pip install demerge==2.7.0
 ```shell
 # テストデータを含める場合
 git clone --recursive https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.7.0
+cd demerge && git checkout v2.8.0
 
 # 最小構成でダウンロードする場合
 git clone --depth=1 https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.7.0
+cd demerge && git checkout v2.8.0
 ```
 
 続けて、`demerge`パッケージのPython環境へのインストールを行います。

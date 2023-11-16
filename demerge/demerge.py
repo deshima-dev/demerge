@@ -240,7 +240,7 @@ def fit_onepeak(sweepdata, peaks, nfwhm=5):
     """
     if len(peaks) == 0:
         return (None, None)
-    
+
     initial_params = gaolinbg_guess(sweepdata, peaks) #params = guess(data)
     gaolinbg_param_names = initial_params.keys()
     s = slice(None)

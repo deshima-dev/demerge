@@ -4,7 +4,7 @@ version = "2.7.0"
 description = "Merge DESHIMA datasets observed with ASTE"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",
-    "Daisuke Naito",
+    "Daisuke Naito <naito@naitosystems.com>",
     "Akio Taniguchi <taniguchi@a.phys.nagoya-u.ac.jp>",
 ]
 keywords = [

@@ -84,7 +84,7 @@ deshima-rawdata list
 `-d` | 観測データディレクトリの指定 | `data`
 `-c` | キャッシュディレクトリを指定 | `cache`
 `-g` | グラフディレクトリを指定 | `graph`
-`-b` | DDBファイルを指定 | `data/ddb/ddb_20180619.fits.gz`
+`-b` | DDBファイルを指定 | `dmerge/ddb_20231029.fits.gz`（パッケージに同梱）
 `-o` | 出力データディレクトリを指定 | `cache`
 `-m` | マージオプションを指定（例：`-m "--coordinate radec"`） | なし
 
@@ -182,11 +182,11 @@ graph
 
 ```shell
 cd /path/to/demerge/test
-./mktd.sh                    # テストに必要なダミーデータを生成します
-python test_merge_to_dems.py # merge_to_dems()関数のテストを実行します
+./mktd.sh                # テストに必要なダミーデータを生成します
+python -m unittest       # merge_to_dems関数およびmerge_functionモジュールのテストを実行します
 ```
 
-test_merge_to_dems.pyを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdata/cosmos_20171103184436/の中のものを使います。
+テストを実行するにはダミーデータとテストデータが必要になります。ダミーデータはmktd.shスクリプトを実行することで生成されます。テストデータはdata/cosmos_20171103184436/の中のものを使いますので、上記の手順であらかじめダウンロードしてください。
 
 ## merge_to_dems.pyについて
 
@@ -225,7 +225,6 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 --- | --- | --- |---
 `--pixel_id` | 整数 | `0` | pixel_idを整数で指定します
 `--coordinate` | 文字列 | `'azel'` | 座標系(azel/radec)を文字列で指定します
-`--mode` | 整数 | 0 | 座標の読み込み方法を整数で指定します(0:相対座標cos射影あり, 1:相対座標cos射影なし, 2:絶対座標)
 `--loadtype` | 文字列 | `'Tsignal'` | 読み込むデータを文字列で指定します(既定値: Tsignal)
 `--findR` | フラグ | なし | 指定するとFindR, Skyを実行します
 `--ch` | 整数 | `0` | findRに利用するチャネルを整数で指定します
@@ -239,9 +238,10 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 `--lon_max_off` | 実数 | `0.0` | shuttle観測時のOFFにするlongitudeの最大値を実数で指定します
 `--lon_min_on` | 実数 | `0.0` | shuttle観測時のONにするlongitudeの最小値を実数で指定します
 `--lon_max_on` | 実数 | `0.0` | shuttle観測時のONにするlongitudeの最大値を実数で指定します
+`--offset_time_antenna` | 整数 | `0` | TODデータとAntennaログの時刻のずれの補正値(ms)を整数で指定します
 `--debug` | フラグ | なし | 指定すると全ての引数の値をログとして表示します
 
-`--mode`のおすすめの設定は0(相対座標cos射影あり)です。0が既定値です。`--loadtype`はTsignalを指定できますが、現在の実装ではTsignal以外は指定できません。将来、loadtypeが増えた場合に備えた引数です。既定値はTsignalです。demerge/run.shでは上記オプション引数を文字列として`-m "--coordinate radec --findR --debug"`のように指定することができます。
+`--loadtype`はTsignal(空の輝度温度)とfshift(MKIDのdf/f)を指定できます。demerge/run.shでは上記オプション引数を文字列として`-m "--coordinate radec --findR --debug"`のように指定することができます。
 
 ## tdmaker.pyについて
 

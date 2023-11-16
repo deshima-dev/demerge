@@ -20,7 +20,7 @@
 #
 # 使用例
 # ------
-#  $ ./run.sh -d data/cosmos 20171103184836
+#  $ ./run.sh -d data 20171103184836
 #
 #
 # 指定可能なオプション
@@ -78,7 +78,7 @@ if [ -z "$GRAPH_DIR" ]; then
     GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
 fi
 if [ -z "$DATA_DIR" ]; then
-    DATA_DIR="data/cosmos" # 観測データの場所の規定値
+    DATA_DIR="data" # 観測データの場所の規定値
 fi
 if [ -z "$DDB_FILE" ]; then
     DDB_FILE="${DEFAULT_DDB}" # DDBファイルの既定値

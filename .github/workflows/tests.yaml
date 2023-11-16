@@ -29,4 +29,5 @@ jobs:
           python-version: ${{ matrix.python }}
       - run: pip install poetry && poetry install
       - run: cd tests && ./mktd.sh && python -m unittest -v
-      - run: demerge -d data/cosmos -m "--debug" 20171103184436
+      - run: deshima-rawdata download 20231108052231 -e
+      - run: demerge -d . -o . -m "--debug" 20231108052231

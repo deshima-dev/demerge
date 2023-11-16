@@ -4,8 +4,6 @@ File name: demerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
-import os
-import sys
 from warnings import catch_warnings, simplefilter, warn
 import numpy as np
 import scipy

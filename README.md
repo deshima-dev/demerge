@@ -63,6 +63,18 @@ poetry install
 demerge -d data 20171103184436
 ```
 
+以下のコマンドでテスト用のデータをダウンロードすることができます。
+
+```shell
+deshima-rawdata download 20171103184436 -d data -e
+```
+
+どのデータがダウンロードできるかは、データリストをご確認ください。
+
+```shell
+deshima-rawdata list
+```
+
 ### demergeコマンドの引数
 
 以下の引数を指定すると、データの取得ディレクトリや保存先などを変更することができます。

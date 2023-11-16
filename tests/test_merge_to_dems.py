@@ -39,7 +39,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata_short_measure'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -100,7 +100,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata_linear_antenna'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -139,7 +139,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -173,7 +173,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata_linear_inc'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -210,7 +210,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata_linear_dec'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -256,7 +256,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -426,7 +426,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -441,7 +441,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         prefix = 'testdata'
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
-            obsinst_path='../data/cosmos/cosmos_{0}/{0}.obs'.format(self.obsid),
+            obsinst_path='../data/cosmos_{0}/{0}.obs'.format(self.obsid),
             antenna_path='{}.ant'.format(prefix),
             readout_path='{}_reduced_readout.fits'.format(prefix),
             skychop_path='{}.skychop'.format(prefix),
@@ -457,7 +457,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
     def test_retrieve_cabin_temps(self):
         """cabinの温度をロードする"""
-        datetimes, upper, lower = mf.retrieve_cabin_temps('../data/cosmos/cosmos_20171103184436/20171103184436.cabin')
+        datetimes, upper, lower = mf.retrieve_cabin_temps('../data/cosmos_{0}/{0}.cabin'.format(self.obsid))
         self.assertEqual(4, len(datetimes), '時刻の行数を確認')
         self.assertEqual(4, len(upper),     'upper_cabin_tempの行数を確認')
         self.assertEqual(4, len(lower),     'lower_cabin_tempの行数を確認')
@@ -482,7 +482,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         return
 
     def test_retrieve_skychop_states(self):
-        datetimes, states = mf.retrieve_skychop_states('../data/cosmos/cosmos_20171103184436/20171103184436.skychop')
+        datetimes, states = mf.retrieve_skychop_states('../data/cosmos_{0}/{0}.skychop'.format(self.obsid))
         self.assertEqual(192201,            len(datetimes))
         self.assertEqual(192201,            len(states))
         self.assertEqual(1509734678.900000, datetimes[0])
@@ -498,7 +498,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         return
 
     def test_retrieve_misti_log(self):
-        time, az, el, pwv = mf.retrieve_misti_log('../data/cosmos/cosmos_20171103184436/20171103184436.misti')
+        time, az, el, pwv = mf.retrieve_misti_log('../data/cosmos_{0}/{0}.misti'.format(self.obsid))
         self.assertEqual(1848, len(time), 'mistiファイルの行数を確認')
         expected = np.array([datetime(2017, 11, 3, hour=18, minute=44, second=38, microsecond=900000)]).astype('datetime64[ns]')
         self.assertEqual(expected[0], time[0], '時刻が正しいことを確認')

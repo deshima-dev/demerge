@@ -31,6 +31,7 @@ sympy = "^1.10"
 zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
+deshima-rawdata = "^2023.11.2"
 ipython = "^8.17"
 
 [tool.poetry.scripts]

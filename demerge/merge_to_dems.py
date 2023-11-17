@@ -80,20 +80,22 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
-    fshift = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixel_id)
     master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
-    response = None
+
+    response = mf.convert_readout(
+        ro=readout_hdul,
+        ddb=ddbfits_hdul,
+        to=loadtype,
+        T_room=lower_cabin_temp[0],
+        T_amb=np.nanmean(weather_table['tmperature']) + 273.15,
+    )
+
     if loadtype == 'Tsignal':
-        # T_signalsを計算する
-        T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-        T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
-        response  = T_signals
-        long_name = "Brightness"
-        units = "K"
+        long_name = 'Brightness'
+        units = 'K'
     elif loadtype == 'fshift':
-        response  = fshift.T
-        long_name = "df/f"
-        units = "dimensionless"
+        long_name = 'df/f'
+        units = 'dimensionless'
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 

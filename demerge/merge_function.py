@@ -8,8 +8,6 @@
      2021         NAITO systems modfied.
      2023         NAITO systems modfied.
 """
-from __future__ import print_function
-
 __all__ = [
     'FORM_FITSTIME',
     'FORM_FITSTIME_P',
@@ -18,15 +16,23 @@ __all__ = [
     'load_obsinst',
     'get_maskid_corresp'
     'Tlos_model',
-    'calibrate_to_power',
+    'convert_readout',
     'convert_asciitime',
     'convert_timestamp'
 ]
 
-from datetime import datetime
-from astropy.io import fits, ascii
+
+# standard library
 import lzma
+from datetime import datetime
+from typing import Literal
+
+
+# dependencies
 import numpy as np
+from astropy.io import fits, ascii
+from numpy.typing import NDArray
+
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -114,6 +120,51 @@ def get_maskid_corresp(pixelid, ddb):
         kidfreqs.append( kidfilt[i][0] * 1e9 )
         kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
+
+def convert_readout(
+    ro: fits.HDUList,
+    ddb: fits.HDUList,
+    to: Literal['Tsignal', 'fshift'],
+    T_room: float,
+    T_amb: float,
+) -> NDArray:
+    """Reduced readoutの値をDEMS出力形式に変換（校正）する
+
+    Args:
+        ro: Reduced readout FITSのHDUListオブジェクト
+        ddb: DDB FITSのHDUListオブジェクト
+        to: 変換形式（Tsignal→Tsky, fshift→df/f)
+        T_room: キャビン温度(K)
+        T_amb: 外気温(K)
+
+    """
+    kidcols = ro['READOUT'].data.columns[2:]
+    linph   = np.array([ro['READOUT'].data[n] for n in kidcols.names]).T[2]
+    linyfc  = np.array(ro['KIDSINFO'].data['yfc, linyfc']).T[1]
+    Qr      = np.array(ro['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
+    fshift  = (linph - linyfc) / (4.0 * Qr)
+    # ここまではKID ID = indexの対応となっている
+
+    n_time = len(fshift)
+    n_chan = len(ddb['KIDFILT'].data)
+    output = np.zeros([n_time, n_chan], np.float32)
+
+    for i in range(n_chan):
+        kidid = ddb['KIDFILT'].data[i]['kidid']
+        masterid = ddb['KIDFILT'].data[i]['masterid']
+        p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
+        fshift_id = fshift[:, kidid]
+
+        if masterid < 0:
+            output[:, i] = np.nan
+        elif to == "fshift":
+            output[:, i] = fshift_id
+        elif to == "Tsignal":
+            output[:, i] = Tlos_model(fshift_id, p0, etaf, T0, T_room, T_amb)
+        else:
+            raise ValueError(f'Invalid output type: {to}')
+
+    return np.array(output)
 
 def fshift(readout_hdul, kidids, pixelid):
     """fshiftを計算する

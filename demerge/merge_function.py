@@ -166,67 +166,9 @@ def convert_readout(
 
     return np.array(output)
 
-def fshift(readout_hdul, kidids, pixelid):
-    """fshiftを計算する
-
-    Args:
-        HDUL   : 開かれたreduced fitsファイルのHDULオブジェクト
-        array  : DDBのKIDFILTに格納されているkididの配列
-        integer: ピクセルID
-
-    Keyword Args:
-        なし
-
-    Returns:
-        fshiftの計算結果を格納したnumpy.array
-
-    経緯:
-        DEMSのresponseにfshiftを格納する場合があるため、
-        calibrate_to_power()関数に含まれていたfshiftの計算を分離した。
-    """
-    nkid     = readout_hdul['READOUT'].header['NKID%d' %pixelid]
-    linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
-    linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
-    Qr       = readout_hdul['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
-    fshift   = np.array((linphase - linyfc)/(4.*Qr)).T
-    return np.array([fshift[i] for i in kidids]) # kididsの数に合わせる(たぶんnkid >= kidids)
-
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (dx + p0*np.sqrt(Troom+T0))**2 / (p0**2 * etaf) - T0/etaf - (1-etaf)/etaf*Tamb
-
-def calibrate_to_power(Troom, Tamb, fshift, ddb):
-    """Tlos_modelを利用して応答を計算する
-
-    Args:
-        float      : キャビン温度(K)
-        float      : 外気温(K)
-        numpy.array: fshift()関数の計算結果
-        HDUL       : 開かれたDDBファイルのHDULオブジェクト
-
-    Keyword Args:
-        なし
-
-    Returns:
-        計算結果を格納したnumpy.array
-
-    """
-    kiddict = {}
-    for (i, j) in zip(ddb['KIDFILT'].data['kidid'], ddb['KIDFILT'].data['masterid']):
-        kiddict[i] = j
-
-    #fshift_err = np.zeros( len(fshift) )
-    #---- Responsivity curve
-    (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
-    Tsignal = []
-    for i in map(int, ddb['KIDFILT'].data['kidid']):
-        masterid = kiddict[i]
-        if masterid < 0:
-            Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )
-            continue
-        #---- Convert to power
-        Tsignal.append(Tlos_model(fshift[i], p0[i], etaf[i], T0[i], Troom, Tamb))
-    return np.array(Tsignal).T
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""

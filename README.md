@@ -223,7 +223,6 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 引数名 | 型 | 既定値 | 説明
 --- | --- | --- |---
-`--pixel_id` | 整数 | `0` | pixel_idを整数で指定します
 `--coordinate` | 文字列 | `'azel'` | 座標系(azel/radec)を文字列で指定します
 `--loadtype` | 文字列 | `'Tsignal'` | 読み込むデータを文字列で指定します(既定値: Tsignal)
 `--findR` | フラグ | なし | 指定するとFindR, Skyを実行します

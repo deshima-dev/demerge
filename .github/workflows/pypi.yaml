@@ -17,4 +17,4 @@ jobs:
         with:
           python-version: "3.12"
       - name: Publish package to PyPI
-        run: pip install poetry && poetry publish --build
+        run: pip install poetry==1.7.1 && poetry publish --build

@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 
 title: "demerge"
 abstract: "Merge DESHIMA datasets observed with ASTE"
-version: 2.8.0
+version: 2.8.1
 date-released: 2023-11-16
 license: "MIT"
 doi: "10.5281/zenodo.10015892"

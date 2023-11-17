@@ -92,33 +92,34 @@ def load_obsinst(obsinst):
         dec = 0
     return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
 
-def get_maskid_corresp(pixelid, ddb):
+def get_maskid_corresp(ddb):
     """Get Correspondance of 'master' and 'kid'"""
-    nkid = ddb['KIDFILT'].header['NKID%d' %pixelid]
-    kiddict, kidfilt = {}, {}
-    for (i, j, k, l) in zip(ddb['KIDFILT'].data['kidid'],
-                            ddb['KIDFILT'].data['masterid'],
-                            ddb['KIDFILT'].data['F_filter, dF_filter'],
-                            ddb['KIDFILT'].data['Q_filter, dQ_filter']):
-        kiddict[i] = j
-        kidfilt[i] = (k[0], l[0])
-    kidname = {}
-    for (i, j) in zip(ddb['KIDDES'].data['masterid'], ddb['KIDDES'].data['attribute']):
-        kidname[i] = j
+    kidnames = dict(
+        zip(
+            ddb['KIDDES'].data['masterid'],
+            ddb['KIDDES'].data['attribute'],
+        )
+    )
 
-    masterids, kidids, kidtypes, kidfreqs, kidQs = [], [], [], [], []
-    for i in map(int, ddb['KIDFILT'].data['kidid']):
-        masterid = kiddict[i]
-        if masterid < 0:
-            kind = 'unknown'
+    masterids = []
+    kidids    = []
+    kidtypes  = []
+    kidfreqs  = []
+    kidQs     = []
+
+    for i in range(len(ddb['KIDFILT'].data)):
+        kidfilt_i = ddb['KIDFILT'].data[i]
+
+        masterids.append(kidfilt_i['masterid'])
+        kidids.append(kidfilt_i['kidid'])
+        kidfreqs.append(kidfilt_i['F_filter, dF_filter'][0] * 1e9)
+        kidQs.append(kidfilt_i['Q_filter, dQ_filter'][0])
+
+        if (masterid := kidfilt_i['masterid']) < 0:
+            kidtypes.append("unknown")
         else:
-            kind = kidname[masterid]
+            kidtypes.append(kidnames[masterid])
 
-        masterids.append( masterid )
-        kidids.append( i )
-        kidtypes.append( kind )
-        kidfreqs.append( kidfilt[i][0] * 1e9 )
-        kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
 def convert_readout(

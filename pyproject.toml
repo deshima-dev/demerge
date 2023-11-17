@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "demerge"
 version = "2.8.1"
-description = "Merge DESHIMA datasets observed with ASTE"
+description = "DESHIMA merge code for observed datasets"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",
     "Daisuke Naito <naito@naitosystems.com>",

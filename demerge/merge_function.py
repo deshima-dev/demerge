@@ -92,7 +92,7 @@ def load_obsinst(obsinst):
         dec = 0
     return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
 
-def get_maskid_corresp(ddb):
+def get_maskid_corresp(ddb: fits.HDUList):
     """Get Correspondance of 'master' and 'kid'"""
     kidnames = dict(
         zip(
@@ -101,11 +101,11 @@ def get_maskid_corresp(ddb):
         )
     )
 
-    masterids = []
-    kidids    = []
-    kidtypes  = []
-    kidfreqs  = []
-    kidQs     = []
+    masterids: list[int]  = []
+    kidids: list[int]     = []
+    kidtypes: list[str]   = []
+    kidfreqs: list[float] = []
+    kidQs: list[float]    = []
 
     for i in range(len(ddb['KIDFILT'].data)):
         kidfilt_i = ddb['KIDFILT'].data[i]

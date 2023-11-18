@@ -34,7 +34,6 @@ def merge_to_dems(
         **kwargs
         ):
     # その他の引数の処理と既定値の設定
-    pixel_id   = kwargs.pop('pixel_id',   0)
     coordinate = kwargs.pop('coordinate', 'azel')
     loadtype   = kwargs.pop('loadtype',   'fshift')
     # find R, sky
@@ -80,20 +79,22 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
-    fshift = mf.fshift(readout_hdul, ddbfits_hdul['KIDFILT'].data['kidid'], pixel_id)
-    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(pixel_id, ddbfits_hdul)
-    response = None
+    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(ddbfits_hdul)
+
+    response = mf.convert_readout(
+        ro=readout_hdul,
+        ddb=ddbfits_hdul,
+        to=loadtype,
+        T_room=lower_cabin_temp[0],
+        T_amb=np.nanmean(weather_table['tmperature']) + 273.15,
+    )
+
     if loadtype == 'Tsignal':
-        # T_signalsを計算する
-        T_amb     = np.nanmean(weather_table['tmperature']) + 273.15 # 度CからKへ変換
-        T_signals = mf.calibrate_to_power(lower_cabin_temp[0], T_amb, fshift, ddbfits_hdul)
-        response  = T_signals
-        long_name = "Brightness"
-        units = "K"
+        long_name = 'Brightness'
+        units = 'K'
     elif loadtype == 'fshift':
-        response  = fshift.T
-        long_name = "df/f"
-        units = "dimensionless"
+        long_name = 'df/f'
+        units = 'dimensionless'
     else:
         raise KeyError('Invalid loadtype: {}'.format(loadtype))
 
@@ -331,7 +332,6 @@ def main() -> None:
     # オプション引数
     parser.add_argument('--misti',       type=str,   default='',       help='mistiファイルへのパスを指定して下さい(.misti)')
     parser.add_argument('--cabin',       type=str,   default='',       help='cabinファイルへのパスを指定して下さい(.cabin)')
-    parser.add_argument('--pixel_id',    type=int,   default=0,        help='pixel_idを整数で指定します')
     parser.add_argument('--coordinate',  type=str,   default='azel',   help='座標系(azel/radec)を文字列で指定します')
     parser.add_argument('--loadtype',    type=str,   default='fshift', help='読み込むデータを文字列で指定します(既定値: fshift, fshiftかTsignalを指定できます)')
     parser.add_argument('--findR',       action='store_true',          help='指定するとFindR, Skyを実行します')
@@ -379,7 +379,6 @@ def main() -> None:
         misti_path  =a.misti,
         cabin_path  =a.cabin,
 
-        pixel_id   =a.pixel_id,
         coordinate =a.coordinate,
         loadtype   =a.loadtype,
         findR      =a.findR,

@@ -8,8 +8,6 @@
      2021         NAITO systems modfied.
      2023         NAITO systems modfied.
 """
-from __future__ import print_function
-
 __all__ = [
     'FORM_FITSTIME',
     'FORM_FITSTIME_P',
@@ -18,15 +16,23 @@ __all__ = [
     'load_obsinst',
     'get_maskid_corresp'
     'Tlos_model',
-    'calibrate_to_power',
+    'convert_readout',
     'convert_asciitime',
     'convert_timestamp'
 ]
 
-from datetime import datetime
-from astropy.io import fits, ascii
+
+# standard library
 import lzma
+from datetime import datetime
+from typing import Literal
+
+
+# dependencies
 import numpy as np
+from astropy.io import fits, ascii
+from numpy.typing import NDArray
+
 
 #-------------------------------- CONSTANTS
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
@@ -86,96 +92,84 @@ def load_obsinst(obsinst):
         dec = 0
     return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
 
-def get_maskid_corresp(pixelid, ddb):
+def get_maskid_corresp(ddb: fits.HDUList):
     """Get Correspondance of 'master' and 'kid'"""
-    nkid = ddb['KIDFILT'].header['NKID%d' %pixelid]
-    kiddict, kidfilt = {}, {}
-    for (i, j, k, l) in zip(ddb['KIDFILT'].data['kidid'],
-                            ddb['KIDFILT'].data['masterid'],
-                            ddb['KIDFILT'].data['F_filter, dF_filter'],
-                            ddb['KIDFILT'].data['Q_filter, dQ_filter']):
-        kiddict[i] = j
-        kidfilt[i] = (k[0], l[0])
-    kidname = {}
-    for (i, j) in zip(ddb['KIDDES'].data['masterid'], ddb['KIDDES'].data['attribute']):
-        kidname[i] = j
+    kidnames = dict(
+        zip(
+            ddb['KIDDES'].data['masterid'],
+            ddb['KIDDES'].data['attribute'],
+        )
+    )
 
-    masterids, kidids, kidtypes, kidfreqs, kidQs = [], [], [], [], []
-    for i in map(int, ddb['KIDFILT'].data['kidid']):
-        masterid = kiddict[i]
-        if masterid < 0:
-            kind = 'unknown'
+    masterids: list[int]  = []
+    kidids: list[int]     = []
+    kidtypes: list[str]   = []
+    kidfreqs: list[float] = []
+    kidQs: list[float]    = []
+
+    for i in range(len(ddb['KIDFILT'].data)):
+        kidfilt_i = ddb['KIDFILT'].data[i]
+
+        masterids.append(kidfilt_i['masterid'])
+        kidids.append(kidfilt_i['kidid'])
+        kidfreqs.append(kidfilt_i['F_filter, dF_filter'][0] * 1e9)
+        kidQs.append(kidfilt_i['Q_filter, dQ_filter'][0])
+
+        if (masterid := kidfilt_i['masterid']) < 0:
+            kidtypes.append("unknown")
         else:
-            kind = kidname[masterid]
+            kidtypes.append(kidnames[masterid])
 
-        masterids.append( masterid )
-        kidids.append( i )
-        kidtypes.append( kind )
-        kidfreqs.append( kidfilt[i][0] * 1e9 )
-        kidQs.append( kidfilt[i][1] )
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
-def fshift(readout_hdul, kidids, pixelid):
-    """fshiftを計算する
+def convert_readout(
+    ro: fits.HDUList,
+    ddb: fits.HDUList,
+    to: Literal['Tsignal', 'fshift'],
+    T_room: float,
+    T_amb: float,
+) -> NDArray:
+    """Reduced readoutの値をDEMS出力形式に変換（校正）する
 
     Args:
-        HDUL   : 開かれたreduced fitsファイルのHDULオブジェクト
-        array  : DDBのKIDFILTに格納されているkididの配列
-        integer: ピクセルID
+        ro: Reduced readout FITSのHDUListオブジェクト
+        ddb: DDB FITSのHDUListオブジェクト
+        to: 変換形式（Tsignal→Tsky, fshift→df/f)
+        T_room: キャビン温度(K)
+        T_amb: 外気温(K)
 
-    Keyword Args:
-        なし
-
-    Returns:
-        fshiftの計算結果を格納したnumpy.array
-
-    経緯:
-        DEMSのresponseにfshiftを格納する場合があるため、
-        calibrate_to_power()関数に含まれていたfshiftの計算を分離した。
     """
-    nkid     = readout_hdul['READOUT'].header['NKID%d' %pixelid]
-    linphase = np.transpose([readout_hdul['READOUT'].data['Amp, Ph, linPh %d' %i].T[2] for i in range(nkid)])
-    linyfc   = readout_hdul['KIDSINFO'].data['yfc, linyfc'].T[1]
-    Qr       = readout_hdul['KIDSINFO'].data['Qr, dQr (300K)'].T[0]
-    fshift   = np.array((linphase - linyfc)/(4.*Qr)).T
-    return np.array([fshift[i] for i in kidids]) # kididsの数に合わせる(たぶんnkid >= kidids)
+    kidcols = ro['READOUT'].data.columns[2:]
+    linph   = np.array([ro['READOUT'].data[n] for n in kidcols.names]).T[2]
+    linyfc  = np.array(ro['KIDSINFO'].data['yfc, linyfc']).T[1]
+    Qr      = np.array(ro['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
+    fshift  = (linph - linyfc) / (4.0 * Qr)
+    # ここまではKID ID = indexの対応となっている
+
+    n_time = len(fshift)
+    n_chan = len(ddb['KIDFILT'].data)
+    output = np.zeros([n_time, n_chan], np.float32)
+
+    for i in range(n_chan):
+        kidid = ddb['KIDFILT'].data[i]['kidid']
+        masterid = ddb['KIDFILT'].data[i]['masterid']
+        fshift_id = fshift[:, kidid]
+
+        if masterid < 0:
+            output[:, i] = np.nan
+        elif to == "fshift":
+            output[:, i] = fshift_id
+        elif to == "Tsignal":
+            p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
+            output[:, i] = Tlos_model(fshift_id, p0, etaf, T0, T_room, T_amb)
+        else:
+            raise ValueError(f'Invalid output type: {to}')
+
+    return np.array(output)
 
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (dx + p0*np.sqrt(Troom+T0))**2 / (p0**2 * etaf) - T0/etaf - (1-etaf)/etaf*Tamb
-
-def calibrate_to_power(Troom, Tamb, fshift, ddb):
-    """Tlos_modelを利用して応答を計算する
-
-    Args:
-        float      : キャビン温度(K)
-        float      : 外気温(K)
-        numpy.array: fshift()関数の計算結果
-        HDUL       : 開かれたDDBファイルのHDULオブジェクト
-
-    Keyword Args:
-        なし
-
-    Returns:
-        計算結果を格納したnumpy.array
-
-    """
-    kiddict = {}
-    for (i, j) in zip(ddb['KIDFILT'].data['kidid'], ddb['KIDFILT'].data['masterid']):
-        kiddict[i] = j
-
-    #fshift_err = np.zeros( len(fshift) )
-    #---- Responsivity curve
-    (p0, etaf, T0) = ddb['KIDRESP'].data['cal params'].T
-    Tsignal = []
-    for i in map(int, ddb['KIDFILT'].data['kidid']):
-        masterid = kiddict[i]
-        if masterid < 0:
-            Tsignal.append( [np.nan for j in range( len(fshift[i]) )] )
-            continue
-        #---- Convert to power
-        Tsignal.append(Tlos_model(fshift[i], p0[i], etaf[i], T0[i], Troom, Tamb))
-    return np.array(Tsignal).T
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""

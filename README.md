@@ -6,14 +6,14 @@
 [![DOI](https://img.shields.io/badge/DOI-10.5281/zenodo.10015892-cornflowerblue?style=flat-square)](https://doi.org/10.5281/zenodo.10015892)
 [![Tests](https://img.shields.io/github/actions/workflow/status/deshima-dev/demerge/tests.yaml?label=Tests&style=flat-square)](https://github.com/deshima-dev/demerge/actions)
 
-Merge DESHIMA datasets observed with ASTE
+DESHIMA merge code for observed datasets
 
 MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、DEMSオブジェクトを生成できるようにしました。今回の更新では、付属のPythonパッケージ`demerge`をPython環境にインストールすることで、同名のコマンド`demerge`が利用可能となります（`demerge/run.sh`のラッパースクリプトです）。これを実行するとmerge_to_dems()関数が実行され、解析結果がまとまったZarrファイルが生成されます。DEMSの構造については[deshima-dev/dems](https://github.com/deshima-dev/dems)をご覧ください。
 
 ## 動作環境
 
 - CPython: 3.9-3.12
-- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.8.0/pyproject.toml)をご確認ください
+- Dependent packages: [pyproject.toml](https://github.com/deshima-dev/demerge/blob/v2.8.1/pyproject.toml)をご確認ください
 
 ## インストール
 
@@ -22,7 +22,7 @@ MergeToDfits()クラスの代わりとなるmerge_to_dems()関数を実装し、
 pipで[PyPI](https://pypi.org)からインストールしてください。
 
 ```shell
-pip install demerge==2.8.0
+pip install demerge==2.8.1
 ```
 
 インストール後、`demerge`コマンドが利用可能になります。
@@ -34,11 +34,11 @@ pip install demerge==2.8.0
 ```shell
 # テストデータを含める場合
 git clone --recursive https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.8.0
+cd demerge && git checkout v2.8.1
 
 # 最小構成でダウンロードする場合
 git clone --depth=1 https://github.com/deshima-dev/demerge.git
-cd demerge && git checkout v2.8.0
+cd demerge && git checkout v2.8.1
 ```
 
 続けて、`demerge`パッケージのPython環境へのインストールを行います。
@@ -223,9 +223,8 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 
 引数名 | 型 | 既定値 | 説明
 --- | --- | --- |---
-`--pixel_id` | 整数 | `0` | pixel_idを整数で指定します
 `--coordinate` | 文字列 | `'azel'` | 座標系(azel/radec)を文字列で指定します
-`--loadtype` | 文字列 | `'Tsignal'` | 読み込むデータを文字列で指定します(既定値: Tsignal)
+`--loadtype` | 文字列 | `'fshift'` | 読み込むデータを文字列で指定します
 `--findR` | フラグ | なし | 指定するとFindR, Skyを実行します
 `--ch` | 整数 | `0` | findRに利用するチャネルを整数で指定します
 `--Rth` | 実数 | `280.0` | R閾値を実数で指定します

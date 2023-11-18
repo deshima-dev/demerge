@@ -153,7 +153,6 @@ def convert_readout(
     for i in range(n_chan):
         kidid = ddb['KIDFILT'].data[i]['kidid']
         masterid = ddb['KIDFILT'].data[i]['masterid']
-        p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
         fshift_id = fshift[:, kidid]
 
         if masterid < 0:
@@ -161,6 +160,7 @@ def convert_readout(
         elif to == "fshift":
             output[:, i] = fshift_id
         elif to == "Tsignal":
+            p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
             output[:, i] = Tlos_model(fshift_id, p0, etaf, T0, T_room, T_amb)
         else:
             raise ValueError(f'Invalid output type: {to}')

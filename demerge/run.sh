@@ -36,7 +36,7 @@
 #
 
 DEMERGE="$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"
-DEFAULT_DDB="${DEMERGE}/ddb_20231029.fits.gz"
+DEFAULT_DDB="${DEMERGE}/ddb_20231123.fits.gz"
 NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 
 # ==================

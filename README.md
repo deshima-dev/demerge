@@ -84,7 +84,7 @@ deshima-rawdata list
 `-d` | 観測データディレクトリの指定 | `data`
 `-c` | キャッシュディレクトリを指定 | `cache`
 `-g` | グラフディレクトリを指定 | `graph`
-`-b` | DDBファイルを指定 | `dmerge/ddb_20231029.fits.gz`（パッケージに同梱）
+`-b` | DDBファイルを指定 | `dmerge/ddb_20231123.fits.gz`（パッケージに同梱）
 `-o` | 出力データディレクトリを指定 | `cache`
 `-m` | マージオプションを指定（例：`-m "--coordinate radec"`） | なし
 

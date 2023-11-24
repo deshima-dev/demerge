@@ -195,10 +195,14 @@ def retrieve_cabin_temps(filename=None):
     Returns:
         tuple (timestames, upperCabinTemps, lowerCabinTemps)
                tupleの各要素はnumpy.array。要素数は同じ。
-               また、ファイル名が空の場合はNaNが入った配列が返される。
+               また、ファイル名が空の場合はデフォルト値が入った配列が返される。
     """
     if filename=='' or filename==None:
-        return (np.array([np.nan]).astype('datetime64[ns]'), np.array([np.nan]).astype(np.float64), np.array([np.nan]).astype(np.float64))
+        return (
+            np.array(["1970-01-01"]).astype('datetime64[ns]'),
+            np.array([20.0]).astype(np.float64),
+            np.array([20.0]).astype(np.float64),
+        )
 
     table = ascii.read(filename, format='no_header')
 

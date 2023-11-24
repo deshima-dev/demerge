@@ -3,7 +3,7 @@ message: "If you use this software, please cite it as below."
 
 title: "demerge"
 abstract: "DESHIMA merge code for observed datasets"
-version: 2.8.1
+version: 2.8.2
 date-released: 2023-11-19
 license: "MIT"
 doi: "10.5281/zenodo.10015892"

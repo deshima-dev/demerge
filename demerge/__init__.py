@@ -7,7 +7,7 @@ __all__ = [
     "merge_to_dems",
     "plot",
 ]
-__version__ = "2.8.2"
+__version__ = "2.9.0"
 
 
 # submodules

@@ -35,4 +35,4 @@ jobs:
       - name: Run a comprehensive merge test
         run: |
           deshima-rawdata download 20231108052231 -d data -e
-          demerge -d data -m "--debug" 20231108052231
+          demerge -d data -m "--debug --loadtype Tsignal" 20231108052231

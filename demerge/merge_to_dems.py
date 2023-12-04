@@ -278,7 +278,7 @@ def merge_to_dems(
         long_name               =long_name,
         units                   =units,
         time                    =times,
-        chan                    =kid_id,
+        chan                    =master_id,
         beam                    =beam,
         state                   =state,
         lon                     =lon,

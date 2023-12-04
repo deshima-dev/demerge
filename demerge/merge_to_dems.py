@@ -79,6 +79,7 @@ def merge_to_dems(
     times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
+    ddb_version = ddbfits_hdul["PRIMARY"].header["DDB_ID"]
     master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(ddbfits_hdul)
 
     response = mf.convert_readout(
@@ -305,7 +306,8 @@ def merge_to_dems(
         d2_mkid_type            =kid_type,
         d2_mkid_frequency       =kid_freq,
         d2_skychopper_isblocking=skychop_state,
-        d2_demerge_version       =DEMERGE_VERSION,
+        d2_demerge_version      =DEMERGE_VERSION,
+        d2_ddb_version          =ddb_version,
         beam_major              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_minor              =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた
         beam_pa                 =0.005,  # 18 arcsec MergeToDfits()でも固定値が指定されていた

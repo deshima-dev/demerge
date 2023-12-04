@@ -220,6 +220,10 @@ class TestDataMaker():
         n_kid  = 66
 
         header = fits.Header()
+        header['DDB_ID'] = 'YYYYmmdd'
+        primary = fits.PrimaryHDU(header=header)
+
+        header = fits.Header()
         header['EXTNAME']  = 'KIDDES', 'name of binary data'
         header['FILENAME'] = 'LT119_FB2.2G_49ch.csv', 'input filename'
         header['PIXEL0']   = 'LT119_FB2.2G_49ch', 'name of pixel 0'
@@ -260,7 +264,7 @@ class TestDataMaker():
         kidresp = fits.BinTableHDU.from_columns(columns, header)
 
         hdul = fits.HDUList()
-        hdul.append(fits.PrimaryHDU())
+        hdul.append(primary)
         hdul.append(kiddes)
         hdul.append(kidfilt)
         hdul.append(kidresp)

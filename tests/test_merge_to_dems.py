@@ -248,11 +248,15 @@ class MergeToDemsTestDrive(unittest.TestCase):
         n_time = None
         n_kid  = None
         times  = None
-        with fits.open('testdata_reduced_readout.fits') as hdul:
-            n_time = hdul['READOUT'].header['NAXIS2']
-            n_kid  = hdul['KIDSINFO'].header['NAXIS2']
-            times  = np.array(mf.convert_timestamp(hdul['READOUT'].data['timestamp'])).astype(np.datetime64)
-            kidids = np.array(hdul['KIDSINFO'].data['kidid']).astype(np.int64)
+
+        with fits.open('{}_reduced_readout.fits'.format(prefix)) as ro:
+            n_time = ro['READOUT'].header['NAXIS2']
+            n_kid  = ro['KIDSINFO'].header['NAXIS2']
+            timestamps = ro['READOUT'].data['timestamp']
+            times  = mf.convert_timestamp(timestamps).astype(np.datetime64)
+
+        with fits.open('{}_DDB.fits.gz'.format(prefix)) as ddb:
+            masterids = ddb['KIDFILT'].data['masterid'].astype(np.int64)
 
         dems = mtd.merge_to_dems(
             ddbfits_path='{}_DDB.fits.gz'.format(prefix),
@@ -325,7 +329,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
 
         # MS::chan
         self.assertEqual(n_kid, len(dems.chan),              'チャネル数の確認')
-        self.assertTrue(np.array(kidids == dems.chan).all(), 'KIDIDがチャネル番号と一致することを確認')
+        self.assertTrue(np.array(masterids == dems.chan).all(), 'Master IDがチャネル番号と一致することを確認')
 
         # MS::beam (既定値)
         self.assertEqual(n_time, len(dems.beam),         'MS::beamの打点数が打刻数に一致することを確認')
@@ -420,6 +424,7 @@ class MergeToDemsTestDrive(unittest.TestCase):
         self.assertEqual(0.5, round(np.count_nonzero(dems.d2_skychopper_isblocking == True)/n_time, 1),  'MS::d2_skychopper_isblockingのおよそ半数がTrueであることを確認')
         self.assertEqual(DEMS_VERSION,    dems.d2_dems_version)
         self.assertEqual(DEMERGE_VERSION, dems.d2_demerge_version)
+        self.assertEqual('YYYYmmdd', dems.d2_ddb_version)
         return
 
     def test_no_cabin_file(self):

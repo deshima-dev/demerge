@@ -4,17 +4,23 @@ File name: demerge.py
 Python 3.7
 (C) 2021 内藤システムズ
 """
-from warnings import catch_warnings, simplefilter, warn
-import numpy as np
-import scipy
-import scipy.signal
-import json
-import pickle
-import lmfit
-import sympy
+# standard library
 from collections.abc import Mapping
-import astropy.io.fits as pyfits
+from logging import getLogger
+from warnings import catch_warnings, simplefilter
+
+
+# dependencies
+import lmfit
+import scipy
+import sympy
+import numpy as np
 from astropy.io import fits
+
+
+# module logger
+logger = getLogger(__name__)
+
 
 #-------------------------
 # For make_divided_data.py
@@ -388,7 +394,7 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
             n = 10
             if l - n >= 0 and r + n < len(freq):
                 f, q, d, bg = fitLorentzian(freq[l-n:r+n], ampl[l-n:r+n], freq[i], q0)
-                print('rough refitting with Lorentzian...')
+                logger.debug('Rough refitting with Lorentzian')
         if q < minq:
             nbadq += 1
             continue
@@ -398,9 +404,9 @@ def find_peaks(freq, ampl, fc, smooth=None, threshold=None, minq=10000, maxratio
         kids.append((f, q, d, bg))
     del l, r, f, q, d, bg
     if nbadq > 0:
-        print('removed', nbadq, 'peaks with bad Q')
+        logger.debug(f'Removed {nbadq} peaks with bad Q')
     if nbadd > 0:
-        print('removed', nbadd, 'peaks with bad S21min')
+        logger.debug(f'Removed {nbadd} peaks with bad S21min')
     kids.sort() #sort by frequency
 
     # pick up a peak which is closest to the carrier frequency (when fc in freq range)
@@ -906,9 +912,9 @@ def power_spectrum_density(data, dt, ndivide=1, window=scipy.signal.windows.hann
         size = step
     if bin(size).count("1") != 1:
         if overwrap_half:
-            warn('warning: ((length of data)/(ndivide+1))*2 is not power of 2: %d' % size)
+            logger.warning('((length of data)/(ndivide+1))*2 is not power of 2: %d' % size)
         else:
-            warn('warning: (length of data)/ndivide is not power of 2: %d' % size)
+            logger.warning('(length of data)/ndivide is not power of 2: %d' % size)
     psd = np.zeros(size)
     T = (size - 1)*dt
     vs = 1/dt
@@ -1048,7 +1054,7 @@ class TODs(Mapping):
         self.open()
 
     def open(self):
-        self.hud = pyfits.open(self.infile)
+        self.hud = fits.open(self.infile)
         bintable = self.hud[1]
         self.fftgain  = bintable.header['fftgain']
         self.framert  = bintable.header['framert']

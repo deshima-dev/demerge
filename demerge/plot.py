@@ -11,12 +11,22 @@ Filename: plot.py
 例)
   $ python plot.py cache/kid00001.pkl graph
 """
+# standard library
 import sys
 import pickle
-import matplotlib.pyplot as plt
+from logging import basicConfig, getLogger
+
+
+# dependencies
 import numpy as np
+import matplotlib.pyplot as plt
 from scipy import interpolate
 from . import demerge
+
+
+# module logger
+logger = getLogger(__name__)
+
 
 def plot(kid, oldkid=None):
     if kid['enabled'] == False:
@@ -111,7 +121,7 @@ def plot(kid, oldkid=None):
         x = interpolate.splev(phase_tod, tck, der=0)
         ax4.plot(x, phase_tod, '.', alpha=0.2, label='TOD')
     except ValueError:
-        print('KID[{}] TOD interpolation failed..'.format(kid['kidid']))
+        logger.warning('KID[{}] TOD interpolation failed..'.format(kid['kidid']))
 
     tck = interpolate.splrep(kid['localsweep'].x, phase_localsweep, s=0)
     y = interpolate.splev(kid['tod'].frequency, tck, der=0)
@@ -196,6 +206,7 @@ def plot(kid, oldkid=None):
 
     return fig1, fig2
 
+
 def main() -> None:
     """
     コマンドライン引数
@@ -203,6 +214,11 @@ def main() -> None:
     args[1] string フィットの結果が格納された一時ファイル(*.pkl)の名前
     args[2] string グラフを保存するディレクトリ名
     """
+    basicConfig(
+        datefmt='%Y-%m-%d %H:%M:%S',
+        format='[%(asctime)s %(name)s %(levelname)s] %(message)s',
+    )
+
     args = sys.argv
     filename = args[1]
     graph_dir = args[2]
@@ -217,6 +233,7 @@ def main() -> None:
         plt.figure(fig2.number)
         plt.savefig('{}/tod_kid{:05}.png'.format(graph_dir, kid['kidid']), transparent=False)
         plt.close()
+
 
 if __name__=='__main__':
     main()

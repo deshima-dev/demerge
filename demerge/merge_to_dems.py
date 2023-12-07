@@ -16,10 +16,11 @@ import xarray as xr
 from astropy.io import ascii, fits
 from dems.d2 import MS
 from . import merge_function as mf
-
-
-# constants
 from . import __version__ as DEMERGE_VERSION
+
+
+# module logger
+logger = getLogger(__name__)
 
 
 def merge_to_dems(
@@ -356,8 +357,6 @@ def main() -> None:
     a = parser.parse_args()
 
     # ロガーの設定
-    logger = getLogger('demerge')
-
     if a.debug:
         logger.setLevel(DEBUG)
 
@@ -400,6 +399,7 @@ def main() -> None:
     )
 
     dems.to_zarr(a.filename, mode="w")
+
 
 if __name__ == '__main__':
     main()

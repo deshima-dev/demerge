@@ -4,7 +4,7 @@ message: "If you use this software, please cite it as below."
 title: "demerge"
 abstract: "DESHIMA merge code for observed datasets"
 version: 2.11.0
-date-released: 2023-12-04
+date-released: 2023-12-07
 license: "MIT"
 doi: "10.5281/zenodo.10015892"
 url: "https://github.com/deshima-dev/demerge"

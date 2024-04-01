@@ -18,7 +18,8 @@ __all__ = [
     'Tlos_model',
     'convert_readout',
     'convert_asciitime',
-    'convert_timestamp'
+    'convert_timestamp',
+    'update_corresp',
 ]
 
 
@@ -31,16 +32,26 @@ from typing import Literal
 # dependencies
 import numpy as np
 from astropy.io import fits, ascii
+from astropy.io.fits import BinTableHDU
 from numpy.typing import NDArray
 
 
-#-------------------------------- CONSTANTS
+# constants
 FORM_FITSTIME   = '%Y-%m-%dT%H:%M:%S'                          # YYYY-mm-ddTHH:MM:SS
 FORM_FITSTIME_P = '%Y-%m-%dT%H:%M:%S.%f'                       # YYYY-mm-ddTHH:MM:SS.ss
 
 CABIN_Q_MARGIN  = 5*60 # seconds. Margin for cabin data query.
 DEFAULT_ROOM_T  = 17. + 273. # Kelvin
 DEFAULT_AMB_T   = 0.  + 273. # Kelvin
+
+
+# constants (master-to-KID correspondence)
+CORRESP_IGNORES = "pixelid", "runid, framelen, refid"
+CORRESP_NOTFOUND = -1
+KIDFILT = "KIDFILT"
+KIDID = "kidid"
+MASTERID = "masterid"
+
 
 def create_bintablehdu(hd):
     """Create Binary Table HDU from 'hdu_dict'"""
@@ -302,3 +313,29 @@ def retrieve_misti_log(filename):
         datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
 
     return (np.array(datetimes).astype('datetime64[ns]'), az, el, pwv)
+
+
+def update_corresp(hdu: fits.BinTableHDU, corresp: dict[str, int]) -> BinTableHDU:
+    """Update the master-to-KID ID correspondence in an HDU.
+
+    Args:
+        hdu: Binary Table HDU to be updated.
+        corresp: New master-to-KID ID correspondence.
+
+    Returns:
+        (Copied) HDU with the new master-to-KID ID correspondence.
+
+    """
+    hdu_new = hdu.copy()
+
+    for masterid, kidid in zip(hdu.data[MASTERID], hdu.data[KIDID]):
+        where = hdu_new.data[MASTERID] == masterid
+
+        if (kidid_new := corresp.get(str(masterid))) is None:
+            for name in hdu_new.data.columns.names:
+                if name not in CORRESP_IGNORES:
+                    hdu_new.data[name][where] = CORRESP_NOTFOUND
+        elif kidid_new != kidid:
+            hdu_new.data[KIDID][where] = kidid_new
+
+    return hdu_new

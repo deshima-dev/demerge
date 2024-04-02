@@ -7,6 +7,7 @@ dems   0.8.0
 """
 # standard library
 import argparse
+import json
 from logging import DEBUG, basicConfig, getLogger
 
 
@@ -25,6 +26,7 @@ logger = getLogger(__name__)
 
 def merge_to_dems(
         ddbfits_path='',
+        corresp_path='',
         obsinst_path='',
         antenna_path='',
         readout_path='',
@@ -55,13 +57,26 @@ def merge_to_dems(
     # その他一時的な補正
     offset_time_antenna = kwargs.pop("offset_time_antenna", 0) # ms(integerでないとnp.timedeltaに変換できないので注意)
 
-    # 時刻と各種データを読み込む(必要に応じて時刻はnp.datetime64[ns]へ変換する)
-    readout_hdul   = fits.open(readout_path)
-    ddbfits_hdul   = fits.open(ddbfits_path)
+    # 時刻と各種データを読み込む
+    readout_hdul   = fits.open(readout_path, mode="readonly")
+    ddbfits_hdul   = fits.open(ddbfits_path, mode="readonly")
     weather_table  = ascii.read(weather_path)
     antenna_table  = ascii.read(antenna_path)[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
     obsinst_params = mf.load_obsinst(obsinst_path) # 観測スクリプトに含まれているパラメタを抽出する
 
+    # Update master-to-KID ID correspondences of HDUs
+    # (this should be done just after loading the DDB)
+    if corresp_path:
+        with open(corresp_path, mode="r") as f:
+            corresp = json.load(f)
+
+        if (name := "KIDFILT") in ddbfits_hdul:
+            ddbfits_hdul[name] = mf.update_corresp(ddbfits_hdul[name], corresp)
+
+        if (name := "KIDRESP") in ddbfits_hdul:
+            ddbfits_hdul[name] = mf.update_corresp(ddbfits_hdul[name], corresp)
+
+    # 必要に応じて時刻はnp.datetime64[ns]へ変換する
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
 
@@ -326,6 +341,7 @@ def main() -> None:
     # 必須引数
     parser.add_argument('filename',  type=str, help='出力ファイルへのパスを指定して下さい(.zarr.zip)')
     parser.add_argument('--ddb',     type=str, required=True, help='DDBファイルへのパスを指定して下さい(.fits.gz)')
+    parser.add_argument('--corresp', type=str, required=True, help='Master-to-KID ID対応ファイルへのパスを指定して下さい(.json)')
     parser.add_argument('--obs',     type=str, required=True, help='obsファイルへのパスを指定して下さい(.obs)')
     parser.add_argument('--antenna', type=str, required=True, help='antennaファイルへのパスを指定して下さい(.antenna)')
     parser.add_argument('--readout', type=str, required=True, help='reduced readoutファイルへのパスを指定して下さい(.fits)')
@@ -372,6 +388,7 @@ def main() -> None:
     # マージの実行
     dems = merge_to_dems(
         ddbfits_path=a.ddb,
+        corresp_path=a.corresp,
         obsinst_path=a.obs,
         antenna_path=a.antenna,
         readout_path=a.readout,

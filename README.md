@@ -85,6 +85,7 @@ deshima-rawdata list
 `-c` | キャッシュディレクトリを指定 | `cache`
 `-g` | グラフディレクトリを指定 | `graph`
 `-b` | DDBファイルを指定 | `dmerge/ddb_20231123.fits.gz`（パッケージに同梱）
+`-i` | Master-to-KID ID対応ファイルを指定 | なし（なしの場合、DDBファイル中の対応関係を使用）
 `-o` | 出力データディレクトリを指定 | `cache`
 `-m` | マージオプションを指定（例：`-m "--coordinate radec"`） | なし
 
@@ -193,6 +194,7 @@ python -m unittest       # merge_to_dems関数およびmerge_functionモジュ�
 merge_to_dems()関数が定義されています。この関数は以下の8つのファイルからDEMSオブジェクトを生成します。
 
  - DDBファイル(.fits.gz)
+ - Master-to-KID ID対応ファイル(.json)
  - obsファイル(.obs)
  - antennaファイル(.ant)
  - skychopファイル(.skychop)
@@ -201,7 +203,7 @@ merge_to_dems()関数が定義されています。この関数は以下の8つ�
  - cabinファイル(.cabin)
  - reduced readoutファイル(.fits)
 
-reduced readoutファイルはdemerge/run.shを実行することによって生成されます。DDBファイルはdemergeのリポジトリに含まれているキャリブレーションデータです。その他のファイル(obs, antenna, skychop, weather, misti, cabin)は観測とともに得られるデータです。
+reduced readoutファイルはdemerge/run.shを実行することによって生成されます。DDBファイルはdemergeのリポジトリに含まれているキャリブレーションデータです。その他のファイルは観測とともに得られるデータです。
 
 merge_to_dems()関数は以下の必須引数とオプション引数をとることができます。
 
@@ -211,6 +213,7 @@ merge_to_dems()関数は以下の必須引数とオプション引数をとる�
 --- | --- | ---
 `filename` | 文字列 | 出力ファイルへのパスを指定して下さい(.zarr.zip)
 `--ddb` | 文字列 | DDBファイルへのパスを指定して下さい(.fits.gz)
+`--corresp` | 文字列 | Master-to-KID ID対応ファイルへのパスを指定して下さい(.json)
 `--obs` | 文字列 | obsファイルへのパスを指定して下さい(.obs)
 `--antenna` | 文字列 | antennaファイルへのパスを指定して下さい(.antenna)
 `--readout` | 文字列 | reduced readoutファイルへのパスを指定して下さい(.fits)

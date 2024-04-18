@@ -24,13 +24,16 @@ __all__ = [
 
 
 # standard library
+import json
 import lzma
 from datetime import datetime
-from typing import Literal
+from functools import partial, reduce
+from typing import Any, Literal
 
 
 # dependencies
 import numpy as np
+import pandas as pd
 from astropy.io import fits, ascii
 from astropy.io.fits import BinTableHDU
 from numpy.typing import NDArray
@@ -102,6 +105,88 @@ def load_obsinst(obsinst):
         ra  = 0
         dec = 0
     return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
+
+
+def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
+    """Get correspondence between KID ID and each KID attribute.
+
+    Args:
+        ddb: DESHIMA database (DDB) as an HDU list.
+        corresp_file: Master-to-KID ID correspondence as JSON file.
+
+    Returns:
+        DataFrame of correspondence between KID ID and each KID attribute.
+
+    """
+    def native(array: NDArray[Any]) -> NDArray[Any]:
+        """Convert the byte order of an array to native."""
+        return array.astype(array.dtype.type)
+
+    frames: list[pd.DataFrame] = []
+
+    # DataFrame of KIDDES HDU
+    data = ddb['KIDDES'].data
+    frame = pd.DataFrame(
+        index=pd.Index(
+            native(data['masterid']),
+            name='masterid',
+        ),
+        data = {
+            'kidtypes': native(data['attribute']),
+        },
+    )
+    frames.append(frame)
+
+    # DataFrame of KIDFILT HDU
+    data = ddb['KIDFILT'].data
+    frame = pd.DataFrame(
+        index=pd.Index(
+            native(data['masterid']),
+            name='masterid'
+        ),
+        data={
+            'kidfreq': native(data["F_filter, df_filter"][:, 0]),
+            'kidQ': native(data['Q_filter, dQ_filter'][:, 0]),
+        },
+    )
+    frame['kidfreq'] *= 1e9
+    frames.append(frame)
+
+    # DataFrame of KIDRESP HDU
+    if 'KIDRESP' in ddb:
+        data = ddb['KIDRESP'].data
+        frame = pd.DataFrame(
+            index=pd.Index(
+                native(data['masterid']),
+                name='masterid',
+            ),
+            data={
+                "p0": native(data['cal params'][:, 0]),
+                "eta_fwd": native(data['cal params'][:, 1]),
+                "T0": native(data['cal params'][:, 2]),
+            },
+        )
+        frames.append(frame)
+
+    # Outer-join DataFrames
+    join = partial(pd.DataFrame.join, how="outer")
+    frame = reduce(join, frames)
+
+    # Assign KID ID as index
+    with open(corresp_file, mode="r") as f:
+        corresp = json.load(f)
+
+    index = pd.Index(
+        [corresp.get(str(i), -1) for i in frame.index],
+        name='kidid'
+    )
+    frame = frame.reset_index().set_index(index)
+
+    # Drop rows with invalid master or KID IDs (-1)
+    frame = frame[frame.index != -1]
+    frame = frame[frame.masterid != -1]
+    return frame
+
 
 def get_maskid_corresp(ddb: fits.HDUList):
     """Get Correspondance of 'master' and 'kid'"""

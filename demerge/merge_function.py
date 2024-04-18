@@ -188,37 +188,6 @@ def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
     return frame
 
 
-def get_maskid_corresp(ddb: fits.HDUList):
-    """Get Correspondance of 'master' and 'kid'"""
-    kidnames = dict(
-        zip(
-            ddb['KIDDES'].data['masterid'],
-            ddb['KIDDES'].data['attribute'],
-        )
-    )
-
-    masterids: list[int]  = []
-    kidids: list[int]     = []
-    kidtypes: list[str]   = []
-    kidfreqs: list[float] = []
-    kidQs: list[float]    = []
-
-    for i in range(len(ddb['KIDFILT'].data)):
-        kidfilt_i = ddb['KIDFILT'].data[i]
-
-        masterids.append(kidfilt_i['masterid'])
-        kidids.append(kidfilt_i['kidid'])
-        kidfreqs.append(kidfilt_i['F_filter, dF_filter'][0] * 1e9)
-        kidQs.append(kidfilt_i['Q_filter, dQ_filter'][0])
-
-        if (masterid := kidfilt_i['masterid']) < 0:
-            kidtypes.append("unknown")
-        else:
-            kidtypes.append(kidnames[masterid])
-
-    return masterids, kidids, kidtypes, kidfreqs, kidQs
-
-
 def convert_readout(
     readout: fits.HDUList,
     corresp: pd.DataFrame,
@@ -393,29 +362,3 @@ def retrieve_misti_log(filename):
         datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
 
     return (np.array(datetimes).astype('datetime64[ns]'), az, el, pwv)
-
-
-def update_corresp(hdu: fits.BinTableHDU, corresp: dict[str, int]) -> BinTableHDU:
-    """Update the master-to-KID ID correspondence in an HDU.
-
-    Args:
-        hdu: Binary Table HDU to be updated.
-        corresp: New master-to-KID ID correspondence.
-
-    Returns:
-        (Copied) HDU with the new master-to-KID ID correspondence.
-
-    """
-    hdu_new = hdu.copy()
-
-    for masterid, kidid in zip(hdu.data[MASTERID], hdu.data[KIDID]):
-        where = hdu_new.data[MASTERID] == masterid
-
-        if (kidid_new := corresp.get(str(masterid))) is None:
-            for name in hdu_new.data.columns.names:
-                if name not in CORRESP_IGNORES:
-                    hdu_new.data[name][where] = CORRESP_NOTFOUND
-        elif kidid_new != kidid:
-            hdu_new.data[KIDID][where] = kidid_new
-
-    return hdu_new

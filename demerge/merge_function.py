@@ -132,7 +132,7 @@ def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
             name='masterid',
         ),
         data = {
-            'kidtypes': native(data['attribute']),
+            'kidtype': native(data['attribute']),
         },
     )
     frames.append(frame)
@@ -162,7 +162,7 @@ def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
             ),
             data={
                 "p0": native(data['cal params'][:, 0]),
-                "eta_fwd": native(data['cal params'][:, 1]),
+                "etaf": native(data['cal params'][:, 1]),
                 "T0": native(data['cal params'][:, 2]),
             },
         )
@@ -218,50 +218,45 @@ def get_maskid_corresp(ddb: fits.HDUList):
 
     return masterids, kidids, kidtypes, kidfreqs, kidQs
 
+
 def convert_readout(
-    ro: fits.HDUList,
-    ddb: fits.HDUList,
+    readout: fits.HDUList,
+    corresp: pd.DataFrame,
     to: Literal['Tsignal', 'fshift'],
     T_room: float,
     T_amb: float,
-) -> NDArray:
+):
     """Reduced readoutの値をDEMS出力形式に変換（校正）する
 
     Args:
-        ro: Reduced readout FITSのHDUListオブジェクト
-        ddb: DDB FITSのHDUListオブジェクト
+        readout: Reduced readout FITSのHDUListオブジェクト
+        corresp: KID IDと各KIDの測定値を対応づけるDataFrame
         to: 変換形式（Tsignal→Tsky, fshift→df/f)
         T_room: キャビン温度(K)
         T_amb: 外気温(K)
 
     """
-    kidcols = ro['READOUT'].data.columns[2:]
-    linph   = np.array([ro['READOUT'].data[n] for n in kidcols.names]).T[2]
-    linyfc  = np.array(ro['KIDSINFO'].data['yfc, linyfc']).T[1]
-    Qr      = np.array(ro['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
-    fshift  = (linph - linyfc) / (4.0 * Qr)
-    # ここまではKID ID = indexの対応となっている
+    kidcols = readout['READOUT'].data.columns[2:].names
+    linph = np.array([readout['READOUT'].data[n] for n in kidcols]).T[2]
+    linyfc = np.array(readout['KIDSINFO'].data['yfc, linyfc']).T[1]
+    Qr = np.array(readout['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
+    fshift = (linph - linyfc) / (4.0 * Qr)
 
-    n_time = len(fshift)
-    n_chan = len(ddb['KIDFILT'].data)
-    output = np.zeros([n_time, n_chan], np.float32)
+    if to == 'fshift':
+        return fshift[:, corresp.index]
 
-    for i in range(n_chan):
-        kidid = ddb['KIDFILT'].data[i]['kidid']
-        masterid = ddb['KIDFILT'].data[i]['masterid']
-        fshift_id = fshift[:, kidid]
+    if to == 'Tsignal':
+        return Tlos_model(
+            dx=fshift[:, corresp.index],
+            p0=corresp.p0,
+            etaf=corresp.etaf,
+            T0=corresp.T0,
+            Troom=T_room,
+            Tamb=T_amb,
+        )
 
-        if masterid < 0:
-            output[:, i] = np.nan
-        elif to == "fshift":
-            output[:, i] = fshift_id
-        elif to == "Tsignal":
-            p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
-            output[:, i] = Tlos_model(fshift_id, p0, etaf, T0, T_room, T_amb)
-        else:
-            raise ValueError(f'Invalid output type: {to}')
+    raise ValueError(f'Invalid output type: {to}')
 
-    return np.array(output)
 
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""

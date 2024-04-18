@@ -64,18 +64,6 @@ def merge_to_dems(
     antenna_table  = ascii.read(antenna_path)[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
     obsinst_params = mf.load_obsinst(obsinst_path) # 観測スクリプトに含まれているパラメタを抽出する
 
-    # Update master-to-KID ID correspondences of HDUs
-    # (this should be done just after loading the DDB)
-    if corresp_path:
-        with open(corresp_path, mode="r") as f:
-            corresp = json.load(f)
-
-        if (name := "KIDFILT") in ddbfits_hdul:
-            ddbfits_hdul[name] = mf.update_corresp(ddbfits_hdul[name], corresp)
-
-        if (name := "KIDRESP") in ddbfits_hdul:
-            ddbfits_hdul[name] = mf.update_corresp(ddbfits_hdul[name], corresp)
-
     # 必要に応じて時刻はnp.datetime64[ns]へ変換する
     times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
@@ -96,11 +84,11 @@ def merge_to_dems(
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
     ddb_version = ddbfits_hdul["PRIMARY"].header["DDB_ID"]
-    master_id, kid_id, kid_type, kid_freq, kid_Q = mf.get_maskid_corresp(ddbfits_hdul)
 
+    corresp = mf.get_corresp_frame(ddbfits_hdul, corresp_path)
     response = mf.convert_readout(
-        ro=readout_hdul,
-        ddb=ddbfits_hdul,
+        readout=readout_hdul,
+        corresp=corresp,
         to=loadtype,
         T_room=lower_cabin_temp[0],
         T_amb=np.nanmean(weather_table['tmperature']) + 273.15,
@@ -149,7 +137,7 @@ def merge_to_dems(
         state_type_numbers[states == state_type] = i
 
     # 補間のためにDataArrayへ格納する
-    response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, kid_id])
+    response_xr               = xr.DataArray(data=response, dims=['time', 'chan'], coords=[times, corresp.index])
     lon_xr                    = xr.DataArray(data=lon,                             coords={'time': times_antenna})
     lat_xr                    = xr.DataArray(data=lat,                             coords={'time': times_antenna})
     lon_origin_xr             = xr.DataArray(data=lon_origin,                      coords={'time': times_antenna})
@@ -295,7 +283,7 @@ def merge_to_dems(
         long_name               =long_name,
         units                   =units,
         time                    =times,
-        chan                    =master_id,
+        chan                    =corresp.masterid,
         beam                    =beam,
         state                   =state,
         lon                     =lon,
@@ -307,7 +295,7 @@ def merge_to_dems(
         humidity                =humidity,
         wind_speed              =wind_speed,
         wind_direction          =wind_direction,
-        frequency               =kid_freq,
+        frequency               =corresp.kidfreq,
         aste_cabin_temperature  =aste_cabin_temperature,
         aste_subref_x           =aste_subref_x,
         aste_subref_y           =aste_subref_y,
@@ -318,9 +306,9 @@ def merge_to_dems(
         aste_misti_lon          =aste_misti_lon,
         aste_misti_lat          =aste_misti_lat,
         aste_misti_pwv          =aste_misti_pwv,
-        d2_mkid_id              =kid_id,
-        d2_mkid_type            =kid_type,
-        d2_mkid_frequency       =kid_freq,
+        d2_mkid_id              =corresp.index,
+        d2_mkid_type            =corresp.kidtype,
+        d2_mkid_frequency       =corresp.kidfreq,
         d2_skychopper_isblocking=skychop_state,
         d2_demerge_version      =DEMERGE_VERSION,
         d2_ddb_version          =ddb_version,

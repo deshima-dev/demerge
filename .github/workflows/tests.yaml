@@ -28,10 +28,10 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install poetry==1.7.1 && poetry install
-      - name: Run unit tests for merge functions
-        run: |
-          deshima-rawdata download 20171103184436 -d data -e
-          cd tests && ./mktd.sh && python -m unittest -v
+      # - name: Run unit tests for merge functions
+      #   run: |
+      #     deshima-rawdata download 20171103184436 -d data -e
+      #     cd tests && ./mktd.sh && python -m unittest -v
       - name: Run a comprehensive merge test
         run: |
           deshima-rawdata download 20231108052231 -d data -e

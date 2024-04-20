@@ -212,14 +212,14 @@ def convert_readout(
     fshift = (linph - linyfc) / (4.0 * Qr)
 
     if to == 'fshift':
-        return fshift[:, corresp.index]
+        return fshift[:, corresp.index.values]
 
     if to == 'Tsignal':
         return Tlos_model(
-            dx=fshift[:, corresp.index],
-            p0=corresp.p0,
-            etaf=corresp.etaf,
-            T0=corresp.T0,
+            dx=fshift[:, corresp.index.values],
+            p0=corresp.p0.values,
+            etaf=corresp.etaf.values,
+            T0=corresp.T0.values,
             Troom=T_room,
             Tamb=T_amb,
         )

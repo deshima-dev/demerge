@@ -30,7 +30,6 @@
 #  -g グラフディレクトリを指定
 #  -d 観測データディレクトリの指定
 #  -b DDBファイルの指定
-#  -i Master-to-KID ID対応ファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
 #  -p プロット実行オプションの指定
@@ -47,19 +46,17 @@ NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
 #  -g グラフディレクトリを指定
 #  -d 観測データディレクトリの指定
 #  -b DDBファイルの指定
-#  -i Master-to-KID ID対応ファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
 #  -p プロット実行オプションの指定
 #
-while getopts c:g:d:b:i:o:m:p: OPT
+while getopts c:g:d:b:o:m:p: OPT
 do
     case $OPT in
     "c") CACHE_DIR="${OPTARG}";;
     "g") GRAPH_DIR="${OPTARG}";;
     "d") DATA_DIR="${OPTARG}";;
     "b") DDB_FILE="${OPTARG}";;
-    "i") CORRESP_FILE="${OPTARG}";;
     "o") OUT_DIR="${OPTARG}";;
     "m") MERGE_OPTS="${OPTARG}";;
     "p") PLOT="${OPTARG}";;
@@ -85,9 +82,6 @@ if [ -z "$DATA_DIR" ]; then
 fi
 if [ -z "$DDB_FILE" ]; then
     DDB_FILE="${DEFAULT_DDB}" # DDBファイルの既定値
-fi
-if [ -z "$CORRESP_FILE" ]; then
-    CORRESP_FILE="" # Master-to-KID ID対応ファイルの規定値
 fi
 if [ -z "$OUT_DIR" ]; then
     OUT_DIR="${CACHE_DIR}" # 出力ディレクトリの規定値
@@ -190,7 +184,7 @@ fi
 #
 merge_to_dems                                                \
     --ddb     "${DDB_FILE}"                                  \
-    --corresp "${CORRESP_FILE}"                              \
+    --corresp "${DATA_DIR}/cosmos_${OBSID}/kid_corresp.json" \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
     --obs     "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.obs"     \
     --antenna "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.ant"     \

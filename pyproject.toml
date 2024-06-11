@@ -26,12 +26,13 @@ dems = "^0.9"
 lmfit = "^1.2"
 matplotlib = "^3.7"
 numpy =	"^1.25"
+pandas = "^2.0"
 scipy = "^1.10"
 sympy = "^1.10"
 zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
-deshima-rawdata = "^2023.11.5"
+deshima-rawdata = "^2024.4.2"
 ipython = "^8.18"
 
 [tool.poetry.scripts]

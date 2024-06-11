@@ -24,13 +24,16 @@ __all__ = [
 
 
 # standard library
+import json
 import lzma
 from datetime import datetime
-from typing import Literal
+from functools import partial, reduce
+from typing import Any, Literal
 
 
 # dependencies
 import numpy as np
+import pandas as pd
 from astropy.io import fits, ascii
 from astropy.io.fits import BinTableHDU
 from numpy.typing import NDArray
@@ -103,80 +106,126 @@ def load_obsinst(obsinst):
         dec = 0
     return {'observer': observer, 'obs_object': obs_object,  'ra': ra, 'dec': dec, 'equinox': equinox, 'project': project, 'observation': observation}
 
-def get_maskid_corresp(ddb: fits.HDUList):
-    """Get Correspondance of 'master' and 'kid'"""
-    kidnames = dict(
-        zip(
-            ddb['KIDDES'].data['masterid'],
-            ddb['KIDDES'].data['attribute'],
-        )
+
+def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
+    """Get correspondence between KID ID and each KID attribute.
+
+    Args:
+        ddb: DESHIMA database (DDB) as an HDU list.
+        corresp_file: Master-to-KID ID correspondence as JSON file.
+
+    Returns:
+        DataFrame of correspondence between KID ID and each KID attribute.
+
+    """
+    def native(array: NDArray[Any]) -> NDArray[Any]:
+        """Convert the byte order of an array to native."""
+        return array.astype(array.dtype.type)
+
+    frames: list[pd.DataFrame] = []
+
+    # DataFrame of KIDDES HDU
+    data = ddb['KIDDES'].data
+    frame = pd.DataFrame(
+        index=pd.Index(
+            native(data['masterid']),
+            name='masterid',
+        ),
+        data = {
+            'kidtype': native(data['attribute']),
+        },
     )
+    frames.append(frame)
 
-    masterids: list[int]  = []
-    kidids: list[int]     = []
-    kidtypes: list[str]   = []
-    kidfreqs: list[float] = []
-    kidQs: list[float]    = []
+    # DataFrame of KIDFILT HDU
+    data = ddb['KIDFILT'].data
+    frame = pd.DataFrame(
+        index=pd.Index(
+            native(data['masterid']),
+            name='masterid'
+        ),
+        data={
+            'kidfreq': native(data["F_filter, df_filter"][:, 0]),
+            'kidQ': native(data['Q_filter, dQ_filter'][:, 0]),
+        },
+    )
+    frame['kidfreq'] *= 1e9
+    frames.append(frame)
 
-    for i in range(len(ddb['KIDFILT'].data)):
-        kidfilt_i = ddb['KIDFILT'].data[i]
+    # DataFrame of KIDRESP HDU
+    if 'KIDRESP' in ddb:
+        data = ddb['KIDRESP'].data
+        frame = pd.DataFrame(
+            index=pd.Index(
+                native(data['masterid']),
+                name='masterid',
+            ),
+            data={
+                "p0": native(data['cal params'][:, 0]),
+                "etaf": native(data['cal params'][:, 1]),
+                "T0": native(data['cal params'][:, 2]),
+            },
+        )
+        frames.append(frame)
 
-        masterids.append(kidfilt_i['masterid'])
-        kidids.append(kidfilt_i['kidid'])
-        kidfreqs.append(kidfilt_i['F_filter, dF_filter'][0] * 1e9)
-        kidQs.append(kidfilt_i['Q_filter, dQ_filter'][0])
+    # Outer-join DataFrames
+    join = partial(pd.DataFrame.join, how="outer")
+    frame = reduce(join, frames)
 
-        if (masterid := kidfilt_i['masterid']) < 0:
-            kidtypes.append("unknown")
-        else:
-            kidtypes.append(kidnames[masterid])
+    # Assign KID ID as index
+    with open(corresp_file, mode="r") as f:
+        corresp = json.load(f)
 
-    return masterids, kidids, kidtypes, kidfreqs, kidQs
+    index = pd.Index(
+        [corresp.get(str(i), -1) for i in frame.index],
+        name='kidid'
+    )
+    frame = frame.reset_index().set_index(index)
+
+    # Drop rows with invalid master or KID IDs (-1)
+    frame = frame[frame.index != -1]
+    frame = frame[frame.masterid != -1]
+    return frame
+
 
 def convert_readout(
-    ro: fits.HDUList,
-    ddb: fits.HDUList,
+    readout: fits.HDUList,
+    corresp: pd.DataFrame,
     to: Literal['Tsignal', 'fshift'],
     T_room: float,
     T_amb: float,
-) -> NDArray:
+):
     """Reduced readoutの値をDEMS出力形式に変換（校正）する
 
     Args:
-        ro: Reduced readout FITSのHDUListオブジェクト
-        ddb: DDB FITSのHDUListオブジェクト
+        readout: Reduced readout FITSのHDUListオブジェクト
+        corresp: KID IDと各KIDの測定値を対応づけるDataFrame
         to: 変換形式（Tsignal→Tsky, fshift→df/f)
         T_room: キャビン温度(K)
         T_amb: 外気温(K)
 
     """
-    kidcols = ro['READOUT'].data.columns[2:]
-    linph   = np.array([ro['READOUT'].data[n] for n in kidcols.names]).T[2]
-    linyfc  = np.array(ro['KIDSINFO'].data['yfc, linyfc']).T[1]
-    Qr      = np.array(ro['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
-    fshift  = (linph - linyfc) / (4.0 * Qr)
-    # ここまではKID ID = indexの対応となっている
+    kidcols = readout['READOUT'].data.columns[2:].names
+    linph = np.array([readout['READOUT'].data[n] for n in kidcols]).T[2]
+    linyfc = np.array(readout['KIDSINFO'].data['yfc, linyfc']).T[1]
+    Qr = np.array(readout['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
+    fshift = (linph - linyfc) / (4.0 * Qr)
 
-    n_time = len(fshift)
-    n_chan = len(ddb['KIDFILT'].data)
-    output = np.zeros([n_time, n_chan], np.float32)
+    if to == 'fshift':
+        return fshift[:, corresp.index.values]
 
-    for i in range(n_chan):
-        kidid = ddb['KIDFILT'].data[i]['kidid']
-        masterid = ddb['KIDFILT'].data[i]['masterid']
-        fshift_id = fshift[:, kidid]
+    if to == 'Tsignal':
+        return Tlos_model(
+            dx=fshift[:, corresp.index.values],
+            p0=corresp.p0.values,
+            etaf=corresp.etaf.values,
+            T0=corresp.T0.values,
+            Troom=T_room,
+            Tamb=T_amb,
+        )
 
-        if masterid < 0:
-            output[:, i] = np.nan
-        elif to == "fshift":
-            output[:, i] = fshift_id
-        elif to == "Tsignal":
-            p0, etaf, T0 = ddb['KIDRESP'].data[i]['cal params']
-            output[:, i] = Tlos_model(fshift_id, p0, etaf, T0, T_room, T_amb)
-        else:
-            raise ValueError(f'Invalid output type: {to}')
+    raise ValueError(f'Invalid output type: {to}')
 
-    return np.array(output)
 
 def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
     """Calibrate 'amplitude' and 'phase' to 'power'"""
@@ -313,29 +362,3 @@ def retrieve_misti_log(filename):
         datetimes.append(datetime.strptime('{} {}'.format(row['date'], row['time']), '%Y/%m/%d %H:%M:%S.%f'))
 
     return (np.array(datetimes).astype('datetime64[ns]'), az, el, pwv)
-
-
-def update_corresp(hdu: fits.BinTableHDU, corresp: dict[str, int]) -> BinTableHDU:
-    """Update the master-to-KID ID correspondence in an HDU.
-
-    Args:
-        hdu: Binary Table HDU to be updated.
-        corresp: New master-to-KID ID correspondence.
-
-    Returns:
-        (Copied) HDU with the new master-to-KID ID correspondence.
-
-    """
-    hdu_new = hdu.copy()
-
-    for masterid, kidid in zip(hdu.data[MASTERID], hdu.data[KIDID]):
-        where = hdu_new.data[MASTERID] == masterid
-
-        if (kidid_new := corresp.get(str(masterid))) is None:
-            for name in hdu_new.data.columns.names:
-                if name not in CORRESP_IGNORES:
-                    hdu_new.data[name][where] = CORRESP_NOTFOUND
-        elif kidid_new != kidid:
-            hdu_new.data[KIDID][where] = kidid_new
-
-    return hdu_new

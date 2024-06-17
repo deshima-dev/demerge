@@ -1,0 +1,3 @@
+[submodule "demerge/kidanalysis-delft"]
+	path = demerge/kidanalysis-delft
+	url = https://github.com/deshima-dev/kidanalysis-delft

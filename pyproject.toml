@@ -39,7 +39,7 @@ deshima-rawdata = "^2024.4.2"
 ipython = "^8.18"
 
 [tool.poetry.scripts]
-demerge = "demerge:main"
+demerge = "demerge:cli"
 analyze = "demerge.analysis:cli"
 merge = "demerge.merge:cli"
 

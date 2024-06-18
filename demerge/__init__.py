@@ -6,11 +6,11 @@ __version__ = "2.13.0"
 from . import analysis, merge
 
 
-def main() -> None:
+def cli() -> None:
     """Run run.sh (works on Linux-like systems)."""
     from pathlib import Path
     from subprocess import run
     from sys import argv
 
-    cmd = Path(__file__).parent / "run.sh"
+    cmd = Path(__file__).parent / "cli.sh"
     run([cmd, *argv[1:]])

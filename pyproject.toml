@@ -40,6 +40,7 @@ ipython = "^8.18"
 
 [tool.poetry.scripts]
 demerge = "demerge:main"
+analyze = "demerge.analysis:cli"
 merge_to_dems = "demerge.merge_to_dems:main"
 
 [build-system]

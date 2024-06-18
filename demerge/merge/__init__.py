@@ -5,6 +5,9 @@ dems   0.8.0
 
 (C) 2023 内藤システムズ
 """
+__all__ = ["merge"]
+
+
 # standard library
 import argparse
 import json
@@ -16,15 +19,15 @@ import numpy as np
 import xarray as xr
 from astropy.io import ascii, fits
 from dems.d2 import MS
-from . import merge_function as mf
-from . import __version__ as DEMERGE_VERSION
+from . import utils
+from .. import __version__ as DEMERGE_VERSION
 
 
 # module logger
 logger = getLogger(__name__)
 
 
-def merge_to_dems(
+def merge(
         ddbfits_path='',
         corresp_path='',
         obsinst_path='',
@@ -62,31 +65,31 @@ def merge_to_dems(
     ddbfits_hdul   = fits.open(ddbfits_path, mode="readonly")
     weather_table  = ascii.read(weather_path)
     antenna_table  = ascii.read(antenna_path)[:-1] # 最後の1行は終端を表す意味のないデータが入っているため無視する
-    obsinst_params = mf.load_obsinst(obsinst_path) # 観測スクリプトに含まれているパラメタを抽出する
+    obsinst_params = utils.load_obsinst(obsinst_path) # 観測スクリプトに含まれているパラメタを抽出する
 
     # 必要に応じて時刻はnp.datetime64[ns]へ変換する
-    times = mf.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
+    times = utils.convert_timestamp(readout_hdul['READOUT'].data['timestamp'])
     times = np.array(times).astype('datetime64[ns]')
 
-    times_misti, az_misti, el_misti, pwv_misti = mf.retrieve_misti_log(misti_path)
+    times_misti, az_misti, el_misti, pwv_misti = utils.retrieve_misti_log(misti_path)
 
-    times_cabin, upper_cabin_temp, lower_cabin_temp = mf.retrieve_cabin_temps(cabin_path)
+    times_cabin, upper_cabin_temp, lower_cabin_temp = utils.retrieve_cabin_temps(cabin_path)
     lower_cabin_temp = lower_cabin_temp + 273.15 # 度CからKへ変換
 
-    times_weather = mf.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
+    times_weather = utils.convert_asciitime(weather_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_weather = np.array(times_weather).astype('datetime64[ns]')
 
-    times_skychop, states_skychop = mf.retrieve_skychop_states(skychop_path)
-    times_skychop = mf.convert_timestamp(times_skychop)
+    times_skychop, states_skychop = utils.retrieve_skychop_states(skychop_path)
+    times_skychop = utils.convert_timestamp(times_skychop)
     times_skychop = np.array(times_skychop).astype('datetime64[ns]')
 
-    times_antenna = mf.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
+    times_antenna = utils.convert_asciitime(antenna_table['time'], '%Y-%m-%dT%H:%M:%S.%f')
     times_antenna = np.array(times_antenna).astype('datetime64[ns]') + np.timedelta64(offset_time_antenna, 'ms')
 
     ddb_version = ddbfits_hdul["PRIMARY"].header["DDB_ID"]
 
-    corresp = mf.get_corresp_frame(ddbfits_hdul, corresp_path)
-    response = mf.convert_readout(
+    corresp = utils.get_corresp_frame(ddbfits_hdul, corresp_path)
+    response = utils.convert_readout(
         readout=readout_hdul,
         corresp=corresp,
         to=loadtype,
@@ -322,7 +325,7 @@ def merge_to_dems(
         object                  =obsinst_params['obs_object'],
     )
 
-def main() -> None:
+def cli() -> None:
     """Demsオブジェクトを作成する"""
     parser = argparse.ArgumentParser()
 
@@ -374,7 +377,7 @@ def main() -> None:
         logger.debug(f'{key}: {val!r}')
 
     # マージの実行
-    dems = merge_to_dems(
+    dems = merge(
         ddbfits_path=a.ddb,
         corresp_path=a.corresp,
         obsinst_path=a.obs,
@@ -404,7 +407,3 @@ def main() -> None:
     )
 
     dems.to_zarr(a.filename, mode="w")
-
-
-if __name__ == '__main__':
-    main()

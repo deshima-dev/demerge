@@ -1,11 +1,9 @@
-__all__ = ["analysis", "merge_function", "merge_to_dems"]
+__all__ = ["analysis", "merge"]
 __version__ = "2.13.0"
 
 
 # submodules
-from . import analysis
-from . import merge_function
-from . import merge_to_dems
+from . import analysis, merge
 
 
 def main() -> None:

@@ -41,7 +41,7 @@ ipython = "^8.18"
 [tool.poetry.scripts]
 demerge = "demerge:main"
 analyze = "demerge.analysis:cli"
-merge_to_dems = "demerge.merge_to_dems:main"
+merge = "demerge.merge:cli"
 
 [build-system]
 requires = ["poetry-core"]

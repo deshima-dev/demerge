@@ -182,7 +182,7 @@ fi
 # TODデータとAntennaログの時刻のずれの補正値(ms)
 # 出力するZarrファイルへの相対パス
 #
-merge_to_dems                                                \
+merge                                                        \
     --ddb     "${DDB_FILE}"                                  \
     --corresp "${DATA_DIR}/cosmos_${OBSID}/kid_corresp.json" \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
@@ -197,7 +197,7 @@ merge_to_dems                                                \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then
-    echo "失敗:merge_to_dems"
+    echo "失敗:merge"
     exit 1
 fi
 

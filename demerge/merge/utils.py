@@ -1,4 +1,4 @@
-"""merge_to_dfits.py: Read logging data and merge them into a FITS object
+"""utils.py: Read logging data and merge them into a FITS object
 
  Author : Tetsutaro Ueda, Junya Suzuki, Kenichi Karatsu, Tatsuya Takekoshi
  Created: 2017/11/02

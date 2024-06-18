@@ -34,7 +34,7 @@
 #
 
 DEMERGE="$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"
-DEFAULT_DDB="${DEMERGE}/ddb_20231123.fits.gz"
+DEFAULT_DDB="${DEMERGE}/data/ddb_20231123.fits.gz"
 
 while getopts c:d:b:o:m: OPT
 do

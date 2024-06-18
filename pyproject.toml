@@ -37,11 +37,7 @@ ipython = "^8.18"
 
 [tool.poetry.scripts]
 demerge = "demerge:main"
-calc_resonance_params = "demerge.calc_resonance_params:main"
-make_divided_data = "demerge.make_divided_data:main"
-make_reduced_fits = "demerge.make_reduced_fits:main"
 merge_to_dems = "demerge.merge_to_dems:main"
-plot = "demerge.plot:main"
 
 [build-system]
 requires = ["poetry-core"]

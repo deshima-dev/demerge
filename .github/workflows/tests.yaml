@@ -28,7 +28,6 @@ jobs:
         with:
           python-version: ${{ matrix.python }}
       - run: pip install poetry==1.7.1 && poetry install
-      - name: Run a comprehensive merge test
-        run: |
-          deshima-rawdata download 20231108052231 -d data -e
-          demerge -d data -m "--debug --loadtype Tsignal" 20231108052231
+      - run: black --check demerge
+      - run: deshima-rawdata download 20231108052231 -d data -e
+      - run: demerge -d data -m "--debug --loadtype Tsignal" 20231108052231

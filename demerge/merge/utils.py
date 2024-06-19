@@ -1,4 +1,4 @@
-"""merge_to_dfits.py: Read logging data and merge them into a FITS object
+"""utils.py: Read logging data and merge them into a FITS object
 
  Author : Tetsutaro Ueda, Junya Suzuki, Kenichi Karatsu, Tatsuya Takekoshi
  Created: 2017/11/02
@@ -206,10 +206,16 @@ def convert_readout(
 
     """
     kidcols = readout['READOUT'].data.columns[2:].names
-    linph = np.array([readout['READOUT'].data[n] for n in kidcols]).T[2]
+    linph = np.array([readout['READOUT'].data[n] for n in kidcols]).T[1]
     linyfc = np.array(readout['KIDSINFO'].data['yfc, linyfc']).T[1]
-    Qr = np.array(readout['KIDSINFO'].data['Qr, dQr (300K)']).T[0]
-    fshift = (linph - linyfc) / (4.0 * Qr)
+    Qr = np.array(readout['KIDSINFO'].data['Qr, dQr (Sky)']).T[0]
+    fr = np.array(readout['KIDSINFO'].data['fr, dfr (Sky)']).T[0]
+    fr_room = np.array(readout['KIDSINFO'].data['fr, dfr (Room)']).T[0]
+
+    if np.isnan(fr_room).all():
+        fshift = (linph - linyfc) / (4.0 * Qr)
+    else:
+        fshift = (linph - linyfc) / (4.0 * Qr) + (fr - fr_room) / fr
 
     if to == 'fshift':
         return fshift[:, corresp.index.values]

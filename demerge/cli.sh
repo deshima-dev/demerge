@@ -27,39 +27,23 @@
 # --------------------
 # 観測IDは必須な引数ですが、これ以外にも指定できるオプションがあります。
 #  -c キャッシュディレクトリを指定
-#  -g グラフディレクトリを指定
 #  -d 観測データディレクトリの指定
 #  -b DDBファイルの指定
 #  -o 出力データディレクトリの指定
 #  -m マージオプションの指定
-#  -p プロット実行オプションの指定
 #
 
 DEMERGE="$(cd "$(dirname "${BASH_SOURCE:-$0}")" && pwd)"
-DEFAULT_DDB="${DEMERGE}/ddb_20231123.fits.gz"
-NCPU=`python -c "import multiprocessing as m; print(m.cpu_count() - 1);"`
+DEFAULT_DDB="${DEMERGE}/data/ddb_20231123.fits.gz"
 
-# ==================
-# 指定可能オプション
-# ==================
-#  -c キャッシュディレクトリを指定
-#  -g グラフディレクトリを指定
-#  -d 観測データディレクトリの指定
-#  -b DDBファイルの指定
-#  -o 出力データディレクトリの指定
-#  -m マージオプションの指定
-#  -p プロット実行オプションの指定
-#
-while getopts c:g:d:b:o:m:p: OPT
+while getopts c:d:b:o:m: OPT
 do
     case $OPT in
     "c") CACHE_DIR="${OPTARG}";;
-    "g") GRAPH_DIR="${OPTARG}";;
     "d") DATA_DIR="${OPTARG}";;
     "b") DDB_FILE="${OPTARG}";;
     "o") OUT_DIR="${OPTARG}";;
     "m") MERGE_OPTS="${OPTARG}";;
-    "p") PLOT="${OPTARG}";;
     esac
 done
 shift $((OPTIND - 1))
@@ -74,9 +58,6 @@ fi
 if [ -z "$CACHE_DIR" ]; then
     CACHE_DIR="cache" # 一時ファイルの場所の規定値
 fi
-if [ -z "$GRAPH_DIR" ]; then
-    GRAPH_DIR="graph" # 作成したグラフを格納する場所の規定値
-fi
 if [ -z "$DATA_DIR" ]; then
     DATA_DIR="data" # 観測データの場所の規定値
 fi
@@ -90,62 +71,14 @@ if [ -z "$MERGE_OPTS" ]; then
     MERGE_OPTS="" # マージオプションの規定値
 fi
 
-# キャッシュやグラフを格納するディレクトリを作成する
-if [ ! -d ${CACHE_DIR}/${OBSID} ]; then
-    mkdir -p ${CACHE_DIR}/${OBSID}
-    if [ $? -ne 0 ]; then
-    exit 1
-    fi
-fi
-if [ ! -d ${GRAPH_DIR}/${OBSID} ]; then
-    mkdir -p ${GRAPH_DIR}/${OBSID}
-    if [ $? -ne 0 ]; then
-    exit 1
-    fi
-fi
-if [ ! -d ${OUT_DIR}/${OBSID} ]; then
-    mkdir -p ${OUT_DIR}/${OBSID}
-    if [ $? -ne 0 ]; then
-    exit 1
-    fi
-fi
-
 START_TIME=`/bin/date +%s`
 
-# 圧縮でも非圧縮でもTODファイルを扱えるようにする
-TOD_FILE=""
-if [ -f "${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz" ]; then
-    TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits.gz"
-else
-    TOD_FILE="${DATA_DIR}/cosmos_${OBSID}/${OBSID}.fits"
-fi
+analyze \
+    "${DATA_DIR}/cosmos_${OBSID}" \
+    "${CACHE_DIR}/${OBSID}"
 
-make_divided_data                                     \
-       "${DATA_DIR}/cosmos_${OBSID}/kids.list"        \
-       "${DATA_DIR}/cosmos_${OBSID}/localsweep.sweep" \
-       "${TOD_FILE}"                                  \
-       "${CACHE_DIR}/${OBSID}"
 if [ $? -ne 0 ]; then
-    echo "失敗:make_divided_data"
-    exit 1
-fi
-
-ls ${CACHE_DIR}/${OBSID}/*.pkl | xargs -P${NCPU} -n1 calc_resonance_params
-if [ $? -ne 0 ]; then
-    echo "失敗:calc_resonance_params"
-    exit 1
-fi
-
-rm -f "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"
-if [ $? -ne 0 ]; then
-    exit 1
-fi
-
-make_reduced_fits \
-       "${CACHE_DIR}/${OBSID}" \
-       "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"
-if [ $? -ne 0 ]; then
-    echo "失敗:make_reduced_fits"
+    echo "失敗:analyze"
     exit 1
 fi
 
@@ -182,7 +115,7 @@ fi
 # TODデータとAntennaログの時刻のずれの補正値(ms)
 # 出力するZarrファイルへの相対パス
 #
-merge_to_dems                                                \
+merge                                                        \
     --ddb     "${DDB_FILE}"                                  \
     --corresp "${DATA_DIR}/cosmos_${OBSID}/kid_corresp.json" \
     --readout "${CACHE_DIR}/${OBSID}/reduced_${OBSID}.fits"  \
@@ -197,32 +130,8 @@ merge_to_dems                                                \
     "${OUT_DIR}/${OBSID}/dems_${OBSID}.zarr.zip"
 
 if [ $? -ne 0 ]; then
-    echo "失敗:merge_to_dems"
+    echo "失敗:merge"
     exit 1
-fi
-
-#
-# 説明
-# ====
-# plot_sweep.pyには2つの引数を渡す必要がある。
-# 引数はそれぞれキャッシュファイル名とグラフを格納するディレクトリ名。
-# グラフを格納するディレクトリ名はすべての同じ。
-# この「キャッシュファイル名」と「グラフを格納するディレクトリ名」のペアの一覧を作り、
-# 一旦シェル変数に格納する。
-# これをxargsにパイプで渡す。
-# xargsには各コマンドの引数が2個であることを示す「-n2」オプションをつける。
-#
-if [ -n "$PLOT" ]; then
-    FILENAMES=""
-    for FILENAME in `ls ${CACHE_DIR}/${OBSID}/*.pkl`
-    do
-        FILENAMES="${FILENAME} ${GRAPH_DIR}/${OBSID} ${FILENAMES}"
-    done
-    echo $FILENAMES | xargs -P${NCPU} -n2 plot
-    if [ $? -ne 0 ]; then
-        echo "失敗:plot"
-        exit 1
-    fi
 fi
 
 END_TIME=`/bin/date +%s`

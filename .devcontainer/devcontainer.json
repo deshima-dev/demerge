@@ -14,6 +14,7 @@
             "extensions": [
                 "github.vscode-pull-request-github",
                 "mhutchie.git-graph",
+                "ms-python.black-formatter",
                 "ms-python.python",
                 "streetsidesoftware.code-spell-checker",
                 "tamasfe.even-better-toml"
@@ -22,6 +23,8 @@
                 "files.insertFinalNewline": true,
                 "files.trimTrailingWhitespace": true,
                 "[python]": {
+                    "editor.defaultFormatter": "ms-python.black-formatter",
+                    "editor.formatOnSave": true,
                     "editor.insertSpaces": true,
                     "editor.tabSize": 4,
                     "python.languageServer": "Pylance"

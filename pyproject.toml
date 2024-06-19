@@ -35,6 +35,7 @@ sympy = "^1.10"
 zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
+black = "^24.4"
 deshima-rawdata = "^2024.4.2"
 ipython = "^8.18"
 
@@ -42,6 +43,9 @@ ipython = "^8.18"
 demerge = "demerge:cli"
 analyze = "demerge.analysis:cli"
 merge = "demerge.merge:cli"
+
+[tool.black]
+exclude = "^/demerge/analysis/utils"
 
 [build-system]
 requires = ["poetry-core"]

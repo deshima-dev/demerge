@@ -24,7 +24,7 @@ LOGGER = getLogger(__name__)
 
 
 def merge(
-    filename: str,
+    dems: Path,
     /,
     *,
     ddb: str,
@@ -56,7 +56,7 @@ def merge(
     """Merge datasets of an observation into a single DEMS file.
 
     Args:
-        filename: 出力ファイルへのパス (.zarr.zip)
+        dems: 出力DEMSファイルへのパス (.zarr.zip)
         ddb: DDBファイルへのパス (.fits or .fits.gz)
         corresp: Master-to-KID ID対応ファイルへのパス (.json)
         obsinst: 指示書ファイルへのパス (.obs)
@@ -86,6 +86,9 @@ def merge(
     Returns:
         Path of the merged DEMS file.
 
+    Raises:
+        FileExistsError: Raised if ``dems`` exists.
+
     """
     # ロガーの設定
     if debug:
@@ -101,7 +104,7 @@ def merge(
         LOGGER.debug(f"{key}: {val!r}")
 
     # マージの実行
-    dems = create_dems(
+    da = create_dems(
         ddbfits_path=ddb,
         corresp_path=corresp,
         obsinst_path=obsinst,
@@ -128,9 +131,12 @@ def merge(
         offset_time_antenna=offset_time_antenna,
     )
 
-    # DEMSをZarr形式で保存
-    dems.to_zarr(filename, mode="w")
-    return Path(filename).resolve()
+    if (dems := Path(dems)).exists():
+        raise FileExistsError(dems)
+
+    dems.parent.mkdir(exist_ok=True, parents=True)
+    da.to_zarr(dems, mode="w")
+    return dems.resolve()
 
 
 def cli() -> None:

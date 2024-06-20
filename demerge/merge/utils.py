@@ -447,6 +447,7 @@ def create_dems(
     readout_hdul = fits.open(readout_path, mode="readonly")
     ddbfits_hdul = fits.open(ddbfits_path, mode="readonly")
     weather_table = ascii.read(weather_path)
+    weather_table["tmperature"] += 273.15
     # 最後の1行は終端を表す意味のないデータが入っているため無視する
     antenna_table = ascii.read(antenna_path)[:-1]
     # 観測スクリプトに含まれているパラメタを抽出する
@@ -489,7 +490,7 @@ def create_dems(
         corresp=corresp,
         to=loadtype,
         T_room=lower_cabin_temp[0],
-        T_amb=np.nanmean(weather_table["tmperature"]) + 273.15,
+        T_amb=np.nanmean(weather_table["tmperature"]),
     )
 
     if loadtype == "Tsignal":

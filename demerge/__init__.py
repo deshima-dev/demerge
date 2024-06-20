@@ -3,6 +3,7 @@ __version__ = "2.13.0"
 
 
 # standard library
+from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any
 
@@ -18,6 +19,7 @@ DEFAULT_DATA_DIR = Path("data").resolve()
 DEFAULT_DEMS_DIR = Path("dems").resolve()
 DEFAULT_DDB_FILE = Path(__file__).parent / "data" / "ddb_20231123.fits.gz"
 DEFAULT_OFFSET_TIME_ANTENNA = 20  # ms
+LOGGER = getLogger(__name__)
 
 
 def demerge(
@@ -47,6 +49,17 @@ def demerge(
         Path of the merged DEMS file.
 
     """
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
+    )
+
+    for key, val in locals().items():
+        LOGGER.debug(f"{key}: {val!r}")
+
     cache_dir_ = Path(cache_dir) / str(obsid)
     data_dir_ = Path(data_dir) / f"cosmos_{obsid}"
     dems_dir_ = Path(dems_dir) / str(obsid)

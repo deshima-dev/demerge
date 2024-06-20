@@ -2,6 +2,7 @@ __all__ = ["reduce"]
 
 
 # standard library
+from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from subprocess import run
 from tempfile import TemporaryDirectory
@@ -12,15 +13,23 @@ from fire import Fire
 
 
 # constants
+LOGGER = getLogger(__name__)
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
-def reduce(data_dir: Path, output_dir: Path, /) -> Path:
+def reduce(
+    data_dir: Path,
+    output_dir: Path,
+    /,
+    *,
+    debug: bool = False,
+) -> Path:
     """Reduce raw data of KID measurements into a single "reduced" FITS.
 
     Args:
         data_dir: Path of raw data directory (e.g. ``cosmos_YYYYmmddHHMMSS``).
         output_dir: Path of output directory (e.g. ``output_YYYYmmddHHMMSS``).
+        debug: If True, detailed logs for debugging will be printed.
 
     Returns:
         Path of the created reduced FITS (in the output directory).
@@ -30,6 +39,17 @@ def reduce(data_dir: Path, output_dir: Path, /) -> Path:
         FileExistsError: Raised if ``output_dir`` exists.
 
     """
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
+    )
+
+    for key, val in locals().items():
+        LOGGER.debug(f"{key}: {val!r}")
+
     # Resolve paths (must be done before changing working directory)
     if not (data_dir := Path(data_dir).resolve()).exists():
         raise FileNotFoundError(data_dir)

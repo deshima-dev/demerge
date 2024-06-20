@@ -19,8 +19,8 @@ from fire import Fire
 from .utils import create_dems
 
 
-# module logger
-logger = getLogger(__name__)
+# constants
+LOGGER = getLogger(__name__)
 
 
 def merge(
@@ -89,7 +89,7 @@ def merge(
     """
     # ロガーの設定
     if debug:
-        logger.setLevel(DEBUG)
+        LOGGER.setLevel(DEBUG)
 
     basicConfig(
         datefmt="%Y-%m-%d %H:%M:%S",
@@ -98,7 +98,7 @@ def merge(
 
     # 引数と値をロガーに記録
     for key, val in locals().items():
-        logger.debug(f"{key}: {val!r}")
+        LOGGER.debug(f"{key}: {val!r}")
 
     # マージの実行
     dems = create_dems(

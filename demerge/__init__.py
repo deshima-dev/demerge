@@ -28,6 +28,7 @@ def demerge(
     data_dir: Path = DEFAULT_DATA_DIR,
     dems_dir: Path = DEFAULT_DEMS_DIR,
     ddb_file: Path = DEFAULT_DDB_FILE,
+    debug: bool = False,
     **merge_options: Any,
 ) -> Path:
     """Run reduce and merge commands to create a single DEMS file.
@@ -39,6 +40,7 @@ def demerge(
         dems_dir: Path of DEMS directory (e.g. ./dems).
         ddb_file: Path of DDB (DESHIMA database) file.
             Defaults to the one shipped with the de:merge package.
+        debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.
 
     Returns:
@@ -50,7 +52,7 @@ def demerge(
     dems_dir_ = Path(dems_dir) / str(obsid)
 
     # Run reduce function
-    readout = reduce.reduce(data_dir_, cache_dir_)
+    readout = reduce.reduce(data_dir_, cache_dir_, debug=debug)
 
     # Run merge function
     if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():
@@ -96,6 +98,7 @@ def demerge(
         weather=weather,
         misti=misti,
         cabin=cabin,
+        debug=debug,
         **merge_options,
     )
 

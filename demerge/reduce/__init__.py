@@ -27,14 +27,15 @@ def reduce(data_dir: Path, output_dir: Path, /) -> Path:
 
     Raises:
         FileNotFoundError: Raised if ``data_dir`` does not exist.
+        FileExistsError: Raised if ``output_dir`` exists.
 
     """
     # Resolve paths (must be done before changing working directory)
-    data_dir = Path(data_dir).resolve()
-    output_dir = Path(output_dir).resolve()
-
-    if not data_dir.exists():
+    if not (data_dir := Path(data_dir).resolve()).exists():
         raise FileNotFoundError(data_dir)
+
+    if (output_dir := Path(output_dir).resolve()).exists():
+        raise FileExistsError(output_dir)
 
     # Run scripts in a temporary directory (to isolate intermediate files)
     with TemporaryDirectory() as work_dir:

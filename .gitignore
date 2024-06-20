@@ -1,9 +1,7 @@
 # Created by package authors
 cache/
-data/*
-!/data/.gitkeep
-graph/
-tests/testdata*
+data/
+dems/
 *~
 
 # Created by https://www.toptal.com/developers/gitignore/api/python

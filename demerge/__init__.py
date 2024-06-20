@@ -14,9 +14,6 @@ from . import merge, reduce
 
 
 # constants
-DEFAULT_CACHE_DIR = Path("cache").resolve()
-DEFAULT_DATA_DIR = Path("data").resolve()
-DEFAULT_DEMS_DIR = Path("dems").resolve()
 DEFAULT_DDB_FILE = Path(__file__).parent / "data" / "ddb_20231123.fits.gz"
 DEFAULT_OFFSET_TIME_ANTENNA = 20  # ms
 LOGGER = getLogger(__name__)
@@ -26,9 +23,9 @@ def demerge(
     obsid: str,
     /,
     *,
-    cache_dir: Path = DEFAULT_CACHE_DIR,
-    data_dir: Path = DEFAULT_DATA_DIR,
-    dems_dir: Path = DEFAULT_DEMS_DIR,
+    data_dir: Path = Path(),
+    dems_dir: Path = Path(),
+    reduced_dir: Path = Path(),
     ddb_file: Path = DEFAULT_DDB_FILE,
     debug: bool = False,
     **merge_options: Any,
@@ -37,11 +34,10 @@ def demerge(
 
     Args:
         obsid: Observation ID (e.g. YYYYmmddHHMMSS).
-        cache_dir: Path of cache directory (e.g. ./cache).
-        data_dir: Path of data directory (e.g. ./data).
-        dems_dir: Path of DEMS directory (e.g. ./dems).
+        data_dir: Path of raw data directory.
+        dems_dir: Path of merged DEMS directory.
+        reduced_dir: Path of (intermediate) reduced data directory.
         ddb_file: Path of DDB (DESHIMA database) file.
-            Defaults to the one shipped with the de:merge package.
         debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.
 
@@ -60,12 +56,12 @@ def demerge(
     for key, val in locals().items():
         LOGGER.debug(f"{key}: {val!r}")
 
-    cache_dir_ = Path(cache_dir) / str(obsid)
-    data_dir_ = Path(data_dir) / f"cosmos_{obsid}"
-    dems_dir_ = Path(dems_dir) / str(obsid)
+    data_dir_ = Path(data_dir).resolve() / f"cosmos_{obsid}"
+    reduced_dir_ = Path(reduced_dir).resolve() / f"reduced_{obsid}"
+    dems_dir_ = Path(dems_dir).resolve()
 
     # Run reduce function
-    readout = reduce.reduce(data_dir_, cache_dir_, debug=debug)
+    readout = reduce.reduce(data_dir_, reduced_dir_, debug=debug)
 
     # Run merge function
     if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():

@@ -19,7 +19,7 @@ SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 def reduce(
     data_dir: Path,
-    output_dir: Path,
+    reduced_dir: Path,
     /,
     *,
     debug: bool = False,
@@ -28,7 +28,7 @@ def reduce(
 
     Args:
         data_dir: Path of raw data directory (e.g. ``cosmos_YYYYmmddHHMMSS``).
-        output_dir: Path of output directory (e.g. ``output_YYYYmmddHHMMSS``).
+        reduced_dir: Path of reduced data directory (e.g. ``reduced_YYYYmmddHHMMSS``).
         debug: If True, detailed logs for debugging will be printed.
 
     Returns:
@@ -36,7 +36,7 @@ def reduce(
 
     Raises:
         FileNotFoundError: Raised if ``data_dir`` does not exist.
-        FileExistsError: Raised if ``output_dir`` exists.
+        FileExistsError: Raised if ``reduced_dir`` exists.
 
     """
     if debug:
@@ -54,13 +54,13 @@ def reduce(
     if not (data_dir := Path(data_dir).resolve()).exists():
         raise FileNotFoundError(data_dir)
 
-    if (output_dir := Path(output_dir).resolve()).exists():
-        raise FileExistsError(output_dir)
+    if (reduced_dir := Path(reduced_dir).resolve()).exists():
+        raise FileExistsError(reduced_dir)
 
     # Run scripts in a temporary directory (to isolate intermediate files)
     with TemporaryDirectory() as work_dir:
         run(
-            ["python", SCRIPTS / "Configure.py", data_dir, output_dir],
+            ["python", SCRIPTS / "Configure.py", data_dir, reduced_dir],
             cwd=work_dir,
             # False if logging is implemented
             capture_output=True,
@@ -78,7 +78,7 @@ def reduce(
             capture_output=True,
         )
 
-    return list(output_dir.glob("reduced_*.fits"))[0]
+    return list(reduced_dir.glob("reduced_*.fits"))[0]
 
 
 def cli() -> None:

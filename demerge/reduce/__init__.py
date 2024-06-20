@@ -15,7 +15,7 @@ from fire import Fire
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
-def reduce(data_dir: Path, output_dir: Path) -> Path:
+def reduce(data_dir: Path, output_dir: Path, /) -> Path:
     """Reduce raw data of KID measurements into a single "reduced" FITS.
 
     Args:

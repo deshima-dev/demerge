@@ -25,25 +25,36 @@ def reduce(data_dir: Path, output_dir: Path, /) -> Path:
     Returns:
         Path of the created reduced FITS (in the output directory).
 
+    Raises:
+        FileNotFoundError: Raised if ``data_dir`` does not exist.
+
     """
+    # Resolve paths (must be done before changing working directory)
     data_dir = Path(data_dir).resolve()
     output_dir = Path(output_dir).resolve()
 
+    if not data_dir.exists():
+        raise FileNotFoundError(data_dir)
+
+    # Run scripts in a temporary directory (to isolate intermediate files)
     with TemporaryDirectory() as work_dir:
         run(
             ["python", SCRIPTS / "Configure.py", data_dir, output_dir],
-            capture_output=True,
             cwd=work_dir,
+            # False if logging is implemented
+            capture_output=True,
         )
         run(
             ["python", SCRIPTS / "FitSweep.py"],
-            capture_output=True,
             cwd=work_dir,
+            # False if logging is implemented
+            capture_output=True,
         )
         run(
             ["python", SCRIPTS / "SaveFits.py"],
-            capture_output=True,
             cwd=work_dir,
+            # False if logging is implemented
+            capture_output=True,
         )
 
     return list(output_dir.glob("reduced_*.fits"))[0]

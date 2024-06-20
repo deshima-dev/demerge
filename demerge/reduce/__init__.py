@@ -1,4 +1,4 @@
-__all__ = ["analyze"]
+__all__ = ["reduce"]
 
 
 # standard library
@@ -15,15 +15,15 @@ from fire import Fire
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
-def analyze(data_dir: Path, output_dir: Path) -> Path:
-    """Analyze a DESHIMA TOD FITS and create a reduced FITS.
+def reduce(data_dir: Path, output_dir: Path) -> Path:
+    """Reduce raw data of KID measurements into a single "reduced" FITS.
 
     Args:
-        data_dir: Path of raw data directory (e.g. ``cosmos_20240101000000``).
-        output_dir: Path of output directory (e.g. ``analysis_20240101000000``).
+        data_dir: Path of raw data directory (e.g. ``cosmos_YYYYmmddHHMMSS``).
+        output_dir: Path of output directory (e.g. ``output_YYYYmmddHHMMSS``).
 
     Returns:
-        Path of the created reduced FITS.
+        Path of the created reduced FITS (in the output directory).
 
     """
     data_dir = Path(data_dir).resolve()
@@ -50,5 +50,5 @@ def analyze(data_dir: Path, output_dir: Path) -> Path:
 
 
 def cli() -> None:
-    """Command line interface of the analyze function."""
-    Fire(analyze)
+    """Command line interface of the reduce function."""
+    Fire(reduce)

@@ -41,11 +41,11 @@ ipython = "^8.18"
 
 [tool.poetry.scripts]
 demerge = "demerge:cli"
-analyze = "demerge.analysis:cli"
 merge = "demerge.merge:cli"
+reduce = "demerge.reduce:cli"
 
 [tool.black]
-exclude = "^/demerge/analysis/utils"
+exclude = "^/demerge/reduce/utils"
 
 [build-system]
 requires = ["poetry-core"]

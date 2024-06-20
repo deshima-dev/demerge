@@ -1,9 +1,9 @@
-__all__ = ["analysis", "merge"]
+__all__ = ["merge", "reduce"]
 __version__ = "2.13.0"
 
 
 # submodules
-from . import analysis, merge
+from . import merge, reduce
 
 
 def cli() -> None:

@@ -29,7 +29,7 @@ def merge(
     *,
     ddb: str,
     corresp: str,
-    obs: str,
+    obsinst: str,
     antenna: str,
     readout: str,
     skychop: str,
@@ -59,7 +59,7 @@ def merge(
         filename: 出力ファイルへのパス (.zarr.zip)
         ddb: DDBファイルへのパス (.fits or .fits.gz)
         corresp: Master-to-KID ID対応ファイルへのパス (.json)
-        obs: 指示書ファイルへのパス (.obs)
+        obsinst: 指示書ファイルへのパス (.obs)
         antenna: アンテナログファイルへのパス (.ant)
         readout: Reduced FITSファイルへのパス (.fits)
         skychop: Sky chopperファイルへのパス (.skychop)
@@ -104,7 +104,7 @@ def merge(
     dems = create_dems(
         ddbfits_path=ddb,
         corresp_path=corresp,
-        obsinst_path=obs,
+        obsinst_path=obsinst,
         antenna_path=antenna,
         readout_path=readout,
         skychop_path=skychop,

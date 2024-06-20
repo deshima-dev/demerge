@@ -17,6 +17,7 @@ import json
 import lzma
 from datetime import datetime
 from functools import partial, reduce
+from pathlib import Path
 from typing import Any, Literal
 
 
@@ -66,44 +67,48 @@ def create_bintablehdu(hd):
     return hdu
 
 
-def load_obsinst(obsinst):
-    """Get data for 'OBSINFO'"""
-    if not ".obs" in obsinst:
-        raise ValueError("The input file must be an observational instruction!!")
+def load_obsinst(obsinst: Path) -> dict[str, Any]:
+    """Get various values from an obsinst file."""
+
+    # default values
+    epoch = 2000.0
+    obs = ""
+    obs_user = ""
+    project = ""
+    src_name = ""
+    src_pos = ["0.0", "0.0"]
+    trk_type = ""
 
     with open(obsinst, "r") as f:
-        equinox = 2000  # Default parameter
         for line in f:
-            if "SET ANTENNA_G TRK_TYPE" in line:
-                trktype = line.split()[-1].strip("'")
-            elif "SET ANTENNA_G SRC_NAME" in line:
-                obs_object = line.split()[-1].strip("'")
-            elif "SET ANTENNA_G SRC_POS" in line:
-                srcpos = [float(c) for c in line.split()[-1].strip("()").split(",")]
-            elif "SET ANTENNA_G EPOCH" in line:
-                equinox = line.split()[-1].strip("'JB")
-            elif "SET DES OBS_USER" in line:
-                observer = line.split()[-1].strip("'")
-            elif "SET DES PROJECT" in line:
-                project = line.split()[-1].strip("'")
-            elif "SET DES PROJECT" in line:
-                project = line.split()[-1].strip("'")
+            if "SET ANTENNA_G EPOCH" in line:
+                epoch = line.split()[-1].strip("'JB")
             elif "% OBS=" in line:
-                observation = line.split("=")[-1].strip()
-    if trktype == "RADEC":
-        ra = srcpos[0]
-        dec = srcpos[1]
+                obs = line.split("=")[-1].strip()
+            elif "SET DES OBS_USER" in line:
+                obs_user = line.split()[-1].strip("'")
+            elif "SET DES PROJECT" in line:
+                project = line.split()[-1].strip("'")
+            elif "SET ANTENNA_G SRC_NAME" in line:
+                src_name = line.split()[-1].strip("'")
+            elif "SET ANTENNA_G SRC_POS" in line:
+                src_pos = line.split()[-1].strip("()").split(",")
+            elif "SET ANTENNA_G TRK_TYPE" in line:
+                trk_type = line.split()[-1].strip("'")
+
+    if trk_type == "RADEC":
+        ra, dec = src_pos
     else:
-        ra = 0
-        dec = 0
+        ra, dec = 0.0, 0.0
+
     return {
-        "observer": observer,
-        "obs_object": obs_object,
-        "ra": ra,
-        "dec": dec,
-        "equinox": equinox,
+        "observation": obs,
+        "observer": obs_user,
         "project": project,
-        "observation": observation,
+        "object": src_name,
+        "equinox": float(epoch),
+        "ra": float(ra),
+        "dec": float(dec),
     }
 
 
@@ -804,5 +809,5 @@ def create_dems(
         interval=1.0 / 196,
         observation=obsinst_params["observation"],
         observer=obsinst_params["observer"],
-        object=obsinst_params["obs_object"],
+        object=obsinst_params["object"],
     )

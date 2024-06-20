@@ -64,8 +64,8 @@ def demerge(
     if not (corresp := data_dir_ / "kid_corresp.json").exists():
         raise FileNotFoundError(corresp)
 
-    if not (obs := data_dir_ / f"{obsid}.obs").exists():
-        raise FileNotFoundError(obs)
+    if not (obsinst := data_dir_ / f"{obsid}.obs").exists():
+        raise FileNotFoundError(obsinst)
 
     if not (antenna := data_dir_ / f"{obsid}.ant").exists():
         raise FileNotFoundError(antenna)
@@ -92,7 +92,7 @@ def demerge(
         ddb=ddb_file,
         corresp=corresp,
         readout=readout,
-        obs=obs,
+        obsinst=obsinst,
         antenna=antenna,
         skychop=skychop,
         weather=weather,

@@ -84,7 +84,7 @@ def merge(
         offset_time_antenna: Reduced FITSとアンテナログの時刻のずれの補正値 (ms)
 
     Returns:
-        Path of the merged DEMS.
+        Path of the merged DEMS file.
 
     """
     # ロガーの設定

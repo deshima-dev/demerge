@@ -300,7 +300,9 @@ def retrieve_cabin_temps(filename=None):
     return (datetimes, upper_cabin_temps, lower_cabin_temps)
 
 
-def retrieve_skychop_states(filename):
+def retrieve_skychop_states(
+    skychop: Path,
+) -> tuple[NDArray[np.float64], NDArray[np.int8]]:
     """skychopファイル(text file)からskychopの時系列状態を取得する
 
     Args:
@@ -321,12 +323,11 @@ def retrieve_skychop_states(filename):
         2列目 0/1による状態
         "#"から始まるコメントがファイル冒頭に数行ある。
     """
-    data = None
-    if filename.endswith(".xz"):
-        with lzma.open(filename, "rt") as f:
+    if Path(skychop).suffix == ".xz":
+        with lzma.open(skychop, "rt") as f:
             data = f.read()
     else:
-        with open(filename, "rt") as f:
+        with open(skychop, "rt") as f:
             data = f.read()
 
     table = ascii.read(

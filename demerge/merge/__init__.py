@@ -56,32 +56,32 @@ def merge(
     """Merge datasets of an observation into a single DEMS file.
 
     Args:
-        dems: 出力DEMSファイルへのパス (.zarr.zip)
-        ddb: DDBファイルへのパス (.fits or .fits.gz)
-        corresp: Master-to-KID ID対応ファイルへのパス (.json)
-        obsinst: 指示書ファイルへのパス (.obs)
-        antenna: アンテナログファイルへのパス (.ant)
-        readout: Reduced FITSファイルへのパス (.fits)
-        skychop: Sky chopperファイルへのパス (.skychop)
-        weather: 気象ログファイルへのパス (.weather)
-        misti: MiSTIログファイルへのパス (.misti)
-        cabin: キャビンログファイルへのパス (.cabin)
-        coordinate: 出力データの座標系 (azel or radec)
-        loadtype: 出力データ形式 (fshift or Tsignal)
-        findR: 指定するとFindR, Skyを実行します
-        ch: FindRの利用するチャネルを整数で指定します
-        Rth: FindRのR閾値を実数で指定します
-        skyth: FindRのsky閾値を実数で指定します
-        cutnum: FindRのカット数を整数で指定します
-        still: 指定するとstill観測用の解析を行います
-        period: Still観測の1/2周期(秒)を整数で指定します
-        shuttle: 指定するとshuttle観測用の解析を行います
-        lon_min_off: Shuttle観測時のOFFにするlongitudeの最小値
-        lon_max_off: Shuttle観測時のOFFにするlongitudeの最大値
-        lon_min_on: Shuttle観測時のONにするlongitudeの最小値
-        lon_max_on: Shuttle観測時のONにするlongitudeの最大値
-        debug: 指定すると全ての引数の値をログとして表示します
-        offset_time_antenna: Reduced FITSとアンテナログの時刻のずれの補正値 (ms)
+        dems: Path of the output DEMS file (.zarr.zip).
+        ddb: Path of the DDB file (.fits or .fits.gz).
+        corresp: Path of the Master-to-KID ID correspondence file (.json).
+        obsinst: Path of the observation instruction file (.obs).
+        antenna: Path of the antenna log file (.ant).
+        readout: Path of the reduced FITS file (.fits).
+        skychop: Path of the Sky chopper file (.skychop).
+        weather: Path of the weather log file (.weather).
+        misti: Path of the MiSTI log file (.misti).
+        cabin: Path of the cabin log file (.cabin).
+        coordinate: Coordinate system of the output data (azel or radec).
+        loadtype: Output data format (fshift or Tsignal).
+        findR: If specified, execute FindR and Sky.
+        ch: Channel to use for FindR as an integer.
+        Rth: R threshold for FindR as a float.
+        skyth: Sky threshold for FindR as a float.
+        cutnum: Cut number for FindR as an integer.
+        still: If specified, perform analysis for still observation.
+        period: Half period (seconds) for still observation as an integer.
+        shuttle: If specified, perform analysis for shuttle observation.
+        lon_min_off: Minimum longitude of OFF during shuttle observation.
+        lon_max_off: Maximum longitude of OFF during shuttle observation.
+        lon_min_on: Minimum longitude of ON during shuttle observation.
+        lon_max_on: Maximum longitude of ON during shuttle observation.
+        debug: If True, detailed logs for debugging will be printed.
+        offset_time_antenna: Time diff (ms) between reduced FITS and antenna log.
 
     Returns:
         Path of the merged DEMS file.

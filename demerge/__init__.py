@@ -33,10 +33,13 @@ def demerge(
     """Run reduce and merge commands to create a single DEMS file.
 
     Args:
-        obsid: Observation ID (e.g. YYYYmmddHHMMSS).
-        data_dir: Path of raw data directory.
-        dems_dir: Path of merged DEMS directory.
-        reduced_dir: Path of (intermediate) reduced data directory.
+        obsid: Observation ID (YYYYmmddHHMMSS).
+        data_dir: Path where raw data directory is placed,
+            i.e. expecting ``${data_dir}/cosmos_YYYYmmddHHMMSS``.
+        dems_dir: Path where merged DEMS file will be placed,
+            i.e. expecting ``${dems_dir}/dems_YYYYmmddHHMMSS.zarr.zip``.
+        reduced_dir: Path where reduced data directory will be placed,
+            i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
         ddb_file: Path of DDB (DESHIMA database) file.
         debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.

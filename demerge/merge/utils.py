@@ -358,10 +358,11 @@ def retrieve_misti_log(filename):
         ファイル形式:
         1列目 年/月/日
         2列目 時:分:6列目 秒(小数点以下2桁も含む)
-        3列目 az(deg)
-        4列目 el(deg)
-        5列目 pwv(um)
-        6列目 Tground(K)
+        3列目 UNIX時間
+        4列目 az(deg)
+        5列目 el(deg)
+        6列目 pwv(um)
+        7列目 Tground(K)
         "#"から始まるコメントがファイル冒頭に数行ある。
 
     """
@@ -376,6 +377,7 @@ def retrieve_misti_log(filename):
     column_names = [
         "date",
         "time",
+        "unixtime",
         "az",
         "el",
         "pwv",

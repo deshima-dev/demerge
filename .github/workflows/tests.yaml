@@ -30,4 +30,4 @@ jobs:
       - run: pip install poetry==1.7.1 && poetry install
       - run: black --check demerge
       - run: deshima-rawdata download 20231108052231 -e
-      - run: demerge 20231108052231 --loadtype Tsignal --debug
+      - run: demerge 20231108052231 --measure brightness --debug

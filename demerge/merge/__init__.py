@@ -37,7 +37,7 @@ def merge(
     misti: str = "",
     cabin: str = "",
     coordinate: str = "azel",
-    loadtype: str = "fshift",
+    measure: str = "df/f",
     findR: bool = False,
     ch: int = 0,
     Rth: float = 280.0,
@@ -67,7 +67,7 @@ def merge(
         misti: Path of the MiSTI log file (.misti).
         cabin: Path of the cabin log file (.cabin).
         coordinate: Coordinate system of the output data (azel or radec).
-        loadtype: Output data format (fshift or Tsignal).
+        measure: Output data format (df/f or brightness).
         findR: If specified, execute FindR and Sky.
         ch: Channel to use for FindR as an integer.
         Rth: R threshold for FindR as a float.
@@ -115,7 +115,7 @@ def merge(
         misti_path=misti,
         cabin_path=cabin,
         coordinate=coordinate,
-        loadtype=loadtype,
+        measure=measure,
         findR=findR,
         ch=ch,
         Rth=Rth,

@@ -197,7 +197,7 @@ def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
 def convert_readout(
     readout: fits.HDUList,
     corresp: pd.DataFrame,
-    to: Literal["Tsignal", "fshift"],
+    to: Literal["brightness", "df/f"],
     T_room: float,
     T_amb: float,
 ):
@@ -206,7 +206,7 @@ def convert_readout(
     Args:
         readout: Reduced readout FITSのHDUListオブジェクト
         corresp: KID IDと各KIDの測定値を対応づけるDataFrame
-        to: 変換形式（Tsignal→Tsky, fshift→df/f)
+        to: 変換形式（brightness or df/f)
         T_room: キャビン温度(K)
         T_amb: 外気温(K)
 
@@ -223,10 +223,10 @@ def convert_readout(
     else:
         fshift = (linph - linyfc) / (4.0 * Qr) + (fr - fr_room) / fr
 
-    if to == "fshift":
+    if to == "df/f":
         return fshift[:, corresp.index.values]
 
-    if to == "Tsignal":
+    if to == "brightness":
         return Tlos_model(
             dx=fshift[:, corresp.index.values],
             p0=corresp.p0.values,
@@ -421,7 +421,7 @@ def create_dems(
 ):
     # その他の引数の処理と既定値の設定
     coordinate = kwargs.pop("coordinate", "azel")
-    loadtype = kwargs.pop("loadtype", "fshift")
+    measure = kwargs.pop("measure", "df/f")
 
     # find R, sky
     findR = kwargs.pop("findR", False)
@@ -490,19 +490,19 @@ def create_dems(
     response = convert_readout(
         readout=readout_hdul,
         corresp=corresp,
-        to=loadtype,
+        to=measure,
         T_room=lower_cabin_temp[0],
         T_amb=np.nanmean(weather_table["tmperature"]),
     )
 
-    if loadtype == "Tsignal":
+    if measure == "brightness":
         long_name = "Brightness"
         units = "K"
-    elif loadtype == "fshift":
+    elif measure == "df/f":
         long_name = "df/f"
         units = "dimensionless"
     else:
-        raise KeyError("Invalid loadtype: {}".format(loadtype))
+        raise KeyError("Invalid measure: {}".format(measure))
 
     ddbfits_hdul.close()
     readout_hdul.close()

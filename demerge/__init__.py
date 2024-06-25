@@ -26,7 +26,7 @@ def demerge(
     data_dir: Path = Path(),
     dems_dir: Path = Path(),
     reduced_dir: Path = Path(),
-    ddb_file: Path = DEFAULT_DDB_FILE,
+    ddb: Path = DEFAULT_DDB_FILE,
     debug: bool = False,
     **merge_options: Any,
 ) -> Path:
@@ -40,7 +40,7 @@ def demerge(
             i.e. expecting ``${dems_dir}/dems_YYYYmmddHHMMSS.zarr.zip``.
         reduced_dir: Path where reduced data directory will be placed,
             i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
-        ddb_file: Path of DDB (DESHIMA database) file.
+        ddb: Path of DDB (DESHIMA database) file.
         debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.
 
@@ -70,8 +70,8 @@ def demerge(
     if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():
         raise FileExistsError(dems)
 
-    if not ddb_file.exists():
-        raise FileNotFoundError(ddb_file)
+    if not ddb.exists():
+        raise FileNotFoundError(ddb)
 
     if not (corresp := data_dir_ / "kid_corresp.json").exists():
         raise FileNotFoundError(corresp)
@@ -101,7 +101,7 @@ def demerge(
 
     merge.merge(
         dems,
-        ddb=ddb_file,
+        ddb=ddb,
         corresp=corresp,
         readout=readout,
         obsinst=obsinst,

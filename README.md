@@ -49,9 +49,9 @@ FLAGS
         Default: PosixPath('.')
         Path where reduced data directory will be placed,
         i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
-    --ddb_file=DDB_FILE
+    --ddb=DDB
         Type: Path
-        Default: PosixPath('/workspaces/demerge/demerge/data/ddb_20231123.fits')
+        Default: PosixPath('/path/to/demerge/data/ddb_20231123.fits')
         Path of DDB (DESHIMA database) file.
     --debug=DEBUG
         Type: bool

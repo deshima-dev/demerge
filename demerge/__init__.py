@@ -62,6 +62,7 @@ def demerge(
     data_dir_ = Path(data_dir).resolve() / f"cosmos_{obsid}"
     reduced_dir_ = Path(reduced_dir).resolve() / f"reduced_{obsid}"
     dems_dir_ = Path(dems_dir).resolve()
+    ddb = Path(ddb).resolve()
 
     # Run reduce function
     readout = reduce.reduce(data_dir_, reduced_dir_, debug=debug)

@@ -36,7 +36,7 @@ zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4"
-deshima-rawdata = "^2024.4.2"
+deshima-rawdata = "^2024.4"
 ipython = "^8.18"
 
 [tool.poetry.scripts]

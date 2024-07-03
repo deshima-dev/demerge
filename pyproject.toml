@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demerge"
-version = "3.0.1"
+version = "3.0.2"
 description = "DESHIMA merge code for observed datasets"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",
@@ -36,7 +36,7 @@ zarr = "^2.14"
 
 [tool.poetry.group.dev.dependencies]
 black = "^24.4"
-deshima-rawdata = "^2024.4.2"
+deshima-rawdata = "^2024.4"
 ipython = "^8.18"
 
 [tool.poetry.scripts]

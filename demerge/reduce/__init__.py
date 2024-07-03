@@ -61,18 +61,21 @@ def reduce(
     with TemporaryDirectory() as work_dir:
         run(
             ["python", SCRIPTS / "Configure.py", data_dir, reduced_dir],
+            check=True,
             cwd=work_dir,
             # False if logging is implemented
             capture_output=True,
         )
         run(
             ["python", SCRIPTS / "FitSweep.py"],
+            check=True,
             cwd=work_dir,
             # False if logging is implemented
             capture_output=True,
         )
         run(
             ["python", SCRIPTS / "SaveFits.py"],
+            check=True,
             cwd=work_dir,
             # False if logging is implemented
             capture_output=True,

@@ -1,13 +1,17 @@
 {
     "name": "demerge",
     "image":"python:3.11",
-    "runArgs": [
-        "--name=demerge"
-    ],
+    "features": {
+        "ghcr.io/devcontainers-contrib/features/poetry:2": {
+            "version": "1.8.3"
+        }
+    },
     "containerEnv": {
         "POETRY_VIRTUALENVS_CREATE": "false"
     },
-    "onCreateCommand": "pip install poetry==1.8.3",
+    "runArgs": [
+        "--name=demerge"
+    ],
     "postCreateCommand": "poetry install",
     "customizations": {
         "vscode": {

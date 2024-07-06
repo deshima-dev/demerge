@@ -83,8 +83,8 @@ def load_obsinst(obsinst: Path) -> dict[str, Any]:
         for line in f:
             if "SET ANTENNA_G EPOCH" in line:
                 epoch = line.split()[-1].strip("'JB")
-            elif "% OBS=" in line:
-                obs = line.split("=")[-1].strip()
+            elif "SET DES OBS_FILE" in line:
+                obs_file = line.split()[-1].strip("'")
             elif "SET DES OBS_USER" in line:
                 obs_user = line.split()[-1].strip("'")
             elif "SET DES PROJECT" in line:
@@ -102,7 +102,7 @@ def load_obsinst(obsinst: Path) -> dict[str, Any]:
         ra, dec = 0.0, 0.0
 
     return {
-        "observation": obs,
+        "observation": obs_file,
         "observer": obs_user,
         "project": project,
         "object": src_name,

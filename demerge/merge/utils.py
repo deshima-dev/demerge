@@ -221,7 +221,7 @@ def convert_readout(
     if np.isnan(fr_room).all():
         fshift = (linph - linyfc) / (4.0 * Qr)
     else:
-        fshift = (linph - linyfc) / (4.0 * Qr) + (fr - fr_room) / fr
+        fshift = (linph - linyfc) / (4.0 * Qr) - (fr - fr_room) / fr
 
     if to == "df/f":
         return fshift[:, corresp.index.values]

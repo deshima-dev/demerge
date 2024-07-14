@@ -62,10 +62,22 @@ COLUMN_NAMES_SKYCHOP = (
     "time",
     "is_blocking",
 )
+COLUMN_NAMES_WEATHER = (
+    "time",
+    "temperature",  # degC
+    "pressure",  # hPa
+    "humidity",  # %
+    "wind_speed",  # m/s
+    "wind_direction",  # deg
+    "_",
+)
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
 DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
+DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
+
+
 def get_antenna(antenna: Path, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(
@@ -133,6 +145,20 @@ def get_skychop(skychop: Path, /) -> xr.Dataset:
         date_parser=DATE_PARSER_SKYCHOP,
     ).to_xarray()
 
+
+def get_weather(weather: Path, /) -> xr.Dataset:
+    """Load a weather log as xarray Dataset."""
+    return pd.read_csv(
+        weather,
+        # read settings
+        names=COLUMN_NAMES_WEATHER,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_WEATHER,
+    ).to_xarray()
 
 
 def load_obsinst(obsinst: Path) -> dict[str, Any]:

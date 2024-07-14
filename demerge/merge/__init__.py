@@ -2,6 +2,7 @@ __all__ = ["merge"]
 
 
 # standard library
+from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 
@@ -13,6 +14,19 @@ from .utils import create_dems
 
 # constants
 LOGGER = getLogger(__name__)
+
+
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
 
 
 def merge(
@@ -60,20 +74,10 @@ def merge(
         FileExistsError: Raised if ``dems`` exists.
 
     """
-    # ロガーの設定
-    if debug:
-        LOGGER.setLevel(DEBUG)
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
 
-    basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S",
-        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
-    )
-
-    # 引数と値をロガーに記録
-    for key, val in locals().items():
-        LOGGER.debug(f"{key}: {val!r}")
-
-    # マージの実行
     da = create_dems(
         ddbfits_path=ddb,
         corresp_path=corresp,
@@ -102,4 +106,9 @@ def merge(
 
 def cli() -> None:
     """Command line interface of the merge function."""
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
+
     Fire(merge)

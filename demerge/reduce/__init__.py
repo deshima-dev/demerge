@@ -2,6 +2,7 @@ __all__ = ["reduce"]
 
 
 # standard library
+from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from shutil import rmtree
@@ -16,6 +17,19 @@ from fire import Fire
 # constants
 LOGGER = getLogger(__name__)
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
+
+
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
 
 
 def reduce(
@@ -42,16 +56,9 @@ def reduce(
         FileExistsError: Raised if ``reduced_dir`` exists.
 
     """
-    if debug:
-        LOGGER.setLevel(DEBUG)
-
-    basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S",
-        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
-    )
-
-    for key, val in locals().items():
-        LOGGER.debug(f"{key}: {val!r}")
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
 
     # Resolve paths (must be done before changing working directory)
     if not (data_dir := Path(data_dir).resolve()).exists():
@@ -92,4 +99,9 @@ def reduce(
 
 def cli() -> None:
     """Command line interface of the reduce function."""
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
+
     Fire(reduce)

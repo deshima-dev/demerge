@@ -3,6 +3,7 @@ __version__ = "3.0.5"
 
 
 # standard library
+from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any
@@ -17,6 +18,19 @@ from . import merge, reduce
 DEFAULT_DDB_FILE = Path(__file__).parent / "data" / "ddb_20231123.fits.gz"
 DEFAULT_OFFSET_TIME_ANTENNA = 20  # ms
 LOGGER = getLogger(__name__)
+
+
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
 
 
 def demerge(
@@ -51,16 +65,9 @@ def demerge(
         Path of the merged DEMS file.
 
     """
-    if debug:
-        LOGGER.setLevel(DEBUG)
-
-    basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S",
-        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
-    )
-
-    for key, val in locals().items():
-        LOGGER.debug(f"{key}: {val!r}")
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
 
     data_dir_ = Path(data_dir).resolve() / f"cosmos_{obsid}"
     reduced_dir_ = Path(reduced_dir).resolve() / f"reduced_{obsid}"
@@ -127,4 +134,9 @@ def demerge(
 
 def cli() -> None:
     """Command line interface of the demerge function."""
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
+
     Fire(demerge)

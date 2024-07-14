@@ -4,6 +4,7 @@ __all__ = ["reduce"]
 # standard library
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
+from shutil import rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
 
@@ -22,6 +23,7 @@ def reduce(
     reduced_dir: Path,
     /,
     *,
+    overwrite: bool = False,
     debug: bool = False,
 ) -> Path:
     """Reduce raw data of KID measurements into a single "reduced" FITS.
@@ -29,6 +31,7 @@ def reduce(
     Args:
         data_dir: Path of raw data directory (e.g. ``cosmos_YYYYmmddHHMMSS``).
         reduced_dir: Path of reduced data directory (e.g. ``reduced_YYYYmmddHHMMSS``).
+        overwrite: If True, ``reduced_dir`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
 
     Returns:
@@ -54,8 +57,11 @@ def reduce(
     if not (data_dir := Path(data_dir).resolve()).exists():
         raise FileNotFoundError(data_dir)
 
-    if (reduced_dir := Path(reduced_dir).resolve()).exists():
+    if (reduced_dir := Path(reduced_dir).resolve()).exists() and not overwrite:
         raise FileExistsError(reduced_dir)
+
+    if overwrite:
+        rmtree(reduced_dir, ignore_errors=True)
 
     # Run scripts in a temporary directory (to isolate intermediate files)
     with TemporaryDirectory() as work_dir:

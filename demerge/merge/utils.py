@@ -4,7 +4,8 @@ __all__ = ["create_dems"]
 # standard library
 import json
 import lzma
-from datetime import datetime
+import re
+from datetime import datetime as dt
 from functools import partial, reduce
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +19,201 @@ from astropy.io import ascii, fits
 from dems.d2 import MS
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
+
+
+# constants
+COLUMN_NAMES_ANTENNA = (
+    "time",
+    "ra-prg",  # deg
+    "dec-prg",  # deg
+    "az-prg",  # deg
+    "el-prg",  # deg
+    "az-real",  # deg
+    "el-real",  # deg
+    "x",  # mm
+    "y",  # mm
+    "z",  # mm
+    "xt",  # deg
+    "yt",  # deg
+    "zt",  # deg
+    "lst",
+    "az-prg(no-cor)",  # deg
+    "el-prog(no-cor)",  # deg
+    "az-prog(center)",  # deg
+    "el-prog(center)",  # deg
+    "type",
+)
+COLUMN_NAMES_CABIN = (
+    "date",
+    "time",
+    "upper_cabin_temperature",  # degC
+    "main_cabin_temperature",  # degC
+    *[f"_{i}" for i in range(18)],
+)
+COLUMN_NAMES_MISTI = (
+    "date",
+    "time",
+    "unix_time",
+    "az",  # deg
+    "el",  # deg
+    "pwv",  # um
+    "ground_temperature",  # K
+)
+COLUMN_NAMES_SKYCHOP = (
+    "time",
+    "is_blocking",
+)
+COLUMN_NAMES_WEATHER = (
+    "time",
+    "temperature",  # degC
+    "pressure",  # hPa
+    "humidity",  # %
+    "wind_speed",  # m/s
+    "wind_direction",  # deg
+    "_",
+)
+DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
+DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
+DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
+DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
+DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
+
+
+def get_antenna(antenna: Path, /) -> xr.Dataset:
+    """Load an antenna log as xarray Dataset."""
+    return pd.read_csv(
+        antenna,
+        # read settings
+        names=COLUMN_NAMES_ANTENNA,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_ANTENNA,
+    ).to_xarray()
+
+
+def get_cabin(cabin: Path, /) -> xr.Dataset:
+    """Load a cabin log as xarray Dataset."""
+    return (
+        pd.read_csv(
+            cabin,
+            # read settings
+            names=COLUMN_NAMES_CABIN,
+            delimiter="\s+",
+            comment="#",
+            # index settings
+            index_col=[0],
+            parse_dates=[[0, 1]],
+            date_parser=DATE_PARSER_CABIN,
+        )
+        .rename_axis("time")
+        .to_xarray()
+    )
+
+
+def get_misti(misti: Path, /) -> xr.Dataset:
+    """Load a MiSTI log as xarray Dataset."""
+    return (
+        pd.read_csv(
+            misti,
+            # read settings
+            names=COLUMN_NAMES_MISTI,
+            delimiter="\s+",
+            comment="#",
+            # index settings
+            index_col=[0],
+            parse_dates=[[0, 1]],
+            date_parser=DATE_PARSER_MISTI,
+        )
+        .rename_axis("time")
+        .to_xarray()
+    )
+
+
+def get_obstable(obstable: Path, /) -> dict[str, str]:
+    """Load an observation table to get parameters."""
+    with open(obstable) as f:
+        lines = f.read()
+
+    def search(pattern: str) -> str:
+        if (match := re.search(pattern, lines)) is None:
+            return ""
+        else:
+            return match[1]
+
+    return {
+        # DES
+        "obs_file": search("SET DES OBS_FILE\s*'(.*)'"),
+        "obs_user": search("SET DES OBS_USER\s*'(.*)'"),
+        "project": search("SET DES PROJECT\s*'(.*)'"),
+        # ANTENNA_G
+        "epoch": search("SET ANTENNA_G EPOCH\s*'(.*)'"),
+        "scan_cood": search("SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
+        "src_name": search("SET ANTENNA_G SRC_NAME\s*'(.*)'"),
+        "src_pos": search("SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+    }
+
+
+def get_readout(readout: Path, /) -> xr.DataArray:
+    """Load a reduced readout FITS as xarray DataArray."""
+    with fits.open(readout) as hdus:
+        readout_data = hdus["READOUT"].data
+        kidcols = readout_data.columns[2:].names
+        time = pd.to_datetime(readout_data["timestamp"], unit="s")
+        linph = np.array([readout_data[col] for col in kidcols]).T[1]
+
+        kidsinfo_data = hdus["KIDSINFO"].data
+        linyfc = kidsinfo_data["yfc, linyfc"].T[1]
+        Qr = kidsinfo_data["Qr, dQr (Sky)"].T[0]
+        fr = kidsinfo_data["fr, dfr (Sky)"].T[0]
+        fr_room = kidsinfo_data["fr, dfr (Room)"].T[0]
+
+    if np.isnan(fr_room).all():
+        dfof = (linph - linyfc) / (4.0 * Qr)
+    else:
+        dfof = (linph - linyfc) / (4.0 * Qr) - (fr - fr_room) / fr
+
+    return xr.DataArray(
+        dfof,
+        name="df/f",
+        dims=("time", "kidid"),
+        coords={
+            "time": time,
+            "kidid": np.arange(dfof.shape[1]),
+        },
+    )
+
+
+def get_skychop(skychop: Path, /) -> xr.Dataset:
+    """Load a sky chopper log as xarray Dataset."""
+    return pd.read_csv(
+        skychop,
+        # read settings
+        names=COLUMN_NAMES_SKYCHOP,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_SKYCHOP,
+    ).to_xarray()
+
+
+def get_weather(weather: Path, /) -> xr.Dataset:
+    """Load a weather log as xarray Dataset."""
+    return pd.read_csv(
+        weather,
+        # read settings
+        names=COLUMN_NAMES_WEATHER,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_WEATHER,
+    ).to_xarray()
 
 
 def load_obsinst(obsinst: Path) -> dict[str, Any]:
@@ -203,15 +399,15 @@ def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""
-    asciitime = [datetime.strptime("%14.6f" % t, "%Y%m%d%H%M%S.%f") for t in asciitime]
-    asciitime = [datetime.strftime(t, form_fitstime) for t in asciitime]
+    asciitime = [dt.strptime("%14.6f" % t, "%Y%m%d%H%M%S.%f") for t in asciitime]
+    asciitime = [dt.strftime(t, form_fitstime) for t in asciitime]
     return np.array(asciitime)
 
 
 def convert_timestamp(timestamp):
     """Timestamp"""
-    timestamp = [datetime.utcfromtimestamp(t) for t in timestamp]
-    timestamp = [datetime.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
+    timestamp = [dt.utcfromtimestamp(t) for t in timestamp]
+    timestamp = [dt.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
     return np.array(timestamp)
 
 
@@ -351,7 +547,7 @@ def retrieve_misti_log(filename):
     datetimes = []
     for row in table:
         datetimes.append(
-            datetime.strptime(
+            dt.strptime(
                 "{} {}".format(row["date"], row["time"]),
                 format="%Y/%m/%d %H:%M:%S.%f",
             )

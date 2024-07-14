@@ -4,7 +4,7 @@ __all__ = ["create_dems"]
 # standard library
 import json
 import lzma
-from datetime import datetime
+from datetime import datetime as dt
 from functools import partial, reduce
 from pathlib import Path
 from typing import Any, Literal
@@ -18,6 +18,45 @@ from astropy.io import ascii, fits
 from dems.d2 import MS
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
+
+
+# constants
+COLUMN_NAMES_ANTENNA = (
+    "time",
+    "ra-prg",  # deg
+    "dec-prg",  # deg
+    "az-prg",  # deg
+    "el-prg",  # deg
+    "az-real",  # deg
+    "el-real",  # deg
+    "x",  # mm
+    "y",  # mm
+    "z",  # mm
+    "xt",  # deg
+    "yt",  # deg
+    "zt",  # deg
+    "lst",
+    "az-prg(no-cor)",  # deg
+    "el-prog(no-cor)",  # deg
+    "az-prog(center)",  # deg
+    "el-prog(center)",  # deg
+    "type",
+)
+DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
+def get_antenna(antenna: Path, /) -> xr.Dataset:
+    """Load an antenna log as xarray Dataset."""
+    return pd.read_csv(
+        antenna,
+        # read settings
+        names=COLUMN_NAMES_ANTENNA,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_ANTENNA,
+    ).to_xarray()
+
 
 
 def load_obsinst(obsinst: Path) -> dict[str, Any]:
@@ -203,15 +242,15 @@ def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
 
 def convert_asciitime(asciitime, form_fitstime):
     """Ascii time"""
-    asciitime = [datetime.strptime("%14.6f" % t, "%Y%m%d%H%M%S.%f") for t in asciitime]
-    asciitime = [datetime.strftime(t, form_fitstime) for t in asciitime]
+    asciitime = [dt.strptime("%14.6f" % t, "%Y%m%d%H%M%S.%f") for t in asciitime]
+    asciitime = [dt.strftime(t, form_fitstime) for t in asciitime]
     return np.array(asciitime)
 
 
 def convert_timestamp(timestamp):
     """Timestamp"""
-    timestamp = [datetime.utcfromtimestamp(t) for t in timestamp]
-    timestamp = [datetime.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
+    timestamp = [dt.utcfromtimestamp(t) for t in timestamp]
+    timestamp = [dt.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
     return np.array(timestamp)
 
 
@@ -351,7 +390,7 @@ def retrieve_misti_log(filename):
     datetimes = []
     for row in table:
         datetimes.append(
-            datetime.strptime(
+            dt.strptime(
                 "{} {}".format(row["date"], row["time"]),
                 format="%Y/%m/%d %H:%M:%S.%f",
             )

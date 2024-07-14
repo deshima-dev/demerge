@@ -49,8 +49,18 @@ COLUMN_NAMES_CABIN = (
     "main_cabin_temperature",  # degC
     *[f"_{i}" for i in range(18)],
 )
+COLUMN_NAMES_MISTI = (
+    "date",
+    "time",
+    "unix_time",
+    "az",  # deg
+    "el",  # deg
+    "pwv",  # um
+    "ground_temperature",  # K
+)
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
+DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
 def get_antenna(antenna: Path, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(
@@ -79,6 +89,25 @@ def get_cabin(cabin: Path, /) -> xr.Dataset:
             index_col=[0],
             parse_dates=[[0, 1]],
             date_parser=DATE_PARSER_CABIN,
+        )
+        .rename_axis("time")
+        .to_xarray()
+    )
+
+
+def get_misti(misti: Path, /) -> xr.Dataset:
+    """Load a MiSTI log as xarray Dataset."""
+    return (
+        pd.read_csv(
+            misti,
+            # read settings
+            names=COLUMN_NAMES_MISTI,
+            delimiter="\s+",
+            comment="#",
+            # index settings
+            index_col=[0],
+            parse_dates=[[0, 1]],
+            date_parser=DATE_PARSER_MISTI,
         )
         .rename_axis("time")
         .to_xarray()

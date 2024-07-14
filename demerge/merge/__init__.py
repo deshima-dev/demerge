@@ -30,6 +30,7 @@ def merge(
     cabin: str = "",
     coordinate: str = "azel",
     measure: str = "df/f",
+    overwrite: bool = False,
     debug: bool = False,
     offset_time_antenna: int = 0,
 ) -> Path:
@@ -48,6 +49,7 @@ def merge(
         cabin: Path of the cabin log file (.cabin).
         coordinate: Coordinate system of the output data (azel or radec).
         measure: Output data format (df/f or brightness).
+        overwrite: If True, ``dems`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
         offset_time_antenna: Time diff (ms) between reduced FITS and antenna log.
 
@@ -87,8 +89,11 @@ def merge(
         offset_time_antenna=offset_time_antenna,
     )
 
-    if (dems := Path(dems)).exists():
+    if (dems := Path(dems)).exists() and not overwrite:
         raise FileExistsError(dems)
+
+    if overwrite:
+        dems.unlink(missing_ok=True)
 
     dems.parent.mkdir(exist_ok=True, parents=True)
     da.to_zarr(dems, mode="w")

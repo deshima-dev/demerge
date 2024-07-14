@@ -24,12 +24,12 @@ from .. import __version__ as DEMERGE_VERSION
 # constants
 COLUMN_NAMES_ANTENNA = (
     "time",
-    "ra-prg",  # deg
-    "dec-prg",  # deg
-    "az-prg",  # deg
-    "el-prg",  # deg
-    "az-real",  # deg
-    "el-real",  # deg
+    "ra_prog",  # deg
+    "dec_prog",  # deg
+    "az_prog",  # deg
+    "el_prog",  # deg
+    "az_real",  # deg
+    "el_real",  # deg
     "x",  # mm
     "y",  # mm
     "z",  # mm
@@ -37,11 +37,11 @@ COLUMN_NAMES_ANTENNA = (
     "yt",  # deg
     "zt",  # deg
     "lst",
-    "az-prg(no-cor)",  # deg
-    "el-prog(no-cor)",  # deg
-    "az-prog(center)",  # deg
-    "el-prog(center)",  # deg
-    "type",
+    "az_prog_no_cor",  # deg
+    "el_prog_no_cor",  # deg
+    "az_prog_center",  # deg
+    "el_prog_center",  # deg
+    "scan_type",
 )
 COLUMN_NAMES_CABIN = (
     "date",

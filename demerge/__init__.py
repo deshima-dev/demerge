@@ -27,6 +27,7 @@ def demerge(
     dems_dir: Path = Path(),
     reduced_dir: Path = Path(),
     ddb: Path = DEFAULT_DDB_FILE,
+    overwrite: bool = False,
     debug: bool = False,
     **merge_options: Any,
 ) -> Path:
@@ -41,6 +42,8 @@ def demerge(
         reduced_dir: Path where reduced data directory will be placed,
             i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
         ddb: Path of DDB (DESHIMA database) file.
+        overwrite: If True, reduced data directory and merged DEMS file
+            will be overwritten even if they exist.
         debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.
 
@@ -65,7 +68,12 @@ def demerge(
     ddb = Path(ddb).resolve()
 
     # Run reduce function
-    readout = reduce.reduce(data_dir_, reduced_dir_, debug=debug)
+    readout = reduce.reduce(
+        data_dir=data_dir_,
+        reduced_dir=reduced_dir_,
+        overwrite=overwrite,
+        debug=debug,
+    )
 
     # Run merge function
     if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():
@@ -111,6 +119,7 @@ def demerge(
         weather=weather,
         misti=misti,
         cabin=cabin,
+        overwrite=overwrite,
         debug=debug,
         **merge_options,
     )

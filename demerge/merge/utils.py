@@ -58,9 +58,14 @@ COLUMN_NAMES_MISTI = (
     "pwv",  # um
     "ground_temperature",  # K
 )
+COLUMN_NAMES_SKYCHOP = (
+    "time",
+    "is_blocking",
+)
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
+DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
 def get_antenna(antenna: Path, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(
@@ -112,6 +117,21 @@ def get_misti(misti: Path, /) -> xr.Dataset:
         .rename_axis("time")
         .to_xarray()
     )
+
+
+def get_skychop(skychop: Path, /) -> xr.Dataset:
+    """Load a sky chopper log as xarray Dataset."""
+    return pd.read_csv(
+        skychop,
+        # read settings
+        names=COLUMN_NAMES_SKYCHOP,
+        delimiter="\s+",
+        comment="#",
+        # index settings
+        index_col=0,
+        parse_dates=[0],
+        date_parser=DATE_PARSER_SKYCHOP,
+    ).to_xarray()
 
 
 

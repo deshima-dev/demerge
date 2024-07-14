@@ -156,6 +156,35 @@ def get_obstable(obstable: Path, /) -> dict[str, str]:
     }
 
 
+def get_readout(readout: Path, /) -> xr.DataArray:
+    """Load a reduced readout FITS as xarray DataArray."""
+    with fits.open(readout) as hdus:
+        readout_data = hdus["READOUT"].data
+        kidcols = readout_data.columns[2:].names
+        time = pd.to_datetime(readout_data["timestamp"], unit="s")
+        linph = np.array([readout_data[col] for col in kidcols]).T[1]
+
+        kidsinfo_data = hdus["KIDSINFO"].data
+        linyfc = kidsinfo_data["yfc, linyfc"].T[1]
+        Qr = kidsinfo_data["Qr, dQr (Sky)"].T[0]
+        fr = kidsinfo_data["fr, dfr (Sky)"].T[0]
+        fr_room = kidsinfo_data["fr, dfr (Room)"].T[0]
+
+    if np.isnan(fr_room).all():
+        dfof = (linph - linyfc) / (4.0 * Qr)
+    else:
+        dfof = (linph - linyfc) / (4.0 * Qr) - (fr - fr_room) / fr
+
+    return xr.DataArray(
+        dfof,
+        name="df/f",
+        dims=("time", "kidid"),
+        coords={
+            "time": time,
+            "kidid": np.arange(dfof.shape[1]),
+        },
+    )
+
 
 def get_skychop(skychop: Path, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""

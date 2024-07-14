@@ -1,8 +1,9 @@
 __all__ = ["demerge", "merge", "reduce"]
-__version__ = "3.0.5"
+__version__ = "3.1.0"
 
 
 # standard library
+from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 from typing import Any
@@ -19,6 +20,19 @@ DEFAULT_OFFSET_TIME_ANTENNA = 20  # ms
 LOGGER = getLogger(__name__)
 
 
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
+
+
 def demerge(
     obsid: str,
     /,
@@ -27,6 +41,7 @@ def demerge(
     dems_dir: Path = Path(),
     reduced_dir: Path = Path(),
     ddb: Path = DEFAULT_DDB_FILE,
+    overwrite: bool = False,
     debug: bool = False,
     **merge_options: Any,
 ) -> Path:
@@ -41,6 +56,8 @@ def demerge(
         reduced_dir: Path where reduced data directory will be placed,
             i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
         ddb: Path of DDB (DESHIMA database) file.
+        overwrite: If True, reduced data directory and merged DEMS file
+            will be overwritten even if they exist.
         debug: If True, detailed logs for debugging will be printed.
         **merge_options: Other merge options for the merge command.
 
@@ -48,16 +65,9 @@ def demerge(
         Path of the merged DEMS file.
 
     """
-    if debug:
-        LOGGER.setLevel(DEBUG)
-
-    basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S",
-        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
-    )
-
-    for key, val in locals().items():
-        LOGGER.debug(f"{key}: {val!r}")
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
 
     data_dir_ = Path(data_dir).resolve() / f"cosmos_{obsid}"
     reduced_dir_ = Path(reduced_dir).resolve() / f"reduced_{obsid}"
@@ -65,7 +75,12 @@ def demerge(
     ddb = Path(ddb).resolve()
 
     # Run reduce function
-    readout = reduce.reduce(data_dir_, reduced_dir_, debug=debug)
+    readout = reduce.reduce(
+        data_dir_,
+        reduced_dir_,
+        overwrite=overwrite,
+        debug=debug,
+    )
 
     # Run merge function
     if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():
@@ -111,6 +126,7 @@ def demerge(
         weather=weather,
         misti=misti,
         cabin=cabin,
+        overwrite=overwrite,
         debug=debug,
         **merge_options,
     )
@@ -118,4 +134,9 @@ def demerge(
 
 def cli() -> None:
     """Command line interface of the demerge function."""
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
+
     Fire(demerge)

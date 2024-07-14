@@ -2,6 +2,7 @@ __all__ = ["merge"]
 
 
 # standard library
+from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
 
@@ -13,6 +14,19 @@ from .utils import create_dems
 
 # constants
 LOGGER = getLogger(__name__)
+
+
+@contextmanager
+def set_logger(debug: bool):
+    level = LOGGER.level
+
+    if debug:
+        LOGGER.setLevel(DEBUG)
+
+    try:
+        yield
+    finally:
+        LOGGER.setLevel(level)
 
 
 def merge(
@@ -30,6 +44,7 @@ def merge(
     cabin: str = "",
     coordinate: str = "azel",
     measure: str = "df/f",
+    overwrite: bool = False,
     debug: bool = False,
     offset_time_antenna: int = 0,
 ) -> Path:
@@ -48,6 +63,7 @@ def merge(
         cabin: Path of the cabin log file (.cabin).
         coordinate: Coordinate system of the output data (azel or radec).
         measure: Output data format (df/f or brightness).
+        overwrite: If True, ``dems`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
         offset_time_antenna: Time diff (ms) between reduced FITS and antenna log.
 
@@ -58,20 +74,10 @@ def merge(
         FileExistsError: Raised if ``dems`` exists.
 
     """
-    # ロガーの設定
-    if debug:
-        LOGGER.setLevel(DEBUG)
+    with set_logger(debug):
+        for key, val in locals().items():
+            LOGGER.debug(f"{key}: {val!r}")
 
-    basicConfig(
-        datefmt="%Y-%m-%d %H:%M:%S",
-        format="[%(asctime)s %(name)s %(levelname)s] %(message)s",
-    )
-
-    # 引数と値をロガーに記録
-    for key, val in locals().items():
-        LOGGER.debug(f"{key}: {val!r}")
-
-    # マージの実行
     da = create_dems(
         ddbfits_path=ddb,
         corresp_path=corresp,
@@ -87,8 +93,11 @@ def merge(
         offset_time_antenna=offset_time_antenna,
     )
 
-    if (dems := Path(dems)).exists():
+    if (dems := Path(dems)).exists() and not overwrite:
         raise FileExistsError(dems)
+
+    if overwrite:
+        dems.unlink(missing_ok=True)
 
     dems.parent.mkdir(exist_ok=True, parents=True)
     da.to_zarr(dems, mode="w")
@@ -97,4 +106,9 @@ def merge(
 
 def cli() -> None:
     """Command line interface of the merge function."""
+    basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="[%(asctime)s %(name)s %(funcName)s %(levelname)s] %(message)s",
+    )
+
     Fire(merge)

@@ -42,7 +42,15 @@ COLUMN_NAMES_ANTENNA = (
     "el-prog(center)",  # deg
     "type",
 )
+COLUMN_NAMES_CABIN = (
+    "date",
+    "time",
+    "upper_cabin_temperature",  # degC
+    "main_cabin_temperature",  # degC
+    *[f"_{i}" for i in range(18)],
+)
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
+DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 def get_antenna(antenna: Path, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(
@@ -56,6 +64,25 @@ def get_antenna(antenna: Path, /) -> xr.Dataset:
         parse_dates=[0],
         date_parser=DATE_PARSER_ANTENNA,
     ).to_xarray()
+
+
+def get_cabin(cabin: Path, /) -> xr.Dataset:
+    """Load a cabin log as xarray Dataset."""
+    return (
+        pd.read_csv(
+            cabin,
+            # read settings
+            names=COLUMN_NAMES_CABIN,
+            delimiter="\s+",
+            comment="#",
+            # index settings
+            index_col=[0],
+            parse_dates=[[0, 1]],
+            date_parser=DATE_PARSER_CABIN,
+        )
+        .rename_axis("time")
+        .to_xarray()
+    )
 
 
 

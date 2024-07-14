@@ -4,6 +4,7 @@ __all__ = ["create_dems"]
 # standard library
 import json
 import lzma
+import re
 from datetime import datetime as dt
 from functools import partial, reduce
 from pathlib import Path
@@ -129,6 +130,31 @@ def get_misti(misti: Path, /) -> xr.Dataset:
         .rename_axis("time")
         .to_xarray()
     )
+
+
+def get_obstable(obstable: Path, /) -> dict[str, str]:
+    """Load an observation table to get parameters."""
+    with open(obstable) as f:
+        lines = f.read()
+
+    def search(pattern: str) -> str:
+        if (match := re.search(pattern, lines)) is None:
+            return ""
+        else:
+            return match[1]
+
+    return {
+        # DES
+        "obs_file": search("SET DES OBS_FILE\s*'(.*)'"),
+        "obs_user": search("SET DES OBS_USER\s*'(.*)'"),
+        "project": search("SET DES PROJECT\s*'(.*)'"),
+        # ANTENNA_G
+        "epoch": search("SET ANTENNA_G EPOCH\s*'(.*)'"),
+        "scan_cood": search("SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
+        "src_name": search("SET ANTENNA_G SRC_NAME\s*'(.*)'"),
+        "src_pos": search("SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+    }
+
 
 
 def get_skychop(skychop: Path, /) -> xr.Dataset:

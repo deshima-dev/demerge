@@ -1,14 +1,3 @@
-"""utils.py: Read logging data and merge them into a FITS object
-
- Author : Tetsutaro Ueda, Junya Suzuki, Kenichi Karatsu, Tatsuya Takekoshi
- Created: 2017/11/02
- Revision History:
-     2018/02/08 - KK - rewrite using class.
-     2018/06/08 - TT - apply new calibration method.
-     2021         NAITO systems modfied.
-     2023         NAITO systems modfied.
-"""
-
 __all__ = ["create_dems"]
 
 
@@ -29,42 +18,6 @@ from astropy.io import ascii, fits
 from dems.d2 import MS
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
-
-
-# constants
-FORM_FITSTIME = "%Y-%m-%dT%H:%M:%S"  # YYYY-mm-ddTHH:MM:SS
-FORM_FITSTIME_P = "%Y-%m-%dT%H:%M:%S.%f"  # YYYY-mm-ddTHH:MM:SS.ss
-
-CABIN_Q_MARGIN = 5 * 60  # seconds. Margin for cabin data query.
-DEFAULT_ROOM_T = 17.0 + 273.0  # Kelvin
-DEFAULT_AMB_T = 0.0 + 273.0  # Kelvin
-
-
-# constants (master-to-KID correspondence)
-CORRESP_IGNORES = "pixelid", "runid, framelen, refid"
-CORRESP_NOTFOUND = -1
-KIDFILT = "KIDFILT"
-KIDID = "kidid"
-MASTERID = "masterid"
-
-
-def create_bintablehdu(hd):
-    """Create Binary Table HDU from 'hdu_dict'"""
-    header = fits.Header()
-    for i, j in zip(hd["hdr_vals"].items(), hd["hdr_coms"].items()):
-        header[i[0]] = i[1], j[1]
-    columns = [
-        fits.Column(name=i[0], format=j[1], array=i[1], unit=k[1])
-        for (i, j, k) in zip(
-            hd["col_vals"].items(),
-            hd["col_form"].items(),
-            hd["col_unit"].items(),
-        )
-    ]
-    hdu = fits.BinTableHDU.from_columns(columns, header)
-    for i in hd["hdr_coms"].items():
-        hdu.header.comments[i[0]] = i[1]
-    return hdu
 
 
 def load_obsinst(obsinst: Path) -> dict[str, Any]:
@@ -258,7 +211,7 @@ def convert_asciitime(asciitime, form_fitstime):
 def convert_timestamp(timestamp):
     """Timestamp"""
     timestamp = [datetime.utcfromtimestamp(t) for t in timestamp]
-    timestamp = [datetime.strftime(t, FORM_FITSTIME_P) for t in timestamp]
+    timestamp = [datetime.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
     return np.array(timestamp)
 
 
@@ -408,43 +361,19 @@ def retrieve_misti_log(filename):
 
 
 def create_dems(
-    ddbfits_path="",
-    corresp_path="",
-    obsinst_path="",
-    antenna_path="",
-    readout_path="",
-    skychop_path="",
-    weather_path="",
-    misti_path="",
-    cabin_path="",
-    **kwargs,
+    ddbfits_path: str,
+    corresp_path: str,
+    obsinst_path: str,
+    antenna_path: str,
+    readout_path: str,
+    skychop_path: str,
+    weather_path: str,
+    misti_path: str,
+    cabin_path: str,
+    coordinate: str,
+    measure: str,
+    offset_time_antenna: int,
 ):
-    # その他の引数の処理と既定値の設定
-    coordinate = kwargs.pop("coordinate", "azel")
-    measure = kwargs.pop("measure", "df/f")
-
-    # find R, sky
-    findR = kwargs.pop("findR", False)
-    ch = kwargs.pop("ch", 0)
-    Rth = kwargs.pop("Rth", 280)
-    skyth = kwargs.pop("skyth", 150)
-    cutnum = kwargs.pop("cutnum", 1)
-
-    # still
-    still = kwargs.pop("still", False)
-    period = kwargs.pop("period", 2)  # 秒
-
-    # shuttle
-    shuttle = kwargs.pop("shuttle", False)
-    lon_min_off = kwargs.pop("lon_min_off", 0)
-    lon_max_off = kwargs.pop("lon_max_off", 0)
-    lon_min_on = kwargs.pop("lon_min_on", 0)
-    lon_max_on = kwargs.pop("lon_max_on", 0)
-
-    # その他一時的な補正
-    # ms(integerでないとnp.timedeltaに変換できないので注意)
-    offset_time_antenna = kwargs.pop("offset_time_antenna", 0)
-
     # 時刻と各種データを読み込む
     readout_hdul = fits.open(readout_path, mode="readonly")
     ddbfits_hdul = fits.open(ddbfits_path, mode="readonly")
@@ -677,95 +606,6 @@ def create_dems(
 
     # Sky chopperの状態からビームラベルを割り当てる(1 -> B, 0 -> A)
     beam = np.where(skychop_state, "B", "A")
-
-    # 静止データの周期に応じてOFFマスクとSCANマスクを設定する
-    if still:
-        seconds = (times - times[0]) / np.timedelta64(1, "s")
-        for i in range(int(seconds[-1]) // period + 1):
-            # fmt: off
-            off_mask = (
-                (period * (2 * i) <= seconds)
-                & (seconds < period * (2 * i + 1))
-            )
-            on_mask = (
-                (period * (2 * i + 1) <= seconds)
-                & (seconds < period * (2 * i + 2))
-            )
-            # fmt: on
-            state[off_mask] = "OFF"
-            state[on_mask] = "SCAN"
-
-    # shuttle観測のマスクを設定する
-    if shuttle:
-        mask_off = (lon_min_off < lon) & (lon < lon_max_off)
-        mask_on = (lon_min_on < lon) & (lon < lon_max_on)
-        state[mask_off] = "OFF"
-        state[mask_on] = "SCAN"
-        state[(~mask_off) & (~mask_on)] = "JUNK"
-
-    # Rとskyの部分を探し、その変化点も含めてJUNKな部分を調べる。
-    if findR:
-        # Rの部分とその変化の部分を探す
-        indices = np.where(response[:, ch] >= Rth)
-        state[indices] = "R"
-
-        # cutnum個だけ左右を切り取った配列を作り、互いに異なる部分を探す。そこはおおよそ変化が起きている部分と考えられる。
-        #
-        # cutnum = 2 の例
-        #
-        # ** 状態Rへ変化していく場合 **
-        # state                   = 0 0 0 0 0 1 1 1 1 1
-        # [cutnum: ]              = 0 0 0 1 1 1 1 1
-        # [:-cutnum]              = 0 0 0 0 0 1 1 1
-        # [cutnum:] != [:-cutnum] = 0 0 0 1 1 0 0 0
-        # state_right_shift       = 0 0 0 0 0 1 1 0 0 0
-        # state_left_shift        = 0 0 0 1 1 0 0 0 0 0
-        # state_R                 = 0 0 0 0 0 1 1 1 1 1
-        # mask_moving             = 0 0 0 0 0 1 1 0 0 0
-        #
-        # ** 状態Rから別の状態へ変化していく場合 **
-        # state                   = 1 1 1 1 1 0 0 0 0 0
-        # [cutnum: ]              = 1 1 1 0 0 0 0 0
-        # [:-cutnum]              = 1 1 1 1 1 0 0 0
-        # [cutnum:] != [:-cutnum] = 0 0 0 1 1 0 0 0
-        # state_right_shift       = 0 0 0 0 0 1 1 0 0 0
-        # state_left_shift        = 0 0 0 1 1 0 0 0 0 0
-        # state_R                 = 1 1 1 1 1 0 0 0 0 0
-        # mask_moving             = 0 0 0 1 1 1 1 0 0 0
-        #
-        # 状態がRへ変化する場合と、状態Rから別の状態へ変化する場合でmask_movingのでき方が違う。
-        #
-        state_cut = state[cutnum:] != state[:-cutnum]
-        # 左側をFalseで埋めて右にずらす
-        state_right_shift = np.hstack([[False] * cutnum, state_cut])
-        # 右側をFalseで埋めて左にずらす
-        state_left_shift = np.hstack([state_cut, [False] * cutnum])
-        state_R = state == "R"
-
-        mask_moving = state_R & state_left_shift | state_right_shift
-        state[mask_moving] = "JUNK"
-
-        indices = (response[:, ch] > skyth) & (state != "R")
-        state[indices] = "JUNK"
-
-        indices = (response[:, ch] <= skyth) & (state == "R")
-        state[indices] = "JUNK"
-
-        # SKYの部分とその変化の部分を探す
-        indices = np.where(response[:, ch] <= skyth)
-        # 最終的にSKYを残さないためにコピーを扱う
-        tmp = state.copy()
-        # 一時的にSKYをマークする
-        tmp[indices] = "SKY"
-
-        # cutnum個だけ左右にずらした配列を作り、変化を探す。
-        tmp_cut = tmp[cutnum:] != tmp[:-cutnum]
-        tmp_right_shift = np.hstack([[False] * cutnum, tmp_cut])
-        tmp_left_shift = np.hstack([tmp_cut, [False] * cutnum])
-        tmp_sky = tmp == "SKY"
-        mask_moving = tmp_sky & tmp_left_shift | tmp_right_shift
-        # 変化の部分はJUNKに置き換える(Rとは違いSKYは残らない)
-        state[mask_moving] = "JUNK"
 
     return MS.new(
         data=response,

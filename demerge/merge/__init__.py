@@ -1,11 +1,3 @@
-"""demsオブジェクトを生成する
-
-python 3.9
-dems   0.8.0
-
-(C) 2023 内藤システムズ
-"""
-
 __all__ = ["merge"]
 
 
@@ -38,18 +30,6 @@ def merge(
     cabin: str = "",
     coordinate: str = "azel",
     measure: str = "df/f",
-    findR: bool = False,
-    ch: int = 0,
-    Rth: float = 280.0,
-    skyth: float = 150.0,
-    cutnum: int = 1,
-    still: bool = False,
-    period: int = 2,
-    shuttle: bool = False,
-    lon_min_off: float = 0.0,
-    lon_max_off: float = 0.0,
-    lon_min_on: float = 0.0,
-    lon_max_on: float = 0.0,
     debug: bool = False,
     offset_time_antenna: int = 0,
 ) -> Path:
@@ -68,18 +48,6 @@ def merge(
         cabin: Path of the cabin log file (.cabin).
         coordinate: Coordinate system of the output data (azel or radec).
         measure: Output data format (df/f or brightness).
-        findR: If specified, execute FindR and Sky.
-        ch: Channel to use for FindR as an integer.
-        Rth: R threshold for FindR as a float.
-        skyth: Sky threshold for FindR as a float.
-        cutnum: Cut number for FindR as an integer.
-        still: If specified, perform analysis for still observation.
-        period: Half period (seconds) for still observation as an integer.
-        shuttle: If specified, perform analysis for shuttle observation.
-        lon_min_off: Minimum longitude of OFF during shuttle observation.
-        lon_max_off: Maximum longitude of OFF during shuttle observation.
-        lon_min_on: Minimum longitude of ON during shuttle observation.
-        lon_max_on: Maximum longitude of ON during shuttle observation.
         debug: If True, detailed logs for debugging will be printed.
         offset_time_antenna: Time diff (ms) between reduced FITS and antenna log.
 
@@ -116,18 +84,6 @@ def merge(
         cabin_path=cabin,
         coordinate=coordinate,
         measure=measure,
-        findR=findR,
-        ch=ch,
-        Rth=Rth,
-        skyth=skyth,
-        cutnum=cutnum,
-        still=still,
-        period=period,
-        shuttle=shuttle,
-        lon_min_off=lon_min_off,
-        lon_max_off=lon_max_off,
-        lon_min_on=lon_min_on,
-        lon_max_on=lon_max_on,
         offset_time_antenna=offset_time_antenna,
     )
 

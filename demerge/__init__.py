@@ -76,8 +76,8 @@ def demerge(
 
     # Run reduce function
     readout = reduce.reduce(
-        data_dir=data_dir_,
-        reduced_dir=reduced_dir_,
+        data_dir_,
+        reduced_dir_,
         overwrite=overwrite,
         debug=debug,
     )

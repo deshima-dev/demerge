@@ -8,7 +8,7 @@ import re
 from datetime import datetime as dt
 from functools import partial, reduce
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Literal, Optional, Union
 
 
 # dependencies
@@ -19,6 +19,10 @@ from astropy.io import ascii, fits
 from dems.d2 import MS
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
+
+
+# type hints
+PathLike = Union[Path, str]
 
 
 # constants
@@ -79,7 +83,7 @@ DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
 
 
-def get_antenna(antenna: Path, /) -> xr.Dataset:
+def get_antenna(antenna: PathLike, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(
         antenna,
@@ -94,7 +98,7 @@ def get_antenna(antenna: Path, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_cabin(cabin: Path, /) -> xr.Dataset:
+def get_cabin(cabin: PathLike, /) -> xr.Dataset:
     """Load a cabin log as xarray Dataset."""
     return (
         pd.read_csv(
@@ -113,7 +117,7 @@ def get_cabin(cabin: Path, /) -> xr.Dataset:
     )
 
 
-def get_corresp(ddb: Path, corresp: Path, /) -> xr.Dataset:
+def get_corresp(ddb: PathLike, corresp: PathLike, /) -> xr.Dataset:
     """Load DDB and KID correspondence files as xarray Dataset."""
 
     def native(array: NDArray[Any]) -> NDArray[Any]:
@@ -184,7 +188,7 @@ def get_corresp(ddb: Path, corresp: Path, /) -> xr.Dataset:
     return frame.to_xarray()
 
 
-def get_misti(misti: Path, /) -> xr.Dataset:
+def get_misti(misti: PathLike, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (
         pd.read_csv(
@@ -203,7 +207,7 @@ def get_misti(misti: Path, /) -> xr.Dataset:
     )
 
 
-def get_obstable(obstable: Path, /) -> dict[str, str]:
+def get_obstable(obstable: PathLike, /) -> dict[str, str]:
     """Load an observation table to get parameters."""
     with open(obstable) as f:
         lines = f.read()
@@ -227,7 +231,7 @@ def get_obstable(obstable: Path, /) -> dict[str, str]:
     }
 
 
-def get_readout(readout: Path, /) -> xr.DataArray:
+def get_readout(readout: PathLike, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
     with fits.open(readout) as hdus:
         readout_data = hdus["READOUT"].data
@@ -257,7 +261,7 @@ def get_readout(readout: Path, /) -> xr.DataArray:
     )
 
 
-def get_skychop(skychop: Path, /) -> xr.Dataset:
+def get_skychop(skychop: PathLike, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""
     return pd.read_csv(
         skychop,
@@ -272,7 +276,7 @@ def get_skychop(skychop: Path, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_weather(weather: Path, /) -> xr.Dataset:
+def get_weather(weather: PathLike, /) -> xr.Dataset:
     """Load a weather log as xarray Dataset."""
     return pd.read_csv(
         weather,

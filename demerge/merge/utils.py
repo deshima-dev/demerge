@@ -234,17 +234,21 @@ def get_obstable(obstable: PathLike, /) -> dict[str, str]:
 def get_readout(readout: PathLike, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
     with fits.open(readout) as hdus:
-        readout_data = hdus["READOUT"].data
-        kidcols = readout_data.columns[2:].names
-        time = pd.to_datetime(readout_data["timestamp"], unit="s")
-        linph = np.array([readout_data[col] for col in kidcols]).T[1]
+        kidsinfo = hdus["KIDSINFO"].data
+        readout_ = hdus["READOUT"].data
 
-        kidsinfo_data = hdus["KIDSINFO"].data
-        linyfc = kidsinfo_data["yfc, linyfc"].T[1]
-        Qr = kidsinfo_data["Qr, dQr (Sky)"].T[0]
-        fr = kidsinfo_data["fr, dfr (Sky)"].T[0]
-        fr_room = kidsinfo_data["fr, dfr (Room)"].T[0]
+        # read from KIDSINFO HDU
+        Qr = kidsinfo["Qr, dQr (Sky)"].T[0]
+        fr = kidsinfo["fr, dfr (Sky)"].T[0]
+        fr_room = kidsinfo["fr, dfr (Room)"].T[0]
+        linyfc = kidsinfo["yfc, linyfc"].T[1]
 
+        # read from READOUT HDU
+        cols = readout_.columns[2:].names
+        time = pd.to_datetime(readout_["timestamp"], unit="s")
+        linph = np.array([readout_[col] for col in cols]).T[1]
+
+    # calculate df/f (or fshift, dx)
     if np.isnan(fr_room).all():
         dfof = (linph - linyfc) / (4.0 * Qr)
     else:

@@ -23,7 +23,7 @@ from .. import __version__ as DEMERGE_VERSION
 
 # constants
 COLUMN_NAMES_ANTENNA = (
-    "time",
+    "time",  # %Y%m%d%H%M%S.%f
     "ra_prog",  # deg
     "dec_prog",  # deg
     "az_prog",  # deg
@@ -36,7 +36,7 @@ COLUMN_NAMES_ANTENNA = (
     "xt",  # deg
     "yt",  # deg
     "zt",  # deg
-    "lst",
+    "lst",  # unknown
     "az_prog_no_cor",  # deg
     "el_prog_no_cor",  # deg
     "az_prog_center",  # deg
@@ -44,15 +44,15 @@ COLUMN_NAMES_ANTENNA = (
     "scan_type",
 )
 COLUMN_NAMES_CABIN = (
-    "date",
-    "time",
+    "date",  # %Y/%m/%d
+    "time",  # %H:%M
     "upper_cabin_temperature",  # degC
     "main_cabin_temperature",  # degC
-    *[f"_{i}" for i in range(18)],
+    *[f"_{i}" for i in range(18)],  # unknown
 )
 COLUMN_NAMES_MISTI = (
-    "date",
-    "time",
+    "date",  # %Y/%m/%d
+    "time",  # %H:%M:%S.%f
     "unix_time",
     "az",  # deg
     "el",  # deg
@@ -60,17 +60,17 @@ COLUMN_NAMES_MISTI = (
     "ground_temperature",  # K
 )
 COLUMN_NAMES_SKYCHOP = (
-    "time",
-    "is_blocking",
+    "time",  # unix
+    "is_blocking",  # bool
 )
 COLUMN_NAMES_WEATHER = (
-    "time",
+    "time",  # %Y%m%d%H%M%S
     "temperature",  # degC
     "pressure",  # hPa
     "humidity",  # %
     "wind_speed",  # m/s
     "wind_direction",  # deg
-    "_",
+    "_",  # unknown
 )
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")

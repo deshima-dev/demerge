@@ -1,9 +1,13 @@
+__all__ = ["to_dems"]
+
+
 # standard library
 import json
 import re
 from datetime import datetime as dt
 from pathlib import Path
-from typing import Any, Union
+from typing import Any, Optional, Union
+from warnings import catch_warnings, simplefilter
 
 
 # dependencies
@@ -11,7 +15,10 @@ import numpy as np
 import pandas as pd
 import xarray as xr
 from astropy.io import fits
+from astropy.units import Quantity
+from dems.d2 import MS
 from numpy.typing import NDArray
+from .. import __version__ as DEMERGE_VERSION
 
 
 # type hints
@@ -74,6 +81,7 @@ DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
 DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
+PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 
 def get_antenna(antenna: PathLike, /) -> xr.Dataset:
@@ -273,6 +281,206 @@ def get_weather(weather: PathLike, /) -> xr.Dataset:
     ).to_xarray()
 
 
+def to_dems(
+    # required datasets
+    ddb: PathLike,
+    corresp: PathLike,
+    obsinst: PathLike,
+    readout: PathLike,
+    *,
+    # optional datasets
+    antenna: Optional[PathLike] = None,
+    cabin: Optional[PathLike] = None,
+    misti: Optional[PathLike] = None,
+    skychop: Optional[PathLike] = None,
+    weather: Optional[PathLike] = None,
+    # optional time offsets
+    dt_antenna: Union[int, str] = "0 ms",
+    dt_cabin: Union[int, str] = "0 ms",
+    dt_misti: Union[int, str] = "0 ms",
+    dt_skychop: Union[int, str] = "0 ms",
+    dt_weather: Union[int, str] = "0 ms",
+) -> xr.DataArray:
+    """Merge datasets into a single DEMS of df/f.
+
+    Args:
+        corresp: Path of the KID correspondence.
+        ddb: Path of DDB FITS.
+        obsinst: Path of the observation instruction.
+        readout: Path of the reduced readout FITS.
+        antenna: Path of the antenna log.
+        cabin: Path of the cabin log.
+        misti: Path of the MiSTI log.
+        skychop: Path of the sky chopper log.
+        weather: Path of the weather log.
+        dt_antenna: Time offset of the antenna log with explicit
+            unit such that (dt_antenna = t_antenna - t_readout).
+        dt_cabin: Time offset of the cabin log with explicit
+            unit such that (dt_cabin = t_cabin - t_readout).
+        dt_misti: Time offset of the MiSTI log with explicit
+            unit such that (dt_misti = t_misti - t_readout).
+        dt_skychop: Time offset of the sky chopper log with explicit
+            unit such that (dt_skychop = t_skychop - t_readout).
+        dt_weather: Time offset of the weather log with explicit
+            unit such that (dt_weather = t_weather - t_readout).
+
+    Returns:
+        Merged DEMS of df/f as xarray DataArray.
+
+    """
+    # load required datasets
+    corresp_ = get_corresp(corresp)
+    ddb_ = get_ddb(ddb)
+    readout_ = get_readout(readout)
+    obsinst_ = get_obsinst(obsinst)
+
+    # load optional datasets
+    if antenna is None:
+        antenna = PACKAGE_DATA / "missing.ant"
+
+    if cabin is None:
+        cabin = PACKAGE_DATA / "missing.cabin"
+
+    if misti is None:
+        misti = PACKAGE_DATA / "missing.misti"
+
+    if skychop is None:
+        skychop = PACKAGE_DATA / "missing.skychop"
+
+    if weather is None:
+        weather = PACKAGE_DATA / "missing.wea"
+
+    with catch_warnings():
+        simplefilter("ignore")
+        antenna_ = get_antenna(antenna)
+        cabin_ = get_cabin(cabin)
+        misti_ = get_misti(misti)
+        skychop_ = get_skychop(skychop)
+        weather_ = get_weather(weather)
+
+    # merge datasets
+    mkid = xr.merge([corresp_, readout_], join="left")
+    mkid = mkid.swap_dims({"kidid": "masterid"})
+    mkid = xr.merge([mkid, ddb_], join="left")
+
+    # correct for time offset and sampling
+    # fmt: off
+    antenna_ = (
+        antenna_
+        .assign_coords(time=antenna_.time + to_timedelta(dt_antenna))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    cabin_ = (
+        cabin_
+        .assign_coords(time=cabin_.time + to_timedelta(dt_cabin))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    misti_ = (
+        misti_
+        .assign_coords(time=misti_.time + to_timedelta(dt_misti))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    skychop_ = (
+        skychop_
+        .assign_coords(time=skychop_.time + to_timedelta(dt_skychop))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    weather_ = (
+        weather_
+        .assign_coords(time=weather_.time + to_timedelta(dt_weather))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    # fmt: on
+
+    # calculate coordinates
+    if obsinst_["scan_cood"] == "RAZEL":
+        lon = antenna_.az_prog_no_cor + (antenna_.az_real - antenna_.az_prog)
+        lat = antenna_.el_prog_no_cor + (antenna_.el_real - antenna_.el_prog)
+        lon_origin = antenna_.az_prog_center
+        lat_origin = antenna_.el_prog_center
+        frame = "altaz"
+    else:  # == "RRADEC"
+        lon = antenna_.ra_prog
+        lat = antenna_.dec_prog
+        lon_origin = np.full_like(lon, obsinst_["src_pos"].split(",")[0], float)
+        lat_origin = np.full_like(lat, obsinst_["src_pos"].split(",")[1], float)
+        frame = "fk5"
+
+    return MS.new(
+        # data
+        data=mkid["df/f"].data,
+        long_name="df/f",
+        units="dimensionless",
+        name="df/f",
+        # dimensions
+        time=mkid.time.data,
+        chan=mkid.masterid.data,
+        # labels
+        beam=np.where(skychop_.is_blocking.data, "B", "A"),
+        state=antenna_.scan_type.data,
+        # telescope pointing
+        lon=lon.data,
+        lat=lat.data,
+        lon_origin=lon_origin.data,
+        lat_origin=lat_origin.data,
+        frame=frame,
+        # weather information
+        temperature=weather_.temperature.data + 273.15,  # degC -> K
+        pressure=weather_.pressure.data * 100,  # Pa -> hPa
+        humidity=weather_.humidity.data,
+        wind_speed=weather_.wind_speed.data,
+        wind_direction=weather_.wind_direction.data,
+        # data information
+        frequency=mkid.F.data * 1e9,  # GHz -> Hz
+        exposure=1 / 160,
+        interval=1 / 160,
+        # observation information
+        observation=obsinst_["obs_file"],
+        observer=obsinst_["obs_user"],
+        project=f"{obsinst_['group']}/{obsinst_['project']}",
+        object=obsinst_["src_name"],
+        telescope_name="ASTE",
+        telescope_diameter=10.0,
+        telescope_coordinates=(
+            +2230817.2140945992,
+            -5440188.022176585,
+            -2475718.801708271,
+        ),
+        # aste specific
+        aste_cabin_temperature=cabin_.main_temperature.data + 273.15,  # degC -> K
+        aste_obs_group=obsinst_["group"],
+        aste_obs_project=obsinst_["project"],
+        aste_obs_file=obsinst_["obs_file"],
+        aste_obs_user=obsinst_["obs_user"],
+        aste_subref_x=antenna_.x.data,
+        aste_subref_y=antenna_.y.data,
+        aste_subref_z=antenna_.z.data,
+        aste_subref_xt=antenna_.xt.data,
+        aste_subref_yt=antenna_.yt.data,
+        aste_subref_zt=antenna_.zt.data,
+        aste_misti_lon=misti_.az.data,
+        aste_misti_lat=misti_.el.data,
+        aste_misti_pwv=misti_.pwv.data,  # um -> mm
+        aste_misti_frame="altaz",
+        # deshima 2.0 specific
+        d2_mkid_id=mkid.masterid.data,
+        d2_mkid_type=mkid.type.data,
+        d2_mkid_frequency=mkid.F.data * 1e9,  # GHz -> Hz
+        d2_mkid_q=mkid.Q.data,
+        d2_resp_fwd=mkid.fwd.data,
+        d2_resp_p0=mkid.p0.data,
+        d2_resp_t0=mkid.T0.data,
+        d2_skychopper_isblocking=skychop_.is_blocking.data,
+        d2_ddb_version=ddb_.version,
+        d2_demerge_version=DEMERGE_VERSION,
+    )
+
+
 def to_native(array: NDArray[Any], /) -> NDArray[Any]:
     """Convert the byte order of an array to native."""
     return array.astype(array.dtype.type)
+
+
+def to_timedelta(dt: Union[int, str], unit: str = "ms", /) -> np.timedelta64:
+    """Convert a time offset to NumPy timedelta (float will be rounded)."""
+    return np.timedelta64(int(Quantity(dt, unit=unit).to(unit).value), unit)

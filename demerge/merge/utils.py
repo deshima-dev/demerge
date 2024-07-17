@@ -313,12 +313,12 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
 
 
 def to_dems(
+    *,
     # required datasets
     corresp: PathLike,
     ddb: PathLike,
     obsinst: PathLike,
     readout: PathLike,
-    *,
     # optional datasets
     antenna: Optional[PathLike] = None,
     cabin: Optional[PathLike] = None,

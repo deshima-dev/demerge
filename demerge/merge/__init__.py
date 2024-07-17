@@ -100,8 +100,8 @@ def merge(
 
     da = to_dems(
         # required datasets
-        ddb=ddb,
         corresp=corresp,
+        ddb=ddb,
         obsinst=obsinst,
         readout=readout,
         # optional datasets

@@ -38,10 +38,9 @@ def set_logger(debug: bool):
 
 
 def reduce(
+    *,
     data_dir: PathLike,
     reduced_dir: PathLike,
-    /,
-    *,
     overwrite: bool = False,
     debug: bool = False,
 ) -> Path:

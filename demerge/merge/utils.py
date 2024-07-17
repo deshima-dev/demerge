@@ -223,6 +223,21 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
     return ds.where(ds.masterid >= 0, drop=True)
 
 
+def get_corresp(corresp: PathLike, /) -> xr.DataArray:
+    """Load a KID correspondence as xarray DataArray."""
+    dim = "masterid"
+
+    with open(corresp) as f:
+        masterid, kidid = zip(*json.load(f).items())
+
+    return xr.DataArray(
+        np.array(kidid, np.int64),
+        name="kidid",
+        dims=(dim,),
+        coords={dim: np.array(masterid, np.int64)},
+    )
+
+
 def get_misti(misti: PathLike, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (

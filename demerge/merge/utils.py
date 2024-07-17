@@ -307,8 +307,8 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
 
 def to_dems(
     # required datasets
-    ddb: PathLike,
     corresp: PathLike,
+    ddb: PathLike,
     obsinst: PathLike,
     readout: PathLike,
     *,
@@ -325,7 +325,7 @@ def to_dems(
     dt_skychop: Union[int, str] = "0 ms",
     dt_weather: Union[int, str] = "0 ms",
 ) -> xr.DataArray:
-    """Merge datasets into a single DEMS of df/f.
+    """Merge observation datasets into a single DEMS of df/f.
 
     Args:
         corresp: Path of the KID correspondence.

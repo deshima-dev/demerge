@@ -184,9 +184,9 @@ def get_misti(misti: PathLike, /) -> xr.Dataset:
     )
 
 
-def get_obstable(obstable: PathLike, /) -> dict[str, str]:
-    """Load an observation table to get parameters."""
-    with open(obstable) as f:
+def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
+    """Load an observation instruction to get parameters."""
+    with open(obsinst) as f:
         lines = f.read()
 
     def search(pattern: str) -> str:

@@ -22,7 +22,7 @@ repository = "https://github.com/deshima-dev/demerge/"
 [tool.poetry.dependencies]
 python = ">=3.9, <3.13"
 astropy = ">=5.2, <7.0"
-dems = "^2024.7.1"
+dems = "^2024.7.2"
 fire = "^0.5"
 h5py = ">=3.7, <3.11"
 lmfit = "^1.2"

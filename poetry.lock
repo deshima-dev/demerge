@@ -384,13 +384,13 @@ files = [
 
 [[package]]
 name = "dems"
-version = "2024.7.1"
+version = "2024.7.2"
 description = "DESHIMA measurement set by DataArray"
 optional = false
 python-versions = "<3.13,>=3.9"
 files = [
-    {file = "dems-2024.7.1-py3-none-any.whl", hash = "sha256:de2326671cdcae9e94d7ca15d31c52810fbae47425818ade5581fc217b055653"},
-    {file = "dems-2024.7.1.tar.gz", hash = "sha256:15a30692210cc007c3a5b96a106557ff88373e72c9a58a6ccbae7abf09576def"},
+    {file = "dems-2024.7.2-py3-none-any.whl", hash = "sha256:a80218b018319e831f6766f2910982af84884b35e5d9577e59b5896334c21f3a"},
+    {file = "dems-2024.7.2.tar.gz", hash = "sha256:6d00fe68dbe6c6e77fd630fbd67ad7a62ab2b8dcf79425829f28412147e95e50"},
 ]
 
 [package.dependencies]
@@ -1887,4 +1887,4 @@ test = ["big-O", "importlib-resources", "jaraco.functools", "jaraco.itertools", 
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.9, <3.13"
-content-hash = "68f88dff67921c659074991bbebed92acea298fd4fceee16d0d0f85426029384"
+content-hash = "235499f51feae562389f0cabc7a0b520d54df4a3cdf44a1fa4dc6b17bc99cbff"

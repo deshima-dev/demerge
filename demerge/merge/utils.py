@@ -128,6 +128,9 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
     dim = "masterid"
 
     with fits.open(ddb) as hdus:
+        # read from PRIMARY HDU
+        version = hdus["PRIMARY"].header["DDB_ID"]
+
         # read from KIDDES HDU
         ds_kiddes = xr.Dataset(
             coords={
@@ -162,7 +165,8 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
         ).drop_duplicates(dim)
 
     ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
-    return ds.where(ds.masterid >= 0, drop=True)
+    ds = ds.where(ds.masterid >= 0, drop=True)
+    return ds.assign_attrs(version=version)
 
 
 def get_misti(misti: PathLike, /) -> xr.Dataset:

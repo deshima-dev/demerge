@@ -110,6 +110,19 @@ def get_cabin(cabin: PathLike, /) -> xr.Dataset:
     )
 
 
+def get_corresp(corresp: PathLike, /) -> xr.DataArray:
+    """Load a KID correspondence as xarray DataArray."""
+    with open(corresp) as f:
+        masterid, kidid = zip(*json.load(f).items())
+
+    return xr.DataArray(
+        np.array(masterid, np.int64),
+        name="masterid",
+        dims=("kidid",),
+        coords={"kidid": np.array(kidid, np.int64)},
+    )
+
+
 def get_ddb(ddb: PathLike, /) -> xr.Dataset:
     """Load a DDB FITS as xarray Dataset."""
     dim = "masterid"
@@ -150,21 +163,6 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
 
     ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
     return ds.where(ds.masterid >= 0, drop=True)
-
-
-def get_corresp(corresp: PathLike, /) -> xr.DataArray:
-    """Load a KID correspondence as xarray DataArray."""
-    dim = "masterid"
-
-    with open(corresp) as f:
-        masterid, kidid = zip(*json.load(f).items())
-
-    return xr.DataArray(
-        np.array(kidid, np.int64),
-        name="kidid",
-        dims=(dim,),
-        coords={dim: np.array(masterid, np.int64)},
-    )
 
 
 def get_misti(misti: PathLike, /) -> xr.Dataset:

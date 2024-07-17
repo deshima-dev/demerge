@@ -11,7 +11,7 @@ DESHIMA merge code for observed datasets
 ## Installation
 
 ```shell
-pip install demerge==2024.7.0
+pip install demerge==2024.7.1
 ```
 
 ## Command line interface
@@ -26,7 +26,7 @@ SYNOPSIS
     demerge OBSID <flags>
 
 DESCRIPTION
-    Run reduce and merge commands to create a single DEMS file.
+    Run reduce and merge commands to create a single DEMS.
 
 POSITIONAL ARGUMENTS
     OBSID
@@ -51,8 +51,17 @@ FLAGS
         i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
     --ddb=DDB
         Type: Path
-        Default: PosixPath('/path/to/demerge/data/ddb_20231123.fits')
+        Default: PosixPath('/path/to/demerge/data/ddb_20240713.fits')
         Path of DDB (DESHIMA database) file.
+    --measure=MEASURE
+        Type: Literal
+        Default: 'df/f'
+        Measure of the DEMS (either df/f or brightness).
+    --overwrite=OVERWRITE
+        Type: bool
+        Default: False
+        If True, reduced data directory and merged DEMS file
+        will be overwritten even if they exist.
     --debug=DEBUG
         Type: bool
         Default: False

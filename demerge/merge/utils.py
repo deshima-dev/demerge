@@ -492,7 +492,7 @@ def to_dems(
         aste_subref_zt=antenna_.zt.data,
         aste_misti_lon=misti_.az.data,
         aste_misti_lat=misti_.el.data,
-        aste_misti_pwv=misti_.pwv.data,  # um -> mm
+        aste_misti_pwv=misti_.pwv.data * 1e-3,  # um -> mm
         aste_misti_frame="altaz",
         # deshima 2.0 specific
         d2_mkid_id=mkid.masterid.data,

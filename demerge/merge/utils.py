@@ -43,8 +43,8 @@ COLUMN_NAMES_ANTENNA = (
 COLUMN_NAMES_CABIN = (
     "date",  # %Y/%m/%d
     "time",  # %H:%M
-    "upper_cabin_temperature",  # degC
-    "main_cabin_temperature",  # degC
+    "upper_temperature",  # degC
+    "main_temperature",  # degC
     *[f"_{i}" for i in range(18)],  # unknown
 )
 COLUMN_NAMES_MISTI = (

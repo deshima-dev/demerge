@@ -340,3 +340,8 @@ def get_weather(weather: PathLike, /) -> xr.Dataset:
         parse_dates=[0],
         date_parser=DATE_PARSER_WEATHER,
     ).to_xarray()
+
+
+def to_native(array: NDArray[Any], /) -> NDArray[Any]:
+    """Convert the byte order of an array to native."""
+    return array.astype(array.dtype.type)

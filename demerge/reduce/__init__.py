@@ -8,10 +8,15 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
+from typing import Union
 
 
 # dependencies
 from fire import Fire
+
+
+# type hints
+PathLike = Union[Path, str]
 
 
 # constants
@@ -33,10 +38,9 @@ def set_logger(debug: bool):
 
 
 def reduce(
-    data_dir: Path,
-    reduced_dir: Path,
-    /,
     *,
+    data_dir: PathLike,
+    reduced_dir: PathLike,
     overwrite: bool = False,
     debug: bool = False,
 ) -> Path:

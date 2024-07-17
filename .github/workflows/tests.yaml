@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       POETRY_VIRTUALENVS_CREATE: false
+      PYTHON_DIRS: demerge docs
     strategy:
       fail-fast: false
       matrix:
@@ -29,6 +30,8 @@ jobs:
         with:
           poetry-version: "1.8.3"
       - run: poetry install
-      - run: black --check demerge
+      - run: black --check ${PYTHON_DIRS}
+      - run: pyright ${PYTHON_DIRS}
+      - run: docs/build
       - run: deshima-rawdata download 20231108052231 -e
       - run: demerge 20231108052231 --measure brightness --debug

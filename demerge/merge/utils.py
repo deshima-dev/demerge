@@ -1,58 +1,62 @@
-__all__ = ["create_dems"]
+__all__ = ["to_brightness", "to_dems"]
 
 
 # standard library
 import json
-import lzma
 import re
 from datetime import datetime as dt
-from functools import partial, reduce
 from pathlib import Path
-from typing import Any, Literal
+from typing import Any, Optional, Union
+from warnings import catch_warnings, simplefilter
 
 
 # dependencies
 import numpy as np
 import pandas as pd
 import xarray as xr
-from astropy.io import ascii, fits
+from astropy.io import fits
+from astropy.units import Quantity
 from dems.d2 import MS
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
 
 
+# type hints
+PathLike = Union[Path, str]
+
+
 # constants
 COLUMN_NAMES_ANTENNA = (
-    "time",
-    "ra-prg",  # deg
-    "dec-prg",  # deg
-    "az-prg",  # deg
-    "el-prg",  # deg
-    "az-real",  # deg
-    "el-real",  # deg
+    "time",  # %Y%m%d%H%M%S.%f
+    "ra_prog",  # deg
+    "dec_prog",  # deg
+    "az_prog",  # deg
+    "el_prog",  # deg
+    "az_real",  # deg
+    "el_real",  # deg
     "x",  # mm
     "y",  # mm
     "z",  # mm
     "xt",  # deg
     "yt",  # deg
     "zt",  # deg
-    "lst",
-    "az-prg(no-cor)",  # deg
-    "el-prog(no-cor)",  # deg
-    "az-prog(center)",  # deg
-    "el-prog(center)",  # deg
-    "type",
+    "lst",  # unknown
+    "az_prog_no_cor",  # deg
+    "el_prog_no_cor",  # deg
+    "az_prog_center",  # deg
+    "el_prog_center",  # deg
+    "scan_type",
 )
 COLUMN_NAMES_CABIN = (
-    "date",
-    "time",
-    "upper_cabin_temperature",  # degC
-    "main_cabin_temperature",  # degC
-    *[f"_{i}" for i in range(18)],
+    "date",  # %Y/%m/%d
+    "time",  # %H:%M
+    "upper_temperature",  # degC
+    "main_temperature",  # degC
+    *[f"_{i}" for i in range(18)],  # unknown
 )
 COLUMN_NAMES_MISTI = (
-    "date",
-    "time",
+    "date",  # %Y/%m/%d
+    "time",  # %H:%M:%S.%f
     "unix_time",
     "az",  # deg
     "el",  # deg
@@ -60,32 +64,33 @@ COLUMN_NAMES_MISTI = (
     "ground_temperature",  # K
 )
 COLUMN_NAMES_SKYCHOP = (
-    "time",
-    "is_blocking",
+    "time",  # unix
+    "is_blocking",  # bool
 )
 COLUMN_NAMES_WEATHER = (
-    "time",
+    "time",  # %Y%m%d%H%M%S
     "temperature",  # degC
     "pressure",  # hPa
     "humidity",  # %
     "wind_speed",  # m/s
     "wind_direction",  # deg
-    "_",
+    "_",  # unknown
 )
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
 DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
+PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 
-def get_antenna(antenna: Path, /) -> xr.Dataset:
+def get_antenna(antenna: PathLike, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         antenna,
         # read settings
         names=COLUMN_NAMES_ANTENNA,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,
@@ -94,14 +99,14 @@ def get_antenna(antenna: Path, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_cabin(cabin: Path, /) -> xr.Dataset:
+def get_cabin(cabin: PathLike, /) -> xr.Dataset:
     """Load a cabin log as xarray Dataset."""
     return (
-        pd.read_csv(
+        pd.read_csv(  # type: ignore
             cabin,
             # read settings
             names=COLUMN_NAMES_CABIN,
-            delimiter="\s+",
+            delimiter=r"\s+",
             comment="#",
             # index settings
             index_col=[0],
@@ -113,14 +118,73 @@ def get_cabin(cabin: Path, /) -> xr.Dataset:
     )
 
 
-def get_misti(misti: Path, /) -> xr.Dataset:
+def get_corresp(corresp: PathLike, /) -> xr.DataArray:
+    """Load a KID correspondence as xarray DataArray."""
+    with open(corresp) as f:
+        masterid, kidid = zip(*json.load(f).items())
+
+    return xr.DataArray(
+        np.array(masterid, np.int64),
+        name="masterid",
+        dims=("kidid",),
+        coords={"kidid": np.array(kidid, np.int64)},
+    )
+
+
+def get_ddb(ddb: PathLike, /) -> xr.Dataset:
+    """Load a DDB FITS as xarray Dataset."""
+    dim = "masterid"
+
+    with fits.open(ddb) as hdus:
+        # read from PRIMARY HDU
+        version = hdus["PRIMARY"].header["DDB_ID"]
+
+        # read from KIDDES HDU
+        ds_kiddes = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDDES"].data)[dim]),
+            },
+            data_vars={
+                "type": (dim, to_native(data["attribute"])),
+            },
+        ).drop_duplicates(dim)
+
+        # read from KIDFILT HDU
+        ds_kidfilt = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDFILT"].data)[dim]),
+            },
+            data_vars={
+                "F": (dim, to_native(data["F_filter, df_filter"].T[0])),
+                "Q": (dim, to_native(data["Q_filter, dQ_filter"].T[0])),
+            },
+        ).drop_duplicates(dim)
+
+        # read from KIDRESP HDU
+        ds_kidresp = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDRESP"].data)[dim]),
+            },
+            data_vars={
+                "p0": (dim, to_native(data["cal params"].T[0])),
+                "fwd": (dim, to_native(data["cal params"].T[1])),
+                "T0": (dim, to_native(data["cal params"].T[2])),
+            },
+        ).drop_duplicates(dim)
+
+    ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
+    ds = ds.where(ds.masterid >= 0, drop=True)
+    return ds.assign_attrs(version=version)
+
+
+def get_misti(misti: PathLike, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (
-        pd.read_csv(
+        pd.read_csv(  # type: ignore
             misti,
             # read settings
             names=COLUMN_NAMES_MISTI,
-            delimiter="\s+",
+            delimiter=r"\s+",
             comment="#",
             # index settings
             index_col=[0],
@@ -132,44 +196,55 @@ def get_misti(misti: Path, /) -> xr.Dataset:
     )
 
 
-def get_obstable(obstable: Path, /) -> dict[str, str]:
-    """Load an observation table to get parameters."""
-    with open(obstable) as f:
+def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
+    """Load an observation instruction to get parameters."""
+    with open(obsinst) as f:
         lines = f.read()
 
+    if match := re.search(r"(\d{14})", Path(obsinst).name):
+        obs_id = match[1]
+    else:
+        obs_id = ""
+
     def search(pattern: str) -> str:
-        if (match := re.search(pattern, lines)) is None:
-            return ""
-        else:
+        if match := re.search(pattern, lines):
             return match[1]
+        else:
+            return ""
 
     return {
-        # DES
-        "obs_file": search("SET DES OBS_FILE\s*'(.*)'"),
-        "obs_user": search("SET DES OBS_USER\s*'(.*)'"),
-        "project": search("SET DES PROJECT\s*'(.*)'"),
-        # ANTENNA_G
-        "epoch": search("SET ANTENNA_G EPOCH\s*'(.*)'"),
-        "scan_cood": search("SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
-        "src_name": search("SET ANTENNA_G SRC_NAME\s*'(.*)'"),
-        "src_pos": search("SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+        # read from DES section
+        "group": search(r"SET DES GROUP\s*'(.*)'"),
+        "obs_file": search(r"SET DES OBS_FILE\s*'(.*)'"),
+        "obs_user": search(r"SET DES OBS_USER\s*'(.*)'"),
+        "project": search(r"SET DES PROJECT\s*'(.*)'"),
+        # read from ANTENNA_G section
+        "scan_cood": search(r"SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
+        "src_name": search(r"SET ANTENNA_G SRC_NAME\s*'(.*)'"),
+        "src_pos": search(r"SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+        # read from file name
+        "obs_id": obs_id,
     }
 
 
-def get_readout(readout: Path, /) -> xr.DataArray:
+def get_readout(readout: PathLike, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
     with fits.open(readout) as hdus:
-        readout_data = hdus["READOUT"].data
-        kidcols = readout_data.columns[2:].names
-        time = pd.to_datetime(readout_data["timestamp"], unit="s")
-        linph = np.array([readout_data[col] for col in kidcols]).T[1]
+        kidsinfo = hdus["KIDSINFO"].data
+        readout_ = hdus["READOUT"].data
 
-        kidsinfo_data = hdus["KIDSINFO"].data
-        linyfc = kidsinfo_data["yfc, linyfc"].T[1]
-        Qr = kidsinfo_data["Qr, dQr (Sky)"].T[0]
-        fr = kidsinfo_data["fr, dfr (Sky)"].T[0]
-        fr_room = kidsinfo_data["fr, dfr (Room)"].T[0]
+        # read from KIDSINFO HDU
+        Qr = kidsinfo["Qr, dQr (Sky)"].T[0]
+        fr = kidsinfo["fr, dfr (Sky)"].T[0]
+        fr_room = kidsinfo["fr, dfr (Room)"].T[0]
+        linyfc = kidsinfo["yfc, linyfc"].T[1]
 
+        # read from READOUT HDU
+        cols = readout_.columns[2:].names
+        time = pd.to_datetime(readout_["timestamp"], unit="s")
+        linph = np.array([readout_[col] for col in cols]).T[1]
+
+    # calculate df/f (or fshift, dx)
     if np.isnan(fr_room).all():
         dfof = (linph - linyfc) / (4.0 * Qr)
     else:
@@ -179,20 +254,17 @@ def get_readout(readout: Path, /) -> xr.DataArray:
         dfof,
         name="df/f",
         dims=("time", "kidid"),
-        coords={
-            "time": time,
-            "kidid": np.arange(dfof.shape[1]),
-        },
+        coords={"time": time, "kidid": np.arange(dfof.shape[1])},
     )
 
 
-def get_skychop(skychop: Path, /) -> xr.Dataset:
+def get_skychop(skychop: PathLike, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         skychop,
         # read settings
         names=COLUMN_NAMES_SKYCHOP,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,
@@ -201,13 +273,13 @@ def get_skychop(skychop: Path, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_weather(weather: Path, /) -> xr.Dataset:
+def get_weather(weather: PathLike, /) -> xr.Dataset:
     """Load a weather log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         weather,
         # read settings
         names=COLUMN_NAMES_WEATHER,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,
@@ -216,638 +288,231 @@ def get_weather(weather: Path, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def load_obsinst(obsinst: Path) -> dict[str, Any]:
-    """Get various values from an obsinst file."""
+def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
+    """Convert a DEMS of df/f to that of brightness."""
+    if np.isnan(T_room := dfof.aste_cabin_temperature.mean().data):
+        T_room = 293.0
 
-    # default values
-    epoch = 2000.0
-    obs = ""
-    obs_user = ""
-    project = ""
-    src_name = ""
-    src_pos = ["0.0", "0.0"]
-    trk_type = ""
+    if np.isnan(T_amb := dfof.temperature.mean().data):
+        T_amb = 273.0
 
-    with open(obsinst, "r") as f:
-        for line in f:
-            if "SET ANTENNA_G EPOCH" in line:
-                epoch = line.split()[-1].strip("'JB")
-            elif "SET DES OBS_FILE" in line:
-                obs_file = line.split()[-1].strip("'")
-            elif "SET DES OBS_USER" in line:
-                obs_user = line.split()[-1].strip("'")
-            elif "SET DES PROJECT" in line:
-                project = line.split()[-1].strip("'")
-            elif "SET ANTENNA_G SRC_NAME" in line:
-                src_name = line.split()[-1].strip("'")
-            elif "SET ANTENNA_G SRC_POS" in line:
-                src_pos = line.split()[-1].strip("()").split(",")
-            elif "SET ANTENNA_G TRK_TYPE" in line:
-                trk_type = line.split()[-1].strip("'")
+    fwd = dfof.d2_resp_fwd.data
+    p0 = dfof.d2_resp_p0.data
+    T0 = dfof.d2_resp_t0.data
 
-    if trk_type == "RADEC":
-        ra, dec = src_pos
-    else:
-        ra, dec = 0.0, 0.0
-
-    return {
-        "observation": obs_file,
-        "observer": obs_user,
-        "project": project,
-        "object": src_name,
-        "equinox": float(epoch),
-        "ra": float(ra),
-        "dec": float(dec),
-    }
-
-
-def get_corresp_frame(ddb: fits.HDUList, corresp_file: str) -> pd.DataFrame:
-    """Get correspondence between KID ID and each KID attribute.
-
-    Args:
-        ddb: DESHIMA database (DDB) as an HDU list.
-        corresp_file: Master-to-KID ID correspondence as JSON file.
-
-    Returns:
-        DataFrame of correspondence between KID ID and each KID attribute.
-
-    """
-
-    def native(array: NDArray[Any]) -> NDArray[Any]:
-        """Convert the byte order of an array to native."""
-        return array.astype(array.dtype.type)
-
-    frames: list[pd.DataFrame] = []
-
-    # DataFrame of KIDDES HDU
-    data = ddb["KIDDES"].data
-    frame = pd.DataFrame(
-        index=pd.Index(
-            native(data["masterid"]),
-            name="masterid",
-        ),
-        data={
-            "kidtype": native(data["attribute"]),
-        },
-    )
-    frames.append(frame)
-
-    # DataFrame of KIDFILT HDU
-    data = ddb["KIDFILT"].data
-    frame = pd.DataFrame(
-        index=pd.Index(
-            data=native(data["masterid"]),
-            name="masterid",
-        ),
-        data={
-            "kidfreq": native(data["F_filter, df_filter"][:, 0]),
-            "kidQ": native(data["Q_filter, dQ_filter"][:, 0]),
-        },
-    )
-    frame["kidfreq"] *= 1e9
-    frames.append(frame)
-
-    # DataFrame of KIDRESP HDU
-    if "KIDRESP" in ddb:
-        data = ddb["KIDRESP"].data
-        frame = pd.DataFrame(
-            index=pd.Index(
-                data=native(data["masterid"]),
-                name="masterid",
-            ),
-            data={
-                "p0": native(data["cal params"][:, 0]),
-                "etaf": native(data["cal params"][:, 1]),
-                "T0": native(data["cal params"][:, 2]),
-            },
-        )
-        frames.append(frame)
-
-    # Outer-join DataFrames
-    join = partial(pd.DataFrame.join, how="outer")
-    frame = reduce(join, frames)
-
-    # Assign KID ID as index
-    with open(corresp_file, mode="r") as f:
-        corresp = json.load(f)
-
-    index = pd.Index(
-        data=[corresp.get(str(i), -1) for i in frame.index],
-        name="kidid",
-    )
-    frame = frame.reset_index().set_index(index)
-
-    # Drop rows with invalid master or KID IDs (-1)
-    frame = frame[frame.index != -1]
-    frame = frame[frame.masterid != -1]
-    return frame
-
-
-def convert_readout(
-    readout: fits.HDUList,
-    corresp: pd.DataFrame,
-    to: Literal["brightness", "df/f"],
-    T_room: float,
-    T_amb: float,
-):
-    """Reduced readoutの値をDEMS出力形式に変換（校正）する
-
-    Args:
-        readout: Reduced readout FITSのHDUListオブジェクト
-        corresp: KID IDと各KIDの測定値を対応づけるDataFrame
-        to: 変換形式（brightness or df/f)
-        T_room: キャビン温度(K)
-        T_amb: 外気温(K)
-
-    """
-    kidcols = readout["READOUT"].data.columns[2:].names
-    linph = np.array([readout["READOUT"].data[n] for n in kidcols]).T[1]
-    linyfc = np.array(readout["KIDSINFO"].data["yfc, linyfc"]).T[1]
-    Qr = np.array(readout["KIDSINFO"].data["Qr, dQr (Sky)"]).T[0]
-    fr = np.array(readout["KIDSINFO"].data["fr, dfr (Sky)"]).T[0]
-    fr_room = np.array(readout["KIDSINFO"].data["fr, dfr (Room)"]).T[0]
-
-    if np.isnan(fr_room).all():
-        fshift = (linph - linyfc) / (4.0 * Qr)
-    else:
-        fshift = (linph - linyfc) / (4.0 * Qr) - (fr - fr_room) / fr
-
-    if to == "df/f":
-        return fshift[:, corresp.index.values]
-
-    if to == "brightness":
-        return Tlos_model(
-            dx=fshift[:, corresp.index.values],
-            p0=corresp.p0.values,
-            etaf=corresp.etaf.values,
-            T0=corresp.T0.values,
-            Troom=T_room,
-            Tamb=T_amb,
-        )
-
-    raise ValueError(f"Invalid output type: {to}")
-
-
-def Tlos_model(dx, p0, etaf, T0, Troom, Tamb):
-    """Calibrate 'amplitude' and 'phase' to 'power'"""
     return (
-        (dx + p0 * np.sqrt(Troom + T0)) ** 2 / (p0**2 * etaf)
-        - T0 / etaf
-        - (1 - etaf) / etaf * Tamb
+        dfof.copy(
+            deep=True,
+            data=(dfof.data + p0 * np.sqrt(T_room + T0)) ** 2 / (p0**2 * fwd)
+            - T0 / fwd
+            - (1 - fwd) / fwd * T_amb,
+        )
+        .rename("Brightness")
+        .assign_attrs(long_name="Brightness", units="K")
     )
 
 
-def convert_asciitime(asciitime, form_fitstime):
-    """Ascii time"""
-    asciitime = [dt.strptime("%14.6f" % t, "%Y%m%d%H%M%S.%f") for t in asciitime]
-    asciitime = [dt.strftime(t, form_fitstime) for t in asciitime]
-    return np.array(asciitime)
-
-
-def convert_timestamp(timestamp):
-    """Timestamp"""
-    timestamp = [dt.utcfromtimestamp(t) for t in timestamp]
-    timestamp = [dt.strftime(t, "%Y-%m-%dT%H:%M:%S.%f") for t in timestamp]
-    return np.array(timestamp)
-
-
-def retrieve_cabin_temps(filename=None):
-    """キャビン内温度を取得する
+def to_dems(
+    *,
+    # required datasets
+    corresp: PathLike,
+    ddb: PathLike,
+    obsinst: PathLike,
+    readout: PathLike,
+    # optional datasets
+    antenna: Optional[PathLike] = None,
+    cabin: Optional[PathLike] = None,
+    misti: Optional[PathLike] = None,
+    skychop: Optional[PathLike] = None,
+    weather: Optional[PathLike] = None,
+    # optional time offsets
+    dt_antenna: Union[int, str] = "0 ms",
+    dt_cabin: Union[int, str] = "0 ms",
+    dt_misti: Union[int, str] = "0 ms",
+    dt_skychop: Union[int, str] = "0 ms",
+    dt_weather: Union[int, str] = "0 ms",
+) -> xr.DataArray:
+    """Merge observation datasets into a single DEMS of df/f.
 
     Args:
-        str ファイル名
-
-    Keyword Args:
-        なし
-
-    Returns:
-        tuple (timestames, upperCabinTemps, lowerCabinTemps)
-               tupleの各要素はnumpy.array。要素数は同じ。
-               また、ファイル名が空の場合はデフォルト値が入った配列が返される。
-    """
-    if filename == "" or filename is None:
-        return (
-            np.array(["1970-01-01"]).astype("datetime64[ns]"),
-            np.array([20.0]).astype(np.float64),
-            np.array([20.0]).astype(np.float64),
-        )
-
-    table = ascii.read(filename, format="no_header")
-
-    # 日付と時刻を取得して文字列でタイムスタンプを作成しそれをnumpy.datetime64へ変換する
-    # テーブルの1列目と2列目がそれぞれ日付と時刻
-    datetimes = []
-    for date, time in zip(table["col1"], table["col2"]):
-        s = "{}T{}".format(date, time)
-        s = s.replace("/", "-")
-        datetimes.append(s)
-
-    datetimes = np.array(datetimes).astype("datetime64[ns]")
-    upper_cabin_temps = np.array(table["col3"]).astype(np.float64)
-    lower_cabin_temps = np.array(table["col4"]).astype(np.float64)
-
-    return (datetimes, upper_cabin_temps, lower_cabin_temps)
-
-
-def retrieve_skychop_states(
-    skychop: Path,
-) -> tuple[NDArray[np.float64], NDArray[np.int8]]:
-    """skychopファイル(text file)からskychopの時系列状態を取得する
-
-    Args:
-        str ファイル名(xzで圧縮されていても読める)
+        corresp: Path of the KID correspondence.
+        ddb: Path of DDB FITS.
+        obsinst: Path of the observation instruction.
+        readout: Path of the reduced readout FITS.
+        antenna: Path of the antenna log.
+        cabin: Path of the cabin log.
+        misti: Path of the MiSTI log.
+        skychop: Path of the sky chopper log.
+        weather: Path of the weather log.
+        dt_antenna: Time offset of the antenna log with explicit
+            unit such that (dt_antenna = t_antenna - t_readout).
+        dt_cabin: Time offset of the cabin log with explicit
+            unit such that (dt_cabin = t_cabin - t_readout).
+        dt_misti: Time offset of the MiSTI log with explicit
+            unit such that (dt_misti = t_misti - t_readout).
+        dt_skychop: Time offset of the sky chopper log with explicit
+            unit such that (dt_skychop = t_skychop - t_readout).
+        dt_weather: Time offset of the weather log with explicit
+            unit such that (dt_weather = t_weather - t_readout).
 
     Returns:
-        tuple (timestames, states)
-          tupleの各要素はnumpy.array。要素数は同じ。
-
-    説明:
-        時刻について
-        ============
-        skychopファイルに記録されている時刻はUNIX時間。
-
-        ファイル形式
-        ============
-        1列目 UNIX時刻
-        2列目 0/1による状態
-        "#"から始まるコメントがファイル冒頭に数行ある。
-    """
-    if Path(skychop).suffix == ".xz":
-        with lzma.open(skychop, "rt") as f:
-            data = f.read()
-    else:
-        with open(skychop, "rt") as f:
-            data = f.read()
-
-    table = ascii.read(
-        data,
-        guess=False,
-        format="no_header",
-        delimiter=" ",
-        names=["datetime", "state"],
-    )
-    datetimes = np.array(table["datetime"]).astype(np.float64)
-    states = np.array(table["state"]).astype(np.int8)
-    return (datetimes, states)
-
-
-def retrieve_misti_log(filename):
-    """mistiファイルからの時系列データを取得する
-
-    Args:
-        str ファイル名
-
-    Returns:
-        tuple (timestames, az, el, pwv)
-            tupleの各要素はnumpy.array。要素数は同じ。
-            また、ファイル名が空の場合はNaNが1つだけ入った配列を返す。
-
-
-    説明:
-        ファイル形式:
-        1列目 年/月/日
-        2列目 時:分:6列目 秒(小数点以下2桁も含む)
-        3列目 UNIX時間
-        4列目 az(deg)
-        5列目 el(deg)
-        6列目 pwv(um)
-        7列目 Tground(K)
-        "#"から始まるコメントがファイル冒頭に数行ある。
+        Merged DEMS of df/f as xarray DataArray.
 
     """
-    if filename == "" or filename is None:
-        return (
-            np.array([np.nan]).astype("datetime64[ns]"),
-            np.array([np.nan]).astype(np.float64),
-            np.array([np.nan]).astype(np.float64),
-            np.array([np.nan]).astype(np.float64),
-        )
+    # load required datasets
+    corresp_ = get_corresp(corresp)
+    ddb_ = get_ddb(ddb)
+    readout_ = get_readout(readout)
+    obsinst_ = get_obsinst(obsinst)
 
-    column_names = [
-        "date",
-        "time",
-        "unixtime",
-        "az",
-        "el",
-        "pwv",
-        "Tround",
-    ]
-    table = ascii.read(
-        filename,
-        guess=False,
-        format="no_header",
-        delimiter=" ",
-        names=column_names,
-    )
+    # load optional datasets
+    if antenna is None:
+        antenna = PACKAGE_DATA / "missing.ant"
 
-    az = np.array(table["az"]).astype(np.float64)
-    el = np.array(table["el"]).astype(np.float64)
-    pwv = np.array(table["pwv"]).astype(np.float64) / 1000.0  # umからmmへ変換
+    if cabin is None:
+        cabin = PACKAGE_DATA / "missing.cabin"
 
-    datetimes = []
-    for row in table:
-        datetimes.append(
-            dt.strptime(
-                "{} {}".format(row["date"], row["time"]),
-                format="%Y/%m/%d %H:%M:%S.%f",
-            )
-        )
+    if misti is None:
+        misti = PACKAGE_DATA / "missing.misti"
 
-    return np.array(datetimes).astype("datetime64[ns]"), az, el, pwv
+    if skychop is None:
+        skychop = PACKAGE_DATA / "missing.skychop"
 
+    if weather is None:
+        weather = PACKAGE_DATA / "missing.wea"
 
-def create_dems(
-    ddbfits_path: str,
-    corresp_path: str,
-    obsinst_path: str,
-    antenna_path: str,
-    readout_path: str,
-    skychop_path: str,
-    weather_path: str,
-    misti_path: str,
-    cabin_path: str,
-    coordinate: str,
-    measure: str,
-    offset_time_antenna: int,
-):
-    # 時刻と各種データを読み込む
-    readout_hdul = fits.open(readout_path, mode="readonly")
-    ddbfits_hdul = fits.open(ddbfits_path, mode="readonly")
-    weather_table = ascii.read(weather_path)
-    weather_table["tmperature"] += 273.15
-    # 最後の1行は終端を表す意味のないデータが入っているため無視する
-    antenna_table = ascii.read(antenna_path)[:-1]
-    # 観測スクリプトに含まれているパラメタを抽出する
-    obsinst_params = load_obsinst(obsinst_path)
+    with catch_warnings():
+        simplefilter("ignore")
+        antenna_ = get_antenna(antenna)
+        cabin_ = get_cabin(cabin)
+        misti_ = get_misti(misti)
+        skychop_ = get_skychop(skychop)
+        weather_ = get_weather(weather)
 
-    # 必要に応じて時刻はnp.datetime64[ns]へ変換する
-    times = convert_timestamp(readout_hdul["READOUT"].data["timestamp"])
-    times = np.array(times).astype("datetime64[ns]")
+    # merge datasets
+    mkid = xr.merge([corresp_, readout_], join="left")
+    mkid = mkid.swap_dims({"kidid": "masterid"})
+    mkid = xr.merge([mkid, ddb_], join="left")
 
-    times_misti, az_misti, el_misti, pwv_misti = retrieve_misti_log(misti_path)
-    times_cabin, _, lower_cabin_temp = retrieve_cabin_temps(cabin_path)
-    lower_cabin_temp = lower_cabin_temp + 273.15  # 度CからKへ変換
-
-    times_weather = convert_asciitime(
-        asciitime=weather_table["time"],
-        form_fitstime="%Y-%m-%dT%H:%M:%S.%f",
-    )
-    times_weather = np.array(times_weather).astype("datetime64[ns]")
-
-    times_skychop, states_skychop = retrieve_skychop_states(skychop_path)
-    times_skychop = convert_timestamp(times_skychop)
-    times_skychop = np.array(times_skychop).astype("datetime64[ns]")
-
-    times_antenna = convert_asciitime(
-        asciitime=antenna_table["time"],
-        form_fitstime="%Y-%m-%dT%H:%M:%S.%f",
-    )
+    # correct for time offset and sampling
     # fmt: off
-    times_antenna = (
-        np.array(times_antenna).astype("datetime64[ns]")
-        + np.timedelta64(offset_time_antenna, "ms")
+    antenna_ = (
+        antenna_
+        .assign_coords(time=antenna_.time + to_timedelta(dt_antenna))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    cabin_ = (
+        cabin_
+        .assign_coords(time=cabin_.time + to_timedelta(dt_cabin))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    misti_ = (
+        misti_
+        .assign_coords(time=misti_.time + to_timedelta(dt_misti))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    skychop_ = (
+        skychop_
+        .assign_coords(time=skychop_.time + to_timedelta(dt_skychop))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
+    )
+    weather_ = (
+        weather_
+        .assign_coords(time=weather_.time + to_timedelta(dt_weather))
+        .interp_like(readout_, kwargs={"fill_value": "extrapolate"})
     )
     # fmt: on
 
-    ddb_version = ddbfits_hdul["PRIMARY"].header["DDB_ID"]
-
-    corresp = get_corresp_frame(ddbfits_hdul, corresp_path)
-    response = convert_readout(
-        readout=readout_hdul,
-        corresp=corresp,
-        to=measure,
-        T_room=lower_cabin_temp[0],
-        T_amb=np.nanmean(weather_table["tmperature"]),
-    )
-
-    if measure == "brightness":
-        long_name = "Brightness"
-        units = "K"
-    elif measure == "df/f":
-        long_name = "df/f"
-        units = "dimensionless"
-    else:
-        raise KeyError("Invalid measure: {}".format(measure))
-
-    ddbfits_hdul.close()
-    readout_hdul.close()
-
-    # モードに応じて経度(lon)と緯度(lat)を選択(azelかradecか)する
-    if coordinate == "azel":
-        if "az-prg(no-cor)" in antenna_table.colnames:
-            az_prg = antenna_table["az-prg(no-cor)"]
-            el_prog = antenna_table["el-prog(no-cor)"]
-        elif "az-prg(no-col)" in antenna_table.colnames:
-            az_prg = antenna_table["az-prg(no-col)"]
-            el_prog = antenna_table["el-prog(no-col)"]
-        else:
-            raise KeyError(
-                str(antenna_path)
-                + "ファイルにaz-prg(no-cor)列またはaz-prg(no-col)列がありません。"
-            )
-
-        lon = az_prg + antenna_table["az-real"] - antenna_table["az-prg"]
-        lat = el_prog + antenna_table["el-real"] - antenna_table["el-prg"]
-        lon_origin = antenna_table["az-prog(center)"]
-        lat_origin = antenna_table["el-prog(center)"]
-    elif coordinate == "radec":
-        lon = antenna_table["ra-prg"]
-        lat = antenna_table["dec-prg"]
-        # 観測スクリプトに設定されているRA,DEC
-        lon_origin = np.full_like(lon, obsinst_params["ra"])
-        lat_origin = np.full_like(lat, obsinst_params["dec"])
-    else:
-        raise KeyError("Invalid coodinate type: {}".format(coordinate))
-
-    # 補間関数で扱うためにSCANTYPE(文字列)を適当な整数に対応させる
-    states = np.array(antenna_table["type"])
-    state_types = {state_type: i for i, state_type in enumerate(np.unique(states))}
-    state_type_numbers = np.zeros(states.shape[0], dtype=int)
-    for state_type, i in state_types.items():
-        state_type_numbers[states == state_type] = i
-
-    # 補間のためにDataArrayへ格納する
-    response_xr = xr.DataArray(
-        data=response,
-        dims=["time", "chan"],
-        coords=[times, corresp.index],
-    )
-    lon_xr = xr.DataArray(
-        data=lon,
-        coords={"time": times_antenna},
-    )
-    lat_xr = xr.DataArray(
-        data=lat,
-        coords={"time": times_antenna},
-    )
-    lon_origin_xr = xr.DataArray(
-        data=lon_origin,
-        coords={"time": times_antenna},
-    )
-    lat_origin_xr = xr.DataArray(
-        data=lat_origin,
-        coords={"time": times_antenna},
-    )
-    temperature_xr = xr.DataArray(
-        data=weather_table["tmperature"],
-        coords={"time": times_weather},
-    )
-    humidity_xr = xr.DataArray(
-        data=weather_table["vapor-pressure"],
-        coords={"time": times_weather},
-    )
-    pressure_xr = xr.DataArray(
-        data=weather_table["presure"],
-        coords={"time": times_weather},
-    )
-    wind_speed_xr = xr.DataArray(
-        data=weather_table["aux1"],
-        coords={"time": times_weather},
-    )
-    wind_direction_xr = xr.DataArray(
-        data=weather_table["aux2"],
-        coords={"time": times_weather},
-    )
-    skychop_state_xr = xr.DataArray(
-        data=states_skychop,
-        coords={"time": times_skychop},
-    )
-    aste_cabin_temperature_xr = xr.DataArray(
-        data=lower_cabin_temp,
-        coords={"time": times_cabin},
-    )
-    aste_subref_x_xr = xr.DataArray(
-        data=antenna_table["x"],
-        coords={"time": times_antenna},
-    )
-    aste_subref_y_xr = xr.DataArray(
-        data=antenna_table["y"],
-        coords={"time": times_antenna},
-    )
-    aste_subref_z_xr = xr.DataArray(
-        data=antenna_table["z"],
-        coords={"time": times_antenna},
-    )
-    aste_subref_xt_xr = xr.DataArray(
-        data=antenna_table["xt"],
-        coords={"time": times_antenna},
-    )
-    aste_subref_yt_xr = xr.DataArray(
-        data=antenna_table["yt"],
-        coords={"time": times_antenna},
-    )
-    aste_subref_zt_xr = xr.DataArray(
-        data=antenna_table["zt"],
-        coords={"time": times_antenna},
-    )
-    aste_misti_lon_xr = xr.DataArray(
-        data=az_misti,
-        coords={"time": times_misti},
-    )
-    aste_misti_lat_xr = xr.DataArray(
-        data=el_misti,
-        coords={"time": times_misti},
-    )
-    aste_misti_pwv_xr = xr.DataArray(
-        data=pwv_misti,
-        coords={"time": times_misti},
-    )
-    state_type_numbers_xr = xr.DataArray(
-        data=state_type_numbers,
-        coords={"time": times_antenna},
-    )
-
-    # Tsignalsの時刻に合わせて補間する
-    lon = lon_xr.interp_like(response_xr)
-    lat = lat_xr.interp_like(response_xr)
-    lon_origin = lon_origin_xr.interp_like(response_xr)
-    lat_origin = lat_origin_xr.interp_like(response_xr)
-    temperature = temperature_xr.interp_like(response_xr)
-    humidity = humidity_xr.interp_like(response_xr)
-    pressure = pressure_xr.interp_like(response_xr)
-    wind_speed = wind_speed_xr.interp_like(response_xr)
-    wind_direction = wind_direction_xr.interp_like(response_xr)
-    aste_subref_x = aste_subref_x_xr.interp_like(response_xr)
-    aste_subref_y = aste_subref_y_xr.interp_like(response_xr)
-    aste_subref_z = aste_subref_z_xr.interp_like(response_xr)
-    aste_subref_xt = aste_subref_xt_xr.interp_like(response_xr)
-    aste_subref_yt = aste_subref_yt_xr.interp_like(response_xr)
-    aste_subref_zt = aste_subref_zt_xr.interp_like(response_xr)
-    skychop_state = skychop_state_xr.interp_like(
-        response_xr,
-        method="nearest",
-    )
-    state_type_numbers = state_type_numbers_xr.interp_like(
-        response_xr,
-        method="nearest",
-    )
-
-    aste_cabin_temperature = np.nan
-    aste_misti_lon = np.nan
-    aste_misti_lat = np.nan
-    aste_misti_pwv = np.nan
-
-    if cabin_path != "" and cabin_path is not None:
-        aste_cabin_temperature = aste_cabin_temperature_xr.interp_like(response_xr)
-
-    if misti_path != "" and misti_path is not None:
-        aste_misti_lon = aste_misti_lon_xr.interp_like(response_xr)
-        aste_misti_lat = aste_misti_lat_xr.interp_like(response_xr)
-        aste_misti_pwv = aste_misti_pwv_xr.interp_like(response_xr)
-
-    # 補間後のSTATETYPEを文字列に戻す
-    state = np.full_like(state_type_numbers, "GRAD", dtype="<U8")
-    for state_type, i in state_types.items():
-        state[state_type_numbers == i] = state_type
-
-    # Sky chopperの状態からビームラベルを割り当てる(1 -> B, 0 -> A)
-    beam = np.where(skychop_state, "B", "A")
+    # calculate coordinates
+    if obsinst_["scan_cood"] == "RAZEL":
+        lon = antenna_.az_prog_no_cor + (antenna_.az_real - antenna_.az_prog)
+        lat = antenna_.el_prog_no_cor + (antenna_.el_real - antenna_.el_prog)
+        lon_origin = antenna_.az_prog_center
+        lat_origin = antenna_.el_prog_center
+        frame = "altaz"
+    else:  # == "RRADEC"
+        lon = antenna_.ra_prog
+        lat = antenna_.dec_prog
+        lon_origin = np.full_like(lon, obsinst_["src_pos"].split(",")[0], float)
+        lat_origin = np.full_like(lat, obsinst_["src_pos"].split(",")[1], float)
+        frame = "fk5"
 
     return MS.new(
-        data=response,
-        long_name=long_name,
-        units=units,
-        time=times,
-        chan=corresp.masterid,
-        beam=beam,
-        state=state,
-        lon=lon,
-        lat=lat,
-        lon_origin=lon_origin,
-        lat_origin=lat_origin,
-        temperature=temperature,
-        pressure=pressure,
-        humidity=humidity,
-        wind_speed=wind_speed,
-        wind_direction=wind_direction,
-        frequency=corresp.kidfreq,
-        aste_cabin_temperature=aste_cabin_temperature,
-        aste_subref_x=aste_subref_x,
-        aste_subref_y=aste_subref_y,
-        aste_subref_z=aste_subref_z,
-        aste_subref_xt=aste_subref_xt,
-        aste_subref_yt=aste_subref_yt,
-        aste_subref_zt=aste_subref_zt,
-        aste_misti_lon=aste_misti_lon,
-        aste_misti_lat=aste_misti_lat,
-        aste_misti_pwv=aste_misti_pwv,
-        d2_mkid_id=corresp.index,
-        d2_mkid_type=corresp.kidtype,
-        d2_mkid_frequency=corresp.kidfreq,
-        d2_skychopper_isblocking=skychop_state,
+        # data
+        data=mkid["df/f"].data,
+        long_name="df/f",
+        units="dimensionless",
+        name="df/f",
+        # dimensions
+        time=mkid.time.data,
+        chan=mkid.masterid.data,
+        # labels
+        beam=np.where(skychop_.is_blocking.data, "B", "A"),
+        state=antenna_.scan_type.data,
+        # telescope pointing
+        lon=lon.data,
+        lat=lat.data,
+        lon_origin=lon_origin.data,
+        lat_origin=lat_origin.data,
+        frame=frame,
+        # weather information
+        temperature=weather_.temperature.data + 273.15,  # degC -> K
+        pressure=weather_.pressure.data * 100,  # Pa -> hPa
+        humidity=weather_.humidity.data,
+        wind_speed=weather_.wind_speed.data,
+        wind_direction=weather_.wind_direction.data,
+        # data information
+        frequency=mkid.F.data * 1e9,  # GHz -> Hz
+        exposure=1 / 160,
+        interval=1 / 160,
+        # observation information
+        observation=obsinst_["obs_file"],
+        observer=obsinst_["obs_user"],
+        project=f"{obsinst_['group']}/{obsinst_['project']}",
+        object=obsinst_["src_name"],
+        telescope_name="ASTE",
+        telescope_diameter=10.0,
+        telescope_coordinates=(
+            +2230817.2140945992,
+            -5440188.022176585,
+            -2475718.801708271,
+        ),
+        # aste specific
+        aste_cabin_temperature=cabin_.main_temperature.data + 273.15,  # degC -> K
+        aste_obs_id=obsinst_["obs_id"],
+        aste_obs_group=obsinst_["group"],
+        aste_obs_project=obsinst_["project"],
+        aste_obs_file=obsinst_["obs_file"],
+        aste_obs_user=obsinst_["obs_user"],
+        aste_subref_x=antenna_.x.data,
+        aste_subref_y=antenna_.y.data,
+        aste_subref_z=antenna_.z.data,
+        aste_subref_xt=antenna_.xt.data,
+        aste_subref_yt=antenna_.yt.data,
+        aste_subref_zt=antenna_.zt.data,
+        aste_misti_lon=misti_.az.data,
+        aste_misti_lat=misti_.el.data,
+        aste_misti_pwv=misti_.pwv.data,  # um -> mm
+        aste_misti_frame="altaz",
+        # deshima 2.0 specific
+        d2_mkid_id=mkid.masterid.data,
+        d2_mkid_type=mkid.type.data,
+        d2_mkid_frequency=mkid.F.data * 1e9,  # GHz -> Hz
+        d2_mkid_q=mkid.Q.data,
+        d2_resp_fwd=mkid.fwd.data,
+        d2_resp_p0=mkid.p0.data,
+        d2_resp_t0=mkid.T0.data,
+        d2_skychopper_isblocking=skychop_.is_blocking.data,
+        d2_ddb_version=ddb_.version,
         d2_demerge_version=DEMERGE_VERSION,
-        d2_ddb_version=ddb_version,
-        # 18 arcsec MergeToDfits()でも固定値が指定されていた
-        beam_major=0.005,
-        # 18 arcsec MergeToDfits()でも固定値が指定されていた
-        beam_minor=0.005,
-        # 18 arcsec MergeToDfits()でも固定値が指定されていた
-        beam_pa=0.005,
-        # MergeToDfits()でも固定値が指定されていた
-        exposure=1.0 / 196,
-        # MergeToDfits()でも固定値が指定されていた
-        interval=1.0 / 196,
-        observation=obsinst_params["observation"],
-        observer=obsinst_params["observer"],
-        object=obsinst_params["object"],
     )
+
+
+def to_native(array: NDArray[Any], /) -> NDArray[Any]:
+    """Convert the byte order of an array to native."""
+    return array.astype(array.dtype.type)
+
+
+def to_timedelta(dt: Union[int, str], unit: str = "ms", /) -> np.timedelta64:
+    """Convert a time offset to NumPy timedelta (float will be rounded)."""
+    return np.timedelta64(int(Quantity(dt, unit=unit).to(unit).value), unit)

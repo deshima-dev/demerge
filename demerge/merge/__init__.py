@@ -5,11 +5,16 @@ __all__ = ["merge"]
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
+from typing import Literal, Optional, Union
 
 
 # dependencies
 from fire import Fire
-from .utils import create_dems
+from .utils import to_brightness, to_dems
+
+
+# type hints
+PathLike = Union[Path, str]
 
 
 # constants
@@ -33,65 +38,88 @@ def merge(
     dems: Path,
     /,
     *,
-    ddb: str,
-    corresp: str,
-    obsinst: str,
-    antenna: str,
-    readout: str,
-    skychop: str,
-    weather: str,
-    misti: str = "",
-    cabin: str = "",
-    coordinate: str = "azel",
-    measure: str = "df/f",
+    # required datasets
+    corresp: PathLike,
+    ddb: PathLike,
+    obsinst: PathLike,
+    readout: PathLike,
+    # optional datasets
+    antenna: Optional[PathLike] = None,
+    cabin: Optional[PathLike] = None,
+    misti: Optional[PathLike] = None,
+    skychop: Optional[PathLike] = None,
+    weather: Optional[PathLike] = None,
+    # optional time offsets
+    dt_antenna: Union[int, str] = "0 ms",
+    dt_cabin: Union[int, str] = "0 ms",
+    dt_misti: Union[int, str] = "0 ms",
+    dt_skychop: Union[int, str] = "0 ms",
+    dt_weather: Union[int, str] = "0 ms",
+    # merge options
+    measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
-    offset_time_antenna: int = 0,
 ) -> Path:
-    """Merge datasets of an observation into a single DEMS file.
+    """Merge observation datasets into a single DEMS.
 
     Args:
-        dems: Path of the output DEMS file (.zarr.zip).
-        ddb: Path of the DDB file (.fits or .fits.gz).
-        corresp: Path of the Master-to-KID ID correspondence file (.json).
-        obsinst: Path of the observation instruction file (.obs).
-        antenna: Path of the antenna log file (.ant).
-        readout: Path of the reduced FITS file (.fits).
-        skychop: Path of the Sky chopper file (.skychop).
-        weather: Path of the weather log file (.weather).
-        misti: Path of the MiSTI log file (.misti).
-        cabin: Path of the cabin log file (.cabin).
-        coordinate: Coordinate system of the output data (azel or radec).
-        measure: Output data format (df/f or brightness).
+        dems: Path of the merged DEMS.
+        corresp: Path of the KID correspondence.
+        ddb: Path of DDB FITS.
+        obsinst: Path of the observation instruction.
+        readout: Path of the reduced readout FITS.
+        antenna: Path of the antenna log.
+        cabin: Path of the cabin log.
+        misti: Path of the MiSTI log.
+        skychop: Path of the sky chopper log.
+        weather: Path of the weather log.
+        dt_antenna: Time offset of the antenna log with explicit
+            unit such that (dt_antenna = t_antenna - t_readout).
+        dt_cabin: Time offset of the cabin log with explicit
+            unit such that (dt_cabin = t_cabin - t_readout).
+        dt_misti: Time offset of the MiSTI log with explicit
+            unit such that (dt_misti = t_misti - t_readout).
+        dt_skychop: Time offset of the sky chopper log with explicit
+            unit such that (dt_skychop = t_skychop - t_readout).
+        dt_weather: Time offset of the weather log with explicit
+            unit such that (dt_weather = t_weather - t_readout).
+        measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, ``dems`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
-        offset_time_antenna: Time diff (ms) between reduced FITS and antenna log.
 
     Returns:
-        Path of the merged DEMS file.
+        Path of the merged DEMS.
 
     Raises:
-        FileExistsError: Raised if ``dems`` exists.
+        FileExistsError: Raised if ``dems`` exists and ``overwrite`` is False.
 
     """
     with set_logger(debug):
         for key, val in locals().items():
             LOGGER.debug(f"{key}: {val!r}")
 
-    da = create_dems(
-        ddbfits_path=ddb,
-        corresp_path=corresp,
-        obsinst_path=obsinst,
-        antenna_path=antenna,
-        readout_path=readout,
-        skychop_path=skychop,
-        weather_path=weather,
-        misti_path=misti,
-        cabin_path=cabin,
-        coordinate=coordinate,
-        measure=measure,
-        offset_time_antenna=offset_time_antenna,
+    da = to_dems(
+        # required datasets
+        corresp=corresp,
+        ddb=ddb,
+        obsinst=obsinst,
+        readout=readout,
+        # optional datasets
+        antenna=antenna,
+        cabin=cabin,
+        misti=misti,
+        skychop=skychop,
+        weather=weather,
+        # optional time offsets
+        dt_antenna=dt_antenna,
+        dt_cabin=dt_cabin,
+        dt_misti=dt_misti,
+        dt_skychop=dt_skychop,
+        dt_weather=dt_weather,
     )
+
+    if measure == "brightness":
+        da = to_brightness(da)
 
     if (dems := Path(dems)).exists() and not overwrite:
         raise FileExistsError(dems)

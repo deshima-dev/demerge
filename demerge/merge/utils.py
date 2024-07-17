@@ -181,6 +181,48 @@ def get_corresp(ddb: PathLike, corresp: PathLike, /) -> xr.Dataset:
     return frame.to_xarray()
 
 
+def get_ddb(ddb: PathLike, /) -> xr.Dataset:
+    """Load a DDB FITS as xarray Dataset."""
+    dim = "masterid"
+
+    with fits.open(ddb) as hdus:
+        # read from KIDDES HDU
+        ds_kiddes = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDDES"].data)[dim]),
+            },
+            data_vars={
+                "type": (dim, to_native(data["attribute"])),
+            },
+        ).drop_duplicates(dim)
+
+        # read from KIDFILT HDU
+        ds_kidfilt = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDFILT"].data)[dim]),
+            },
+            data_vars={
+                "F": (dim, to_native(data["F_filter, df_filter"].T[0])),
+                "Q": (dim, to_native(data["Q_filter, dQ_filter"].T[0])),
+            },
+        ).drop_duplicates(dim)
+
+        # read from KIDRESP HDU
+        ds_kidresp = xr.Dataset(
+            coords={
+                dim: to_native((data := hdus["KIDRESP"].data)[dim]),
+            },
+            data_vars={
+                "p0": (dim, to_native(data["cal params"].T[0])),
+                "fwd": (dim, to_native(data["cal params"].T[1])),
+                "T0": (dim, to_native(data["cal params"].T[2])),
+            },
+        ).drop_duplicates(dim)
+
+    ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
+    return ds.where(ds.masterid >= 0, drop=True)
+
+
 def get_misti(misti: PathLike, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (

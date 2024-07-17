@@ -201,11 +201,11 @@ def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
 
     return {
         # DES
+        "group": search("SET DES GROUP\s*'(.*)'"),
         "obs_file": search("SET DES OBS_FILE\s*'(.*)'"),
         "obs_user": search("SET DES OBS_USER\s*'(.*)'"),
         "project": search("SET DES PROJECT\s*'(.*)'"),
         # ANTENNA_G
-        "epoch": search("SET ANTENNA_G EPOCH\s*'(.*)'"),
         "scan_cood": search("SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
         "src_name": search("SET ANTENNA_G SRC_NAME\s*'(.*)'"),
         "src_pos": search("SET ANTENNA_G SRC_POS\s*\((.*)\)"),

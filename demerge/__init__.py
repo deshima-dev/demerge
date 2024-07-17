@@ -40,7 +40,7 @@ def demerge(
     data_dir: Path = Path(),
     dems_dir: Path = Path(),
     reduced_dir: Path = Path(),
-    ddb: Path = PACKAGE_DATA / "ddb_20231123.fits.gz",
+    ddb: Path = PACKAGE_DATA / "ddb_20240713.fits.gz",
     # merge options
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,

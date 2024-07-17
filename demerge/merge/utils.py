@@ -86,11 +86,11 @@ PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 def get_antenna(antenna: PathLike, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         antenna,
         # read settings
         names=COLUMN_NAMES_ANTENNA,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,
@@ -102,11 +102,11 @@ def get_antenna(antenna: PathLike, /) -> xr.Dataset:
 def get_cabin(cabin: PathLike, /) -> xr.Dataset:
     """Load a cabin log as xarray Dataset."""
     return (
-        pd.read_csv(
+        pd.read_csv(  # type: ignore
             cabin,
             # read settings
             names=COLUMN_NAMES_CABIN,
-            delimiter="\s+",
+            delimiter=r"\s+",
             comment="#",
             # index settings
             index_col=[0],
@@ -180,11 +180,11 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
 def get_misti(misti: PathLike, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (
-        pd.read_csv(
+        pd.read_csv(  # type: ignore
             misti,
             # read settings
             names=COLUMN_NAMES_MISTI,
-            delimiter="\s+",
+            delimiter=r"\s+",
             comment="#",
             # index settings
             index_col=[0],
@@ -209,14 +209,14 @@ def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
 
     return {
         # DES
-        "group": search("SET DES GROUP\s*'(.*)'"),
-        "obs_file": search("SET DES OBS_FILE\s*'(.*)'"),
-        "obs_user": search("SET DES OBS_USER\s*'(.*)'"),
-        "project": search("SET DES PROJECT\s*'(.*)'"),
+        "group": search(r"SET DES GROUP\s*'(.*)'"),
+        "obs_file": search(r"SET DES OBS_FILE\s*'(.*)'"),
+        "obs_user": search(r"SET DES OBS_USER\s*'(.*)'"),
+        "project": search(r"SET DES PROJECT\s*'(.*)'"),
         # ANTENNA_G
-        "scan_cood": search("SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
-        "src_name": search("SET ANTENNA_G SRC_NAME\s*'(.*)'"),
-        "src_pos": search("SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+        "scan_cood": search(r"SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
+        "src_name": search(r"SET ANTENNA_G SRC_NAME\s*'(.*)'"),
+        "src_pos": search(r"SET ANTENNA_G SRC_POS\s*\((.*)\)"),
     }
 
 
@@ -253,11 +253,11 @@ def get_readout(readout: PathLike, /) -> xr.DataArray:
 
 def get_skychop(skychop: PathLike, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         skychop,
         # read settings
         names=COLUMN_NAMES_SKYCHOP,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,
@@ -268,11 +268,11 @@ def get_skychop(skychop: PathLike, /) -> xr.Dataset:
 
 def get_weather(weather: PathLike, /) -> xr.Dataset:
     """Load a weather log as xarray Dataset."""
-    return pd.read_csv(
+    return pd.read_csv(  # type: ignore
         weather,
         # read settings
         names=COLUMN_NAMES_WEATHER,
-        delimiter="\s+",
+        delimiter=r"\s+",
         comment="#",
         # index settings
         index_col=0,

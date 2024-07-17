@@ -201,22 +201,29 @@ def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
     with open(obsinst) as f:
         lines = f.read()
 
+    if match := re.search(r"(\d{14})", Path(obsinst).name):
+        obs_id = match[1]
+    else:
+        obs_id = ""
+
     def search(pattern: str) -> str:
-        if (match := re.search(pattern, lines)) is None:
-            return ""
-        else:
+        if match := re.search(pattern, lines):
             return match[1]
+        else:
+            return ""
 
     return {
-        # DES
+        # read from DES section
         "group": search(r"SET DES GROUP\s*'(.*)'"),
         "obs_file": search(r"SET DES OBS_FILE\s*'(.*)'"),
         "obs_user": search(r"SET DES OBS_USER\s*'(.*)'"),
         "project": search(r"SET DES PROJECT\s*'(.*)'"),
-        # ANTENNA_G
+        # read from ANTENNA_G section
         "scan_cood": search(r"SET ANTENNA_G SCAN_COOD\s*'(.*)'"),
         "src_name": search(r"SET ANTENNA_G SRC_NAME\s*'(.*)'"),
         "src_pos": search(r"SET ANTENNA_G SRC_POS\s*\((.*)\)"),
+        # read from file name
+        "obs_id": obs_id,
     }
 
 
@@ -472,6 +479,7 @@ def to_dems(
         ),
         # aste specific
         aste_cabin_temperature=cabin_.main_temperature.data + 273.15,  # degC -> K
+        aste_obs_id=obsinst_["obs_id"],
         aste_obs_group=obsinst_["group"],
         aste_obs_project=obsinst_["project"],
         aste_obs_file=obsinst_["obs_file"],

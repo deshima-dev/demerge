@@ -308,10 +308,7 @@ def get_readout(readout: PathLike, /) -> xr.DataArray:
         dfof,
         name="df/f",
         dims=("time", "kidid"),
-        coords={
-            "time": time,
-            "kidid": np.arange(dfof.shape[1]),
-        },
+        coords={"time": time, "kidid": np.arange(dfof.shape[1])},
     )
 
 

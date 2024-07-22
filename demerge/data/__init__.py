@@ -1,4 +1,4 @@
-__all__ = ["Data", "parse_data"]
+__all__ = ["DataPackage", "parse"]
 
 
 # standard library
@@ -12,37 +12,33 @@ from typing import Optional, Union
 PathLike = Union[Path, str]
 
 
-# constants
-PACKAGE_DATA = Path(__file__).parent
-
-
 @dataclass
-class Data:
+class DataPackage:
     """Parsed data package structure."""
 
-    antenna: Path
-    """Path of the antenna log."""
+    antenna: Optional[Path]
+    """Path of the antenna log (optional)."""
 
-    cabin: Path
-    """Path of the cabin log."""
+    cabin: Optional[Path]
+    """Path of the cabin log (optional)."""
 
     corresp: Path
-    """Path of the KID correspondence."""
+    """Path of the KID correspondence (required)."""
 
-    misti: Path
-    """Path of the MiSTI log."""
+    misti: Optional[Path]
+    """Path of the MiSTI log (optional)."""
 
     obsinst: Path
-    """Path of the observation instruction."""
+    """Path of the observation instruction (required)."""
 
     readout: Path
-    """Path of the KID readout FITS."""
+    """Path of the KID readout FITS (required)."""
 
-    skychop: Path
-    """Path of the sky chopper log."""
+    skychop: Optional[Path]
+    """Path of the sky chopper log (optional)."""
 
-    weather: Path
-    """Path of the weather log."""
+    weather: Optional[Path]
+    """Path of the weather log (optional)."""
 
 
 def first(glob_results: Iterator[Path]) -> Optional[Path]:
@@ -51,42 +47,27 @@ def first(glob_results: Iterator[Path]) -> Optional[Path]:
         return path
 
 
-def parse_data(data: PathLike, /) -> Data:
+def parse(data_pack: PathLike, /) -> DataPackage:
     """Parse a data package (data directory)."""
-    if not (data := Path(data)).exists():
-        raise FileNotFoundError(data)
+    if not (data_pack := Path(data_pack)).exists():
+        raise FileNotFoundError(data_pack)
 
-    if (antenna := first(data.glob("*.ant"))) is None:
-        antenna = PACKAGE_DATA / "missing.ant"
-
-    if (cabin := first(data.glob("*.cabin"))) is None:
-        cabin = PACKAGE_DATA / "missing.cabin"
-
-    if (corresp := first(data.glob("*.json"))) is None:
+    if (corresp := first(data_pack.glob("*.json"))) is None:
         raise FileNotFoundError("KID correspondence (*.json).")
 
-    if (misti := first(data.glob("*.misti"))) is None:
-        misti = PACKAGE_DATA / "missing.misti"
-
-    if (obsinst := first(data.glob("*.obs"))) is None:
+    if (obsinst := first(data_pack.glob("*.obs"))) is None:
         raise FileNotFoundError(f"Observation instruction (*.obs).")
 
-    if (readout := first(data.glob("*.fits*"))) is None:
+    if (readout := first(data_pack.glob("*.fits*"))) is None:
         raise FileNotFoundError(f"KID readout FITS (*.fits).")
 
-    if (skychop := first(data.glob("*.skychopper*"))) is None:
-        skychop = PACKAGE_DATA / "missing.skychop"
-
-    if (weather := first(data.glob("*.wea"))) is None:
-        weather = PACKAGE_DATA / "missing.wea"
-
-    return Data(
-        antenna=antenna,
-        cabin=cabin,
+    return DataPackage(
+        antenna=first(data_pack.glob("*.ant")),
+        cabin=first(data_pack.glob("*.cabin")),
         corresp=corresp,
-        misti=misti,
+        misti=first(data_pack.glob("*.misti")),
         obsinst=obsinst,
         readout=readout,
-        skychop=skychop,
-        weather=weather,
+        skychop=first(data_pack.glob("*.skychopper*")),
+        weather=first(data_pack.glob("*.wea")),
     )

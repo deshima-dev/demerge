@@ -97,7 +97,7 @@ def demerge(
     ):
         data_pack = Path(data_dir).resolve() / f"cosmos_{obsid}"
         reduced_pack = reduced_dir / f"reduced_{obsid}"
-        parsed = data.parse_data(data_pack)
+        data_pack_ = data.parse(data_pack)
 
         # Run reduce function
         readout = reduce.reduce(
@@ -111,16 +111,16 @@ def demerge(
         return merge.merge(
             dems_dir / f"dems_{obsid}.zarr.zip",
             # required datasets
-            corresp=parsed.corresp,
+            corresp=data_pack_.corresp,
             ddb=ddb,
-            obsinst=parsed.obsinst,
+            obsinst=data_pack_.obsinst,
             readout=readout,
             # optional datasets
-            antenna=parsed.antenna,
-            cabin=parsed.cabin,
-            misti=parsed.misti,
-            skychop=parsed.skychop,
-            weather=parsed.weather,
+            antenna=data_pack_.antenna,
+            cabin=data_pack_.cabin,
+            misti=data_pack_.misti,
+            skychop=data_pack_.skychop,
+            weather=data_pack_.weather,
             # merge options
             measure=measure,
             overwrite=overwrite,

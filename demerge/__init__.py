@@ -86,7 +86,7 @@ def demerge(
     )
 
     # Run merge function
-    if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists():
+    if (dems := dems_dir_ / f"dems_{obsid}.zarr.zip").exists() and not overwrite:
         raise FileExistsError(dems)
 
     if not (corresp := data_dir_ / "kid_corresp.json").exists():

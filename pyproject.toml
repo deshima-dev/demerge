@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demerge"
-version = "2024.7.1"
+version = "2024.7.2"
 description = "DESHIMA merge code for observed datasets"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",
@@ -46,9 +46,9 @@ pytest = "^8.2"
 sphinx = "^7.3"
 
 [tool.poetry.scripts]
-demerge = "demerge:cli"
-merge = "demerge.merge:cli"
-reduce = "demerge.reduce:cli"
+demerge = "demerge:demerge_cli"
+merge = "demerge.merge:merge_cli"
+reduce = "demerge.reduce:reduce_cli"
 
 [tool.black]
 exclude = "demerge/reduce/utils"

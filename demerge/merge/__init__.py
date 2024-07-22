@@ -134,7 +134,7 @@ def merge(
     return dems.resolve()
 
 
-def cli() -> None:
+def merge_cli() -> None:
     """Command line interface of the merge function."""
     basicConfig(
         datefmt="%Y-%m-%d %H:%M:%S",

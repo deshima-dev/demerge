@@ -307,6 +307,7 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
             - T0 / fwd
             - (1 - fwd) / fwd * T_amb,
         )
+        .astype(dfof.dtype)
         .rename("Brightness")
         .assign_attrs(long_name="Brightness", units="K")
     )

@@ -308,7 +308,6 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
             - (1 - fwd) / fwd * T_amb,
         )
         .astype(dfof.dtype)
-        .rename("Brightness")
         .assign_attrs(long_name="Brightness", units="K")
     )
 
@@ -443,7 +442,7 @@ def to_dems(
         data=mkid["df/f"].data,
         long_name="df/f",
         units="dimensionless",
-        name="df/f",
+        name=obsinst_["obs_id"],
         # dimensions
         time=mkid.time.data,
         chan=mkid.masterid.data,

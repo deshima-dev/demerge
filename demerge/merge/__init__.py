@@ -2,6 +2,7 @@ __all__ = ["merge"]
 
 
 # standard library
+from collections.abc import Iterator
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
@@ -22,7 +23,8 @@ LOGGER = getLogger(__name__)
 
 
 @contextmanager
-def set_logger(debug: bool):
+def set_logger(debug: bool, /) -> Iterator[None]:
+    """Temporarily set the level of the module logger."""
     level = LOGGER.level
 
     if debug:

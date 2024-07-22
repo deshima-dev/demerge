@@ -25,6 +25,11 @@ LOGGER = getLogger(__name__)
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
+def set_dir(dir: PathLike, /) -> Path:
+    """Resolve a directory."""
+    return Path(dir).expanduser().resolve()
+
+
 @contextmanager
 def set_logger(debug: bool, /) -> Iterator[None]:
     """Temporarily set the level of the module logger."""
@@ -41,25 +46,25 @@ def set_logger(debug: bool, /) -> Iterator[None]:
 
 def reduce(
     *,
-    data_dir: PathLike,
-    reduced_dir: PathLike,
+    data_pack: PathLike,
+    reduced_pack: PathLike,
     overwrite: bool = False,
     debug: bool = False,
 ) -> Path:
-    """Reduce raw data of KID measurements into a single "reduced" FITS.
+    """Reduce KID measurements into a single "reduced" FITS.
 
     Args:
-        data_dir: Path of raw data directory (e.g. ``cosmos_YYYYmmddHHMMSS``).
-        reduced_dir: Path of reduced data directory (e.g. ``reduced_YYYYmmddHHMMSS``).
-        overwrite: If True, ``reduced_dir`` will be overwritten even if it exists.
+        data_pack: Path of data package (e.g. ``cosmos_YYYYmmddHHMMSS``).
+        reduced_pack: Path of reduced package (e.g. ``reduced_YYYYmmddHHMMSS``).
+        overwrite: If True, ``reduced_pack`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
 
     Returns:
-        Path of the created reduced FITS (in the output directory).
+        Path of the created reduced FITS (in the reduced package).
 
     Raises:
-        FileNotFoundError: Raised if ``data_dir`` does not exist.
-        FileExistsError: Raised if ``reduced_dir`` exists.
+        FileNotFoundError: Raised if ``data_pack`` does not exist.
+        FileExistsError: Raised if ``reduced_pack`` exists and overwrite is False.
 
     """
     with set_logger(debug):
@@ -67,19 +72,19 @@ def reduce(
             LOGGER.debug(f"{key}: {val!r}")
 
     # Resolve paths (must be done before changing working directory)
-    if not (data_dir := Path(data_dir).resolve()).exists():
-        raise FileNotFoundError(data_dir)
+    if not (data_pack := set_dir(data_pack)).exists():
+        raise FileNotFoundError(data_pack)
 
-    if (reduced_dir := Path(reduced_dir).resolve()).exists() and not overwrite:
-        raise FileExistsError(reduced_dir)
+    if (reduced_pack := set_dir(reduced_pack)).exists() and not overwrite:
+        raise FileExistsError(reduced_pack)
 
     if overwrite:
-        rmtree(reduced_dir, ignore_errors=True)
+        rmtree(reduced_pack, ignore_errors=True)
 
     # Run scripts in a temporary directory (to isolate intermediate files)
     with TemporaryDirectory() as work_dir:
         run(
-            ["python", SCRIPTS / "Configure.py", data_dir, reduced_dir],
+            ["python", SCRIPTS / "Configure.py", data_pack, reduced_pack],
             check=True,
             cwd=work_dir,
             # False if logging is implemented
@@ -100,7 +105,7 @@ def reduce(
             capture_output=True,
         )
 
-    return list(reduced_dir.glob("reduced_*.fits"))[0]
+    return list(reduced_pack.glob("*.fits"))[0]
 
 
 def cli() -> None:

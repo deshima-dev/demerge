@@ -129,7 +129,7 @@ def demerge(
         )
 
 
-def cli() -> None:
+def demerge_cli() -> None:
     """Command line interface of the demerge function."""
     basicConfig(
         datefmt="%Y-%m-%d %H:%M:%S",

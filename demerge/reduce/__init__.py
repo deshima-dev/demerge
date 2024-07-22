@@ -108,7 +108,7 @@ def reduce(
     return list(reduced_pack.glob("*.fits"))[0]
 
 
-def cli() -> None:
+def reduce_cli() -> None:
     """Command line interface of the reduce function."""
     basicConfig(
         datefmt="%Y-%m-%d %H:%M:%S",

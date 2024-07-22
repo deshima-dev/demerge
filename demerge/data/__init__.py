@@ -41,8 +41,8 @@ class DataPackage:
     """Path of the weather log (optional)."""
 
 
-def first(glob_results: Iterator[Path]) -> Optional[Path]:
-    """Return the first Path.glob results if exists."""
+def first(glob_results: Iterator[Path], /) -> Optional[Path]:
+    """Return the first Path.glob result if exists."""
     for path in glob_results:
         return path
 

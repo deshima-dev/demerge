@@ -32,7 +32,8 @@ def set_dir(dir: Optional[Path] = None, /) -> Iterator[Path]:
 
 
 @contextmanager
-def set_logger(debug: bool):
+def set_logger(debug: bool, /) -> Iterator[None]:
+    """Temporarily set the level of the module logger."""
     level = LOGGER.level
 
     if debug:

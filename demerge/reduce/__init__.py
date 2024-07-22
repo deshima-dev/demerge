@@ -2,6 +2,7 @@ __all__ = ["reduce"]
 
 
 # standard library
+from collections.abc import Iterator
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from pathlib import Path
@@ -25,7 +26,8 @@ SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
 @contextmanager
-def set_logger(debug: bool):
+def set_logger(debug: bool, /) -> Iterator[None]:
+    """Temporarily set the level of the module logger."""
     level = LOGGER.level
 
     if debug:

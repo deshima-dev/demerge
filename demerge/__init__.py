@@ -1,4 +1,4 @@
-__all__ = ["demerge", "merge", "reduce"]
+__all__ = ["data", "demerge", "merge", "reduce"]
 __version__ = "2024.7.1"
 
 
@@ -13,7 +13,7 @@ from typing import Any, Literal, Optional
 
 # dependencies
 from fire import Fire
-from . import merge, reduce
+from . import data, merge, reduce
 
 
 # constants

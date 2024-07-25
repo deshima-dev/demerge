@@ -4,7 +4,7 @@ __all__ = ["to_brightness", "to_dems"]
 # standard library
 import json
 import re
-from datetime import datetime as dt
+from datetime import datetime as dt, timezone as tz
 from pathlib import Path
 from typing import Any, Optional, Union
 from warnings import catch_warnings, simplefilter
@@ -79,7 +79,7 @@ COLUMN_NAMES_WEATHER = (
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
-DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
+DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s), tz.utc)
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
 PACKAGE_DATA = Path(__file__).parents[1] / "data"
 

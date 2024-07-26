@@ -79,7 +79,7 @@ COLUMN_NAMES_WEATHER = (
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
-DATE_PARSER_SKYCHOP = lambda s: dt.fromtimestamp(float(s))
+DATE_PARSER_SKYCHOP = lambda s: dt.utcfromtimestamp(float(s))
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
 PACKAGE_DATA = Path(__file__).parents[1] / "data"
 

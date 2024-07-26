@@ -11,7 +11,7 @@ DESHIMA merge code for observed datasets
 ## Installation
 
 ```shell
-pip install demerge==2024.7.2
+pip install demerge==2024.7.3
 ```
 
 ## Command line interface

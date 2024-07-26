@@ -77,7 +77,7 @@ def demerge(
             If not specified, a temporary directory will be used.
         ddb: Path of DDB (DESHIMA database) file.
         measure: Measure of the DEMS (either df/f or brightness).
-        overwrite: If True, reduced data directory and merged DEMS file
+        overwrite: If True, the reduced package and the merged DEMS file
             will be overwritten even if they exist.
         debug: If True, detailed logs for debugging will be printed.
         **options: Other merge options for the merge command.

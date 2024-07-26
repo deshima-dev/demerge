@@ -37,18 +37,19 @@ FLAGS
     --data_dir=DATA_DIR
         Type: Path
         Default: PosixPath('.')
-        Path where raw data directory is placed,
+        Path of directory where data packages are placed,
         i.e. expecting ``${data_dir}/cosmos_YYYYmmddHHMMSS``.
     --dems_dir=DEMS_DIR
         Type: Path
         Default: PosixPath('.')
-        Path where merged DEMS file will be placed,
+        Path of directory where merged DEMS will be placed,
         i.e. expecting ``${dems_dir}/dems_YYYYmmddHHMMSS.zarr.zip``.
     --reduced_dir=REDUCED_DIR
         Type: Path
         Default: PosixPath('.')
-        Path where reduced data directory will be placed,
+        Path of directory where reduced packages are placed,
         i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
+        If not specified, a temporary directory will be used.
     --ddb=DDB
         Type: Path
         Default: PosixPath('/path/to/demerge/data/ddb_20240713.fits')
@@ -60,7 +61,7 @@ FLAGS
     --overwrite=OVERWRITE
         Type: bool
         Default: False
-        If True, reduced data directory and merged DEMS file
+        If True, the reduced package and the merged DEMS file
         will be overwritten even if they exist.
     --debug=DEBUG
         Type: bool

@@ -52,7 +52,7 @@ FLAGS
         If not specified, a temporary directory will be used.
     --ddb=DDB
         Type: Path
-        Default: PosixPath('/path/to/demerge/data/ddb_20240713.fits')
+        Default: PosixPath('/path/to/demerge/data/ddb_20240731.fits')
         Path of DDB (DESHIMA database) file.
     --measure=MEASURE
         Type: Literal

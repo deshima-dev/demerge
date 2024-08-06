@@ -55,7 +55,7 @@ def merge(
     dt_antenna: Union[int, str] = "0 ms",
     dt_cabin: Union[int, str] = "0 ms",
     dt_misti: Union[int, str] = "0 ms",
-    dt_skychop: Union[int, str] = "0 ms",
+    dt_skychop: Union[int, str] = "9 ms",
     dt_weather: Union[int, str] = "0 ms",
     # merge options
     measure: Literal["df/f", "brightness"] = "df/f",
@@ -83,6 +83,7 @@ def merge(
             unit such that (dt_misti = t_misti - t_readout).
         dt_skychop: Time offset of the sky chopper log with explicit
             unit such that (dt_skychop = t_skychop - t_readout).
+            Defaults to 9 ms (for DESHIMA campaign in 2024).
         dt_weather: Time offset of the weather log with explicit
             unit such that (dt_weather = t_weather - t_readout).
         measure: Measure of the DEMS (either df/f or brightness).

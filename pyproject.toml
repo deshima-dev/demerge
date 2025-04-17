@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "demerge"
-version = "2025.4.0"
+version = "2025.4.1"
 description = "DESHIMA merge code for observed datasets"
 authors = [
     "Tatsuya Takekoshi <tatsuya.takekoshi@gmail.com>",

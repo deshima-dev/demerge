@@ -1,0 +1,20 @@
+demerge package
+===============
+
+Subpackages
+-----------
+
+.. toctree::
+   :maxdepth: 4
+
+   demerge.data
+   demerge.merge
+   demerge.reduce
+
+Module contents
+---------------
+
+.. automodule:: demerge
+   :members:
+   :undoc-members:
+   :show-inheritance:

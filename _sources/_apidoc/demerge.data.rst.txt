@@ -1,0 +1,10 @@
+demerge.data package
+====================
+
+Module contents
+---------------
+
+.. automodule:: demerge.data
+   :members:
+   :undoc-members:
+   :show-inheritance:

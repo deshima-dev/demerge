@@ -1,0 +1,10 @@
+demerge.reduce package
+======================
+
+Module contents
+---------------
+
+.. automodule:: demerge.reduce
+   :members:
+   :undoc-members:
+   :show-inheritance:

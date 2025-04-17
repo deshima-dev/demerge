@@ -135,7 +135,7 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
     """Load a DDB FITS as xarray Dataset."""
     dim = "masterid"
 
-    with fits.open(ddb) as hdus:
+    with fits.open(ddb) as hdus:  # type: ignore
         # read from PRIMARY HDU
         version = hdus["PRIMARY"].header["DDB_ID"]
 
@@ -229,7 +229,7 @@ def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
 
 def get_readout(readout: PathLike, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
-    with fits.open(readout) as hdus:
+    with fits.open(readout) as hdus:  # type:ignore
         kidsinfo = hdus["KIDSINFO"].data
         readout_ = hdus["READOUT"].data
 

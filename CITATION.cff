@@ -17,7 +17,7 @@ authors:
     affiliation: Naito Systems
   - given-names: Akio
     family-names: Taniguchi
-    affiliation: Nagoya University
+    affiliation: Kitami Institute of Technology
     orcid: 'https://orcid.org/0000-0002-9695-6183'
 identifiers:
   - type: doi
@@ -31,5 +31,5 @@ keywords:
   - spectroscopy
   - deshima
 license: MIT
-version: 2024.9.0
-date-released: '2024-09-10'
+version: 2025.4.0
+date-released: '2025-04-17'

@@ -41,9 +41,9 @@ class DataPackage:
     """Path of the weather log (optional)."""
 
 
-def first(glob_results: Iterator[Path], /) -> Optional[Path]:
-    """Return the first Path.glob result if exists."""
-    for path in glob_results:
+def last(glob_results: Iterator[Path], /) -> Optional[Path]:
+    """Return the last Path.glob result if exists."""
+    for path in reversed(sorted(glob_results)):
         return path
 
 
@@ -52,22 +52,22 @@ def parse(data_pack: PathLike, /) -> DataPackage:
     if not (data_pack := Path(data_pack)).exists():
         raise FileNotFoundError(data_pack)
 
-    if (corresp := first(data_pack.glob("*.json"))) is None:
+    if (corresp := last(data_pack.glob("*.json"))) is None:
         raise FileNotFoundError("KID correspondence (*.json).")
 
-    if (obsinst := first(data_pack.glob("*.obs"))) is None:
-        raise FileNotFoundError(f"Observation instruction (*.obs).")
+    if (obsinst := last(data_pack.glob("*.obs"))) is None:
+        raise FileNotFoundError("Observation instruction (*.obs).")
 
-    if (readout := first(data_pack.glob("*.fits*"))) is None:
-        raise FileNotFoundError(f"KID readout FITS (*.fits).")
+    if (readout := last(data_pack.glob("*.fits*"))) is None:
+        raise FileNotFoundError("KID readout FITS (*.fits).")
 
     return DataPackage(
-        antenna=first(data_pack.glob("*.ant")),
-        cabin=first(data_pack.glob("*.cabin")),
+        antenna=last(data_pack.glob("*.ant")),
+        cabin=last(data_pack.glob("*.cabin")),
         corresp=corresp,
-        misti=first(data_pack.glob("*.misti")),
+        misti=last(data_pack.glob("*.misti")),
         obsinst=obsinst,
         readout=readout,
-        skychop=first(data_pack.glob("*.skychopper*")),
-        weather=first(data_pack.glob("*.wea")),
+        skychop=last(data_pack.glob("*.skychopper*")),
+        weather=last(data_pack.glob("*.wea")),
     )

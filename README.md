@@ -11,14 +11,14 @@ DESHIMA merge code for observed datasets
 ## Installation
 
 ```shell
-pip install demerge==2024.8.0
+pip install demerge==2024.9.0
 ```
 
 ## Command line interface
 
 de:merge ships with three commands, `demerge`, `reduce`, and `merge`.
-`demerge` is a main command that (1) reduces raw data of KID measurements into a single "reduced" FITS and (2) merge datasets of a DESHIMA observation (including the reduced FITS) into a single DEMS file.
-`reduce` and `merge` are subcommands that perform (1) and (2), respectively, and they should be used only for debugging.
+`demerge` is the main command that (1) reduces raw data of KID measurements into a single "reduced" FITS and (2) merge datasets of a DESHIMA observation (including the reduced FITS) into a single DEMS file.
+`reduce` and `merge` are the subcommands that perform (1) and (2), respectively, and they should be used only for debugging.
 
 Here is (part of) the `demerge` command help:
 ```plaintext
@@ -73,7 +73,7 @@ A typical command run is as follows:
 ```shell
 demerge YYYYmmddHHMMSS --data_dir /path/to/data --reduced_dir .cache
 ```
-where a raw data directory, `/path/to/data/cosmos_YYYYmmddHHMMSS`, will be specified, then an intermediate reduced data directory will be created as `./.cache/reduced_YYYYmmddHHMMSS`, and finally a merged DEMS file will be placed as `./dems_YYYYmmddHHMMSS.zarr.zip`.
+where the raw data directory, `/path/to/data/cosmos_YYYYmmddHHMMSS`, will be selected, then an intermediate reduced data directory will be created as `./.cache/reduced_YYYYmmddHHMMSS`, and finally the merged DEMS file will be placed as `./dems_YYYYmmddHHMMSS.zarr.zip`.
 
 ## Raw data directory
 
@@ -98,6 +98,8 @@ cosmos_YYYYmmddHHMMSS/
     ├── localsweep.sweep
     └── localsweep_info.txt
 ```
+
+If multiple files with the same extension exist, then the last one sorted by name will be selected.
 
 ## Use as a Python package
 

@@ -145,7 +145,7 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
                 dim: to_native((data := hdus["KIDDES"].data)[dim]),
             },
             data_vars={
-                "type": (dim, to_native(data["attribute"])),
+                "type": (dim, np.array(to_native(data["attribute"]))),
             },
         ).drop_duplicates(dim)
 

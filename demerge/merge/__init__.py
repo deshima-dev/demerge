@@ -122,6 +122,11 @@ def merge(
     )
 
     if measure == "brightness":
+        LOGGER.warning(
+            "df/f-to-brightness conversion in de:merge will be deprecated in a future release. "
+            "Convert in de:code by specifying measure='brightness' when loading "
+            "or by explicitly calling the to_brightness function after loading."
+        )
         da = to_brightness(da)
 
     if (dems := Path(dems)).exists() and not overwrite:

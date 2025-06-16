@@ -362,6 +362,9 @@ def to_dems(
         Merged DEMS of df/f as xarray DataArray.
 
     """
+    # record merge options first
+    d2_merge_options = to_merge_options(locals())
+
     # load required datasets
     corresp_ = get_corresp(corresp)
     ddb_ = get_ddb(ddb)
@@ -450,8 +453,9 @@ def to_dems(
         time=mkid.time.data,
         chan=mkid.masterid.data,
         # labels
-        beam=np.where(skychop_.is_blocking.data, "B", "A"),
+        observation=obsinst_["obs_id"],
         state=antenna_.scan_type.data,
+        beam=np.where(skychop_.is_blocking.data, "B", "A"),
         # telescope pointing
         lon=lon.data,
         lat=lat.data,
@@ -462,6 +466,7 @@ def to_dems(
         temperature=weather_.temperature.data + 273.15,  # degC -> K
         pressure=weather_.pressure.data * 100,  # Pa -> hPa
         humidity=to_humidity(weather_.vapor_pressure.data, weather_.temperature.data),
+        pwv=misti_.pwv.data * 1e-3,  # um -> mm
         wind_speed=weather_.wind_speed.data,
         wind_direction=weather_.wind_direction.data,
         # data information
@@ -469,7 +474,6 @@ def to_dems(
         exposure=1 / 160,
         interval=1 / 160,
         # observation information
-        observation=obsinst_["obs_file"],
         observer=obsinst_["obs_user"],
         project=f"{obsinst_['group']}/{obsinst_['project']}",
         object=obsinst_["src_name"],
@@ -507,6 +511,7 @@ def to_dems(
         d2_resp_t0=mkid.T0.data,
         d2_skychopper_isblocking=skychop_.is_blocking.data,
         d2_ddb_version=ddb_.version,
+        d2_merge_options=d2_merge_options,
         d2_demerge_version=DEMERGE_VERSION,
     )
 
@@ -534,6 +539,22 @@ def to_humidity(
         .to("%")
         .magnitude
     )
+
+
+def to_merge_options(locals: dict[str, Any], /) -> dict[str, Any]:
+    """Convert local dictionary to merge-option dictionary."""
+    merge_options = {}
+
+    for key, val in locals.items():
+        if val is None:
+            continue
+
+        if isinstance(val, Path):
+            merge_options[key] = str(val)
+        else:
+            merge_options[key] = val
+
+    return merge_options
 
 
 def to_native(array: NDArray[Any], /) -> NDArray[Any]:

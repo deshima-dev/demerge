@@ -8,6 +8,10 @@ message: >-
   metadata from this file.
 type: software
 authors:
+  - given-names: Akio
+    family-names: Taniguchi
+    affiliation: Kitami Institute of Technology
+    orcid: 'https://orcid.org/0000-0002-9695-6183'
   - given-names: Tatsuya
     family-names: Takekoshi
     affiliation: Kitami Institute of Technology
@@ -15,21 +19,19 @@ authors:
   - given-names: Daisuke
     family-names: Naito
     affiliation: Naito Systems
-  - given-names: Akio
-    family-names: Taniguchi
-    affiliation: Kitami Institute of Technology
-    orcid: 'https://orcid.org/0000-0002-9695-6183'
 identifiers:
   - type: doi
     value: 10.5281/zenodo.10015892
 repository-code: 'https://github.com/deshima-dev/demerge'
 abstract: DESHIMA merge code for observed datasets
 keywords:
+  - python
   - astronomy
-  - radio-astronomy
-  - submillimeter
-  - spectroscopy
+  - data-format
   - deshima
+  - measurement-set
+  - spectroscopy
+  - submillimeter
 license: MIT
 version: 2026.6.0
-date-released: '2025-04-17'
+date-released: '2026-06-16'

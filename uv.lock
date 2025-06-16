@@ -548,7 +548,7 @@ dev = [
 [package.metadata]
 requires-dist = [
     { name = "astropy", specifier = ">=6,<8" },
-    { name = "dems", specifier = ">=2024.7,<2025.0" },
+    { name = "dems", specifier = ">=2025.6,<2026.0" },
     { name = "fire", specifier = ">=0.5,<1.0" },
     { name = "h5py", specifier = ">=3,<4" },
     { name = "lmfit", specifier = ">=1,<2" },
@@ -577,14 +577,14 @@ dev = [
 
 [[package]]
 name = "dems"
-version = "2024.7.2"
+version = "2025.6.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "xarray-dataclasses" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/ad/de/6b0c38b0a643cd56de2722103a830b6b03358e09f7babee39c599ce5d5eb/dems-2024.7.2.tar.gz", hash = "sha256:6d00fe68dbe6c6e77fd630fbd67ad7a62ab2b8dcf79425829f28412147e95e50", size = 5318, upload-time = "2024-07-17T12:38:50.628Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/0e/79/f63de9590d4ba6dc2b9f0670acd59af5261063e5c6b1b5906174e541e642/dems-2025.6.0.tar.gz", hash = "sha256:f0eb087b9df6cef88eb0a5f571f526f54c5538b55e83ebe96590335c691aa2d9", size = 43812, upload-time = "2025-06-16T15:43:08.46Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8c/59/fc1c391012714cf2e6f908ee4357878176ba5cb981c98dec37c507301b41/dems-2024.7.2-py3-none-any.whl", hash = "sha256:a80218b018319e831f6766f2910982af84884b35e5d9577e59b5896334c21f3a", size = 6599, upload-time = "2024-07-17T12:38:49.16Z" },
+    { url = "https://files.pythonhosted.org/packages/ac/f8/af20ca0b181e9df93b25436756da024b9361efe789ddddbc617406c5bc61/dems-2025.6.0-py3-none-any.whl", hash = "sha256:d48eae72ebb3a0c6bd11ed3b666800c7ad47cf56d809e0d890846efc2d00a2a2", size = 7533, upload-time = "2025-06-16T15:43:06.932Z" },
 ]
 
 [[package]]

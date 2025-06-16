@@ -450,8 +450,9 @@ def to_dems(
         time=mkid.time.data,
         chan=mkid.masterid.data,
         # labels
-        beam=np.where(skychop_.is_blocking.data, "B", "A"),
+        observation=obsinst_["obs_id"],
         state=antenna_.scan_type.data,
+        beam=np.where(skychop_.is_blocking.data, "B", "A"),
         # telescope pointing
         lon=lon.data,
         lat=lat.data,
@@ -469,7 +470,6 @@ def to_dems(
         exposure=1 / 160,
         interval=1 / 160,
         # observation information
-        observation=obsinst_["obs_file"],
         observer=obsinst_["obs_user"],
         project=f"{obsinst_['group']}/{obsinst_['project']}",
         object=obsinst_["src_name"],

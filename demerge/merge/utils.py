@@ -463,6 +463,7 @@ def to_dems(
         temperature=weather_.temperature.data + 273.15,  # degC -> K
         pressure=weather_.pressure.data * 100,  # Pa -> hPa
         humidity=to_humidity(weather_.vapor_pressure.data, weather_.temperature.data),
+        pwv=misti_.pwv.data * 1e-3,  # um -> mm
         wind_speed=weather_.wind_speed.data,
         wind_direction=weather_.wind_direction.data,
         # data information

@@ -17,6 +17,8 @@ import xarray as xr
 from astropy.io import fits
 from astropy.units import Quantity
 from dems.d2 import MS
+from metpy.calc import saturation_vapor_pressure
+from metpy.units import units
 from numpy.typing import NDArray
 from .. import __version__ as DEMERGE_VERSION
 
@@ -71,7 +73,7 @@ COLUMN_NAMES_WEATHER = (
     "time",  # %Y%m%d%H%M%S
     "temperature",  # degC
     "pressure",  # hPa
-    "humidity",  # %
+    "vapor_pressure",  # hPa
     "wind_speed",  # m/s
     "wind_direction",  # deg
     "_",  # unknown
@@ -459,7 +461,7 @@ def to_dems(
         # weather information
         temperature=weather_.temperature.data + 273.15,  # degC -> K
         pressure=weather_.pressure.data * 100,  # Pa -> hPa
-        humidity=weather_.humidity.data * 100,
+        humidity=to_humidity(weather_.vapor_pressure.data, weather_.temperature.data),
         wind_speed=weather_.wind_speed.data,
         wind_direction=weather_.wind_direction.data,
         # data information
@@ -506,6 +508,31 @@ def to_dems(
         d2_skychopper_isblocking=skychop_.is_blocking.data,
         d2_ddb_version=ddb_.version,
         d2_demerge_version=DEMERGE_VERSION,
+    )
+
+
+def to_humidity(
+    vapor_pressure: NDArray[Any],
+    temperature: NDArray[Any],
+    /,
+) -> NDArray[Any]:
+    """Convert water vapor pressure in hPa to relative humidity in %.
+
+    Args:
+        vapor_pressure: Water vaper pressure (array) in hPa.
+        temperature: Atmospheric temperautre (array) in degC.
+
+    Returns:
+        Relative humidity (array) in %.
+
+    """
+    return (
+        (
+            (vapor_pressure * units.hPa)
+            / saturation_vapor_pressure(temperature * units.degC)
+        )
+        .to("%")
+        .magnitude
     )
 
 

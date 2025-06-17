@@ -1,6 +1,6 @@
 [project]
 name = "demerge"
-version = "2025.6.0"
+version = "2025.6.1"
 description = "DESHIMA merge code for observed datasets"
 readme = "README.md"
 keywords = [
@@ -58,7 +58,7 @@ merge = "demerge.merge:merge_cli"
 reduce = "demerge.reduce:reduce_cli"
 
 [project.urls]
-homepage = "https://github.com/deshima-dev/demerge"
+homepage = "https://deshima-dev.github.io/demerge"
 repository = "https://github.com/deshima-dev/demerge"
 
 [build-system]

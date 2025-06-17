@@ -454,6 +454,8 @@ def to_dems(
         chan=mkid.masterid.data,
         # labels
         observation=obsinst_["obs_id"],
+        scan=(scan := to_phase(antenna_.scan_type)).data,
+        subscan=skychop_.is_blocking.astype(bool).groupby(scan).apply(to_phase).data,
         state=antenna_.scan_type.data,
         beam=np.where(skychop_.is_blocking.data, "B", "A"),
         # telescope pointing
@@ -560,6 +562,16 @@ def to_merge_options(locals: dict[str, Any], /) -> dict[str, Any]:
 def to_native(array: NDArray[Any], /) -> NDArray[Any]:
     """Convert the byte order of an array to native."""
     return array.astype(array.dtype.type)
+
+
+def to_phase(array: xr.DataArray, /) -> xr.DataArray:
+    """Assign a phase to each value in a 1D DataArray."""
+    if array.ndim != 1:
+        raise ValueError("Input array must be 1D.")
+
+    is_transision = xr.zeros_like(array, bool)
+    is_transision.data[1:] = array.data[1:] != array.data[:-1]
+    return is_transision.cumsum()
 
 
 def to_timedelta(dt: Union[int, str], unit: str = "ms", /) -> np.timedelta64:

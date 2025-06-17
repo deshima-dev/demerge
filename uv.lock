@@ -498,7 +498,7 @@ wheels = [
 
 [[package]]
 name = "demerge"
-version = "2025.4.1"
+version = "2025.6.1"
 source = { editable = "." }
 dependencies = [
     { name = "astropy", version = "6.0.1", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.10'" },
@@ -577,14 +577,14 @@ dev = [
 
 [[package]]
 name = "dems"
-version = "2025.6.0"
+version = "2025.6.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "xarray-dataclasses" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/0e/79/f63de9590d4ba6dc2b9f0670acd59af5261063e5c6b1b5906174e541e642/dems-2025.6.0.tar.gz", hash = "sha256:f0eb087b9df6cef88eb0a5f571f526f54c5538b55e83ebe96590335c691aa2d9", size = 43812, upload-time = "2025-06-16T15:43:08.46Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/83/e9/24512a328b20e463078eb74f1e5476466fc22470646280f00f2dce3dcdb7/dems-2025.6.1.tar.gz", hash = "sha256:c04286989c3102a6e568af09a5de0fb262255da97c4651a5e83efc8d05014005", size = 43842, upload-time = "2025-06-17T04:47:42.271Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/ac/f8/af20ca0b181e9df93b25436756da024b9361efe789ddddbc617406c5bc61/dems-2025.6.0-py3-none-any.whl", hash = "sha256:d48eae72ebb3a0c6bd11ed3b666800c7ad47cf56d809e0d890846efc2d00a2a2", size = 7533, upload-time = "2025-06-16T15:43:06.932Z" },
+    { url = "https://files.pythonhosted.org/packages/56/3b/d7bb59254955f64c432c514bad8b852f0cbe2d1d4d24651b6a4da829543f/dems-2025.6.1-py3-none-any.whl", hash = "sha256:30e527670438f829ac505750509dcae557600b516b842f0090305c285c1c6529", size = 7561, upload-time = "2025-06-17T04:47:41.223Z" },
 ]
 
 [[package]]

@@ -1,6 +1,6 @@
 [project]
 name = "demerge"
-version = "2025.6.0"
+version = "2025.6.1"
 description = "DESHIMA merge code for observed datasets"
 readme = "README.md"
 keywords = [

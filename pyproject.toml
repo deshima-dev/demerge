@@ -58,7 +58,7 @@ merge = "demerge.merge:merge_cli"
 reduce = "demerge.reduce:reduce_cli"
 
 [project.urls]
-homepage = "https://github.com/deshima-dev/demerge"
+homepage = "https://deshima-dev.github.io/demerge"
 repository = "https://github.com/deshima-dev/demerge"
 
 [build-system]

@@ -5,6 +5,7 @@ __all__ = ["reduce"]
 from collections.abc import Iterator
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
+from os import PathLike
 from pathlib import Path
 from shutil import rmtree
 from subprocess import run
@@ -17,7 +18,7 @@ from fire import Fire
 
 
 # type hints
-PathLike = Union[Path, str]
+StrPath = Union[PathLike[str], str]
 
 
 # constants
@@ -25,7 +26,7 @@ LOGGER = getLogger(__name__)
 SCRIPTS = Path(__file__).parent / "utils" / "scripts" / "aste"
 
 
-def set_dir(dir: PathLike, /) -> Path:
+def set_dir(dir: StrPath, /) -> Path:
     """Resolve a directory."""
     return Path(dir).expanduser().resolve()
 
@@ -46,8 +47,8 @@ def set_logger(debug: bool, /) -> Iterator[None]:
 
 def reduce(
     *,
-    data_pack: PathLike,
-    reduced_pack: PathLike,
+    data_pack: StrPath,
+    reduced_pack: StrPath,
     overwrite: bool = False,
     debug: bool = False,
 ) -> Path:

@@ -1,11 +1,12 @@
 __all__ = ["data", "demerge", "merge", "reduce"]
-__version__ = "2025.6.1"
+__version__ = "2025.7.0"
 
 
 # standard library
 from collections.abc import Iterator
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
+from os import PathLike
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Any, Literal, Optional, Union
@@ -17,7 +18,7 @@ from . import data, merge, reduce
 
 
 # type hints
-PathLike = Union[Path, str]
+StrPath = Union[PathLike[str], str]
 
 
 # constants
@@ -26,7 +27,7 @@ PACKAGE_DATA = Path(__file__).parent / "data"
 
 
 @contextmanager
-def set_dir(dir: Optional[PathLike] = None, /) -> Iterator[Path]:
+def set_dir(dir: Optional[StrPath] = None, /) -> Iterator[Path]:
     """Resolve a directory or set a temporary directory."""
     if dir is None:
         with TemporaryDirectory() as temp_dir:
@@ -54,10 +55,10 @@ def demerge(
     /,
     *,
     # data paths
-    data_dir: PathLike = Path(),
-    dems_dir: PathLike = Path(),
+    data_dir: StrPath = Path(),
+    dems_dir: StrPath = Path(),
     reduced_dir: Optional[Path] = None,
-    ddb: PathLike = PACKAGE_DATA / "ddb_20240713.fits.gz",
+    ddb: StrPath = PACKAGE_DATA / "ddb_20250628.fits.gz",
     # merge options
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,

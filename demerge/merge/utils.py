@@ -5,6 +5,7 @@ __all__ = ["to_brightness", "to_dems"]
 import json
 import re
 from datetime import datetime as dt
+from os import PathLike
 from pathlib import Path
 from typing import Any, Optional, Union
 from warnings import catch_warnings, simplefilter
@@ -24,7 +25,7 @@ from .. import __version__ as DEMERGE_VERSION
 
 
 # type hints
-PathLike = Union[Path, str]
+StrPath = Union[PathLike[str], str]
 
 
 # constants
@@ -86,7 +87,7 @@ DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
 PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 
-def get_antenna(antenna: PathLike, /) -> xr.Dataset:
+def get_antenna(antenna: StrPath, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         antenna,
@@ -101,7 +102,7 @@ def get_antenna(antenna: PathLike, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_cabin(cabin: PathLike, /) -> xr.Dataset:
+def get_cabin(cabin: StrPath, /) -> xr.Dataset:
     """Load a cabin log as xarray Dataset."""
     return (
         pd.read_csv(  # type: ignore
@@ -120,7 +121,7 @@ def get_cabin(cabin: PathLike, /) -> xr.Dataset:
     )
 
 
-def get_corresp(corresp: PathLike, /) -> xr.DataArray:
+def get_corresp(corresp: StrPath, /) -> xr.DataArray:
     """Load a KID correspondence as xarray DataArray."""
     with open(corresp) as f:
         masterid, kidid = zip(*json.load(f).items())
@@ -133,7 +134,7 @@ def get_corresp(corresp: PathLike, /) -> xr.DataArray:
     )
 
 
-def get_ddb(ddb: PathLike, /) -> xr.Dataset:
+def get_ddb(ddb: StrPath, /) -> xr.Dataset:
     """Load a DDB FITS as xarray Dataset."""
     dim = "masterid"
 
@@ -179,7 +180,7 @@ def get_ddb(ddb: PathLike, /) -> xr.Dataset:
     return ds.assign_attrs(version=version)
 
 
-def get_misti(misti: PathLike, /) -> xr.Dataset:
+def get_misti(misti: StrPath, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (
         pd.read_csv(  # type: ignore
@@ -198,7 +199,7 @@ def get_misti(misti: PathLike, /) -> xr.Dataset:
     )
 
 
-def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
+def get_obsinst(obsinst: StrPath, /) -> dict[str, str]:
     """Load an observation instruction to get parameters."""
     with open(obsinst) as f:
         lines = f.read()
@@ -229,7 +230,7 @@ def get_obsinst(obsinst: PathLike, /) -> dict[str, str]:
     }
 
 
-def get_readout(readout: PathLike, /) -> xr.DataArray:
+def get_readout(readout: StrPath, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
     with fits.open(readout) as hdus:  # type:ignore
         kidsinfo = hdus["KIDSINFO"].data
@@ -260,7 +261,7 @@ def get_readout(readout: PathLike, /) -> xr.DataArray:
     )
 
 
-def get_skychop(skychop: PathLike, /) -> xr.Dataset:
+def get_skychop(skychop: StrPath, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         skychop,
@@ -275,7 +276,7 @@ def get_skychop(skychop: PathLike, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_weather(weather: PathLike, /) -> xr.Dataset:
+def get_weather(weather: StrPath, /) -> xr.Dataset:
     """Load a weather log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         weather,
@@ -317,16 +318,16 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
 def to_dems(
     *,
     # required datasets
-    corresp: PathLike,
-    ddb: PathLike,
-    obsinst: PathLike,
-    readout: PathLike,
+    corresp: StrPath,
+    ddb: StrPath,
+    obsinst: StrPath,
+    readout: StrPath,
     # optional datasets
-    antenna: Optional[PathLike] = None,
-    cabin: Optional[PathLike] = None,
-    misti: Optional[PathLike] = None,
-    skychop: Optional[PathLike] = None,
-    weather: Optional[PathLike] = None,
+    antenna: Optional[StrPath] = None,
+    cabin: Optional[StrPath] = None,
+    misti: Optional[StrPath] = None,
+    skychop: Optional[StrPath] = None,
+    weather: Optional[StrPath] = None,
     # optional time offsets
     dt_antenna: Union[int, str] = "0 ms",
     dt_cabin: Union[int, str] = "0 ms",

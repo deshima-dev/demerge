@@ -4,12 +4,13 @@ __all__ = ["DataPackage", "parse"]
 # standard library
 from collections.abc import Iterator
 from dataclasses import dataclass
+from os import PathLike
 from pathlib import Path
 from typing import Optional, Union
 
 
 # type hints
-PathLike = Union[Path, str]
+StrPath = Union[PathLike[str], str]
 
 
 @dataclass
@@ -47,7 +48,7 @@ def last(glob_results: Iterator[Path], /) -> Optional[Path]:
         return path
 
 
-def parse(data_pack: PathLike, /) -> DataPackage:
+def parse(data_pack: StrPath, /) -> DataPackage:
     """Parse a data package (data directory)."""
     if not (data_pack := Path(data_pack)).exists():
         raise FileNotFoundError(data_pack)

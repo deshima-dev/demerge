@@ -5,6 +5,7 @@ __all__ = ["merge"]
 from collections.abc import Iterator
 from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
+from os import PathLike
 from pathlib import Path
 from typing import Literal, Optional, Union
 
@@ -15,7 +16,7 @@ from .utils import to_brightness, to_dems
 
 
 # type hints
-PathLike = Union[Path, str]
+StrPath = Union[PathLike[str], str]
 
 
 # constants
@@ -37,20 +38,20 @@ def set_logger(debug: bool, /) -> Iterator[None]:
 
 
 def merge(
-    dems: Path,
+    dems: StrPath,
     /,
     *,
     # required datasets
-    corresp: PathLike,
-    ddb: PathLike,
-    obsinst: PathLike,
-    readout: PathLike,
+    corresp: StrPath,
+    ddb: StrPath,
+    obsinst: StrPath,
+    readout: StrPath,
     # optional datasets
-    antenna: Optional[PathLike] = None,
-    cabin: Optional[PathLike] = None,
-    misti: Optional[PathLike] = None,
-    skychop: Optional[PathLike] = None,
-    weather: Optional[PathLike] = None,
+    antenna: Optional[StrPath] = None,
+    cabin: Optional[StrPath] = None,
+    misti: Optional[StrPath] = None,
+    skychop: Optional[StrPath] = None,
+    weather: Optional[StrPath] = None,
     # optional time offsets
     dt_antenna: Union[int, str] = "0 ms",
     dt_cabin: Union[int, str] = "0 ms",

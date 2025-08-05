@@ -99,6 +99,13 @@ def reduce(
             capture_output=True,
         )
         run(
+            ["python", SCRIPTS / "flag_KIDs_based_on_FitSweep.py"],
+            check=True,
+            cwd=work_dir,
+            # False if logging is implemented
+            capture_output=True,
+        )
+        run(
             ["python", SCRIPTS / "SaveFits.py"],
             check=True,
             cwd=work_dir,

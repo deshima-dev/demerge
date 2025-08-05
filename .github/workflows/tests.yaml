@@ -32,5 +32,3 @@ jobs:
       - run: black --check ${PYTHON_DIRS}
       - run: pyright ${PYTHON_DIRS}
       - run: docs/build
-      - run: deshima-rawdata download 20231108052231 -e
-      - run: demerge 20231108052231 --measure brightness --debug

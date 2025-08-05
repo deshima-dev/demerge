@@ -58,7 +58,8 @@ def merge(
     dt_misti: Union[int, str] = "0 ms",
     dt_skychop: Union[int, str] = "9 ms",
     dt_weather: Union[int, str] = "0 ms",
-    # merge options
+    # optional merge strategies
+    include_disabled_mkids: bool = False,
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
@@ -87,6 +88,9 @@ def merge(
             Defaults to 9 ms (for DESHIMA campaign in 2024).
         dt_weather: Time offset of the weather log with explicit
             unit such that (dt_weather = t_weather - t_readout).
+        include_disabled_mkids: Whether to include disabled
+            (e.g. fit-failed) MKID responses in the merged DEMS.
+            Note that such data will be all filled with NaN.
         measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, ``dems`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
@@ -120,6 +124,8 @@ def merge(
         dt_misti=dt_misti,
         dt_skychop=dt_skychop,
         dt_weather=dt_weather,
+        # optional merge strategies
+        include_disabled_mkids=include_disabled_mkids,
     )
 
     if measure == "brightness":

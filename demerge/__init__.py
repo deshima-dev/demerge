@@ -59,6 +59,8 @@ def demerge(
     dems_dir: StrPath = Path(),
     reduced_dir: Optional[Path] = None,
     ddb: StrPath = PACKAGE_DATA / "ddb_20250628.fits.gz",
+    # analysis options
+    plot_fitsweep: bool = False,
     # merge options
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
@@ -77,6 +79,7 @@ def demerge(
             i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
             If not specified, a temporary directory will be used.
         ddb: Path of DDB (DESHIMA database) file.
+        plot_fitsweep: If True, the results of ``FitSweep.py`` will be plotted.
         measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, the reduced package and the merged DEMS file
             will be overwritten even if they exist.
@@ -104,6 +107,7 @@ def demerge(
         readout = reduce.reduce(
             data_pack=data_pack,
             reduced_pack=reduced_pack,
+            plot_fitsweep=plot_fitsweep,
             overwrite=overwrite,
             debug=debug,
         )

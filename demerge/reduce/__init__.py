@@ -49,6 +49,7 @@ def reduce(
     *,
     data_pack: StrPath,
     reduced_pack: StrPath,
+    plot_fitsweep: bool = False,
     overwrite: bool = False,
     debug: bool = False,
 ) -> Path:
@@ -57,6 +58,7 @@ def reduce(
     Args:
         data_pack: Path of data package (e.g. ``cosmos_YYYYmmddHHMMSS``).
         reduced_pack: Path of reduced package (e.g. ``reduced_YYYYmmddHHMMSS``).
+        plot_fitsweep: If True, the results of ``FitSweep.py`` will be plotted.
         overwrite: If True, ``reduced_pack`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
 
@@ -98,6 +100,16 @@ def reduce(
             # False if logging is implemented
             capture_output=True,
         )
+
+        if plot_fitsweep:
+            run(
+                ["python", SCRIPTS / "FitSweep.py", "--mode", "plot", "--ncpu", "1"],
+                check=True,
+                cwd=work_dir,
+                # False if logging is implemented
+                capture_output=True,
+            )
+
         run(
             ["python", SCRIPTS / "flag_KIDs_based_on_FitSweep.py"],
             check=True,

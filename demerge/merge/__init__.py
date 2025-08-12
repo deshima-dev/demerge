@@ -7,7 +7,7 @@ from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from os import PathLike
 from pathlib import Path
-from typing import Literal, Optional, Union
+from typing import Any, Literal, Optional, Union
 
 
 # dependencies
@@ -42,7 +42,7 @@ def merge(
     /,
     *,
     # required datasets
-    corresp: StrPath,
+    cdb: StrPath,
     ddb: StrPath,
     obsinst: StrPath,
     readout: StrPath,
@@ -63,13 +63,14 @@ def merge(
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
+    **_: Any,
 ) -> Path:
     """Merge observation datasets into a single DEMS.
 
     Args:
         dems: Path of the merged DEMS.
-        corresp: Path of the KID correspondence.
-        ddb: Path of DDB FITS.
+        cdb: Path of CDB (KID correspondence database) file.
+        ddb: Path of DDB (DESHIMA database) file.
         obsinst: Path of the observation instruction.
         readout: Path of the reduced readout FITS.
         antenna: Path of the antenna log.
@@ -108,7 +109,7 @@ def merge(
 
     da = to_dems(
         # required datasets
-        corresp=corresp,
+        cdb=cdb,
         ddb=ddb,
         obsinst=obsinst,
         readout=readout,

@@ -2,7 +2,6 @@ __all__ = ["to_brightness", "to_dems"]
 
 
 # standard library
-import json
 import re
 from datetime import datetime as dt
 from os import PathLike
@@ -82,8 +81,10 @@ COLUMN_NAMES_WEATHER = (
 DATE_PARSER_ANTENNA = lambda s: dt.strptime(s, "%Y%m%d%H%M%S.%f")
 DATE_PARSER_CABIN = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M")
 DATE_PARSER_MISTI = lambda s: dt.strptime(s, "%Y/%m/%d %H:%M:%S.%f")
+DATE_PARSER_OBSID = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
 DATE_PARSER_SKYCHOP = lambda s: dt.utcfromtimestamp(float(s))
 DATE_PARSER_WEATHER = lambda s: dt.strptime(s, "%Y%m%d%H%M%S")
+MASTERID_MISSING = -1
 PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 
@@ -121,17 +122,9 @@ def get_cabin(cabin: StrPath, /) -> xr.Dataset:
     )
 
 
-def get_corresp(corresp: StrPath, /) -> xr.DataArray:
-    """Load a KID correspondence as xarray DataArray."""
-    with open(corresp) as f:
-        masterid, kidid = zip(*json.load(f).items())
-
-    return xr.DataArray(
-        np.array(masterid, np.int64),
-        name="masterid",
-        dims=("kidid",),
-        coords={"kidid": np.array(kidid, np.int64)},
-    )
+def get_cdb(cdb: StrPath, /) -> xr.DataArray:
+    """Load a CDB Zarr as xarray DataArray."""
+    return xr.open_dataarray(cdb, engine="zarr").compute()
 
 
 def get_ddb(ddb: StrPath, /) -> xr.Dataset:
@@ -322,7 +315,7 @@ def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
 def to_dems(
     *,
     # required datasets
-    corresp: StrPath,
+    cdb: StrPath,
     ddb: StrPath,
     obsinst: StrPath,
     readout: StrPath,
@@ -344,8 +337,8 @@ def to_dems(
     """Merge observation datasets into a single DEMS of df/f.
 
     Args:
-        corresp: Path of the KID correspondence.
-        ddb: Path of DDB FITS.
+        cdb: Path of CDB (KID correspondence database) file.
+        ddb: Path of DDB (DESHIMA database) file.
         obsinst: Path of the observation instruction.
         readout: Path of the reduced readout FITS.
         antenna: Path of the antenna log.
@@ -376,7 +369,7 @@ def to_dems(
     d2_merge_options = to_merge_options(locals())
 
     # load required datasets
-    corresp_ = get_corresp(corresp)
+    cdb_ = get_cdb(cdb)
     ddb_ = get_ddb(ddb)
     readout_ = get_readout(readout)
     obsinst_ = get_obsinst(obsinst)
@@ -408,10 +401,18 @@ def to_dems(
         skychop_ = get_skychop(skychop)
         weather_ = get_weather(weather)
 
+    # select KID correspondence
+    cdb_ = cdb_.reindex(
+        time=[DATE_PARSER_OBSID(obsinst_["obs_id"])],
+        method="ffill",
+        fill_value=MASTERID_MISSING,  # type: ignore
+    )
+    cdb_ = cdb_.where(cdb_ != MASTERID_MISSING, drop=True)
+
     # merge datasets
-    mkid = xr.merge([corresp_, readout_], join="left")
-    mkid = mkid.swap_dims({"kidid": "masterid"})
-    mkid = xr.merge([mkid, ddb_], join="left")
+    merged = xr.merge([cdb_[0], readout_], join="left")
+    merged = merged.swap_dims({"kidid": "masterid"})
+    merged = xr.merge([merged, ddb_], join="left")
 
     # correct for time offset and sampling
     # fmt: off
@@ -458,13 +459,13 @@ def to_dems(
 
     return MS.new(
         # data
-        data=mkid["df/f"].data,
+        data=merged["df/f"].data,
         long_name="df/f",
         units="dimensionless",
         name=obsinst_["obs_id"],
         # dimensions
-        time=mkid.time.data,
-        chan=mkid.masterid.data,
+        time=merged.time.data,
+        chan=merged.masterid.data,
         # labels
         observation=obsinst_["obs_id"],
         scan=(scan := to_phase(antenna_.scan_type)).data,
@@ -485,7 +486,7 @@ def to_dems(
         wind_speed=weather_.wind_speed.data,
         wind_direction=weather_.wind_direction.data,
         # data information
-        frequency=mkid.F.data * 1e9,  # GHz -> Hz
+        frequency=merged.F.data * 1e9,  # GHz -> Hz
         exposure=1 / 160,
         interval=1 / 160,
         # observation information
@@ -517,13 +518,13 @@ def to_dems(
         aste_misti_pwv=misti_.pwv.data * 1e-3,  # um -> mm
         aste_misti_frame="altaz",
         # deshima 2.0 specific
-        d2_mkid_id=mkid.masterid.data,
-        d2_mkid_type=mkid.type.data,
-        d2_mkid_frequency=mkid.F.data * 1e9,  # GHz -> Hz
-        d2_mkid_q=mkid.Q.data,
-        d2_resp_fwd=mkid.fwd.data,
-        d2_resp_p0=mkid.p0.data,
-        d2_resp_t0=mkid.T0.data,
+        d2_mkid_id=merged.masterid.data,
+        d2_mkid_type=merged.type.data,
+        d2_mkid_frequency=merged.F.data * 1e9,  # GHz -> Hz
+        d2_mkid_q=merged.Q.data,
+        d2_resp_fwd=merged.fwd.data,
+        d2_resp_p0=merged.p0.data,
+        d2_resp_t0=merged.T0.data,
         d2_skychopper_isblocking=skychop_.is_blocking.data,
         d2_ddb_version=ddb_.version,
         d2_merge_options=d2_merge_options,

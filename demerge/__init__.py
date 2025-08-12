@@ -58,9 +58,8 @@ def demerge(
     data_dir: StrPath = Path(),
     dems_dir: StrPath = Path(),
     reduced_dir: Optional[Path] = None,
+    cdb: StrPath = PACKAGE_DATA / "cdb_20250528.zarr.zip",
     ddb: StrPath = PACKAGE_DATA / "ddb_20250628.fits.gz",
-    # analysis options
-    plot_fitsweep: bool = False,
     # merge options
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
@@ -78,13 +77,13 @@ def demerge(
         reduced_dir: Path of directory where reduced packages are placed,
             i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
             If not specified, a temporary directory will be used.
+        cdb: Path of CDB (KID correspondence database) file.
         ddb: Path of DDB (DESHIMA database) file.
-        plot_fitsweep: If True, the results of ``FitSweep.py`` will be plotted.
         measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, the reduced package and the merged DEMS file
             will be overwritten even if they exist.
         debug: If True, detailed logs for debugging will be printed.
-        **options: Other merge options for the merge command.
+        **options: Other merge options for the reduce and merge commands.
 
     Returns:
         Path of the merged DEMS.
@@ -107,16 +106,16 @@ def demerge(
         readout = reduce.reduce(
             data_pack=data_pack,
             reduced_pack=reduced_pack,
-            plot_fitsweep=plot_fitsweep,
             overwrite=overwrite,
             debug=debug,
+            **options,
         )
 
         # Run merge function
         return merge.merge(
             dems_dir / f"dems_{obsid}.zarr.zip",
             # required datasets
-            corresp=data_pack_.corresp,
+            cdb=cdb,
             ddb=ddb,
             obsinst=data_pack_.obsinst,
             readout=readout,

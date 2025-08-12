@@ -31,28 +31,32 @@ DESCRIPTION
 POSITIONAL ARGUMENTS
     OBSID
         Type: str
-        Observation ID (YYYYmmddHHMMSS).
+        Observation ID (YYYYMMDDHHMMSS).
 
 FLAGS
     --data_dir=DATA_DIR
         Type: Path
         Default: PosixPath('.')
         Path of directory where data packages are placed,
-        i.e. expecting ``${data_dir}/cosmos_YYYYmmddHHMMSS``.
+        i.e. expecting ``${data_dir}/cosmos_YYYYMMDDHHMMSS``.
     --dems_dir=DEMS_DIR
         Type: Path
         Default: PosixPath('.')
         Path of directory where merged DEMS will be placed,
-        i.e. expecting ``${dems_dir}/dems_YYYYmmddHHMMSS.zarr.zip``.
+        i.e. expecting ``${dems_dir}/dems_YYYYMMDDHHMMSS.zarr.zip``.
     --reduced_dir=REDUCED_DIR
         Type: Path
         Default: PosixPath('.')
         Path of directory where reduced packages are placed,
-        i.e. expecting ``${reduced_dir}/reduced_YYYYmmddHHMMSS``.
+        i.e. expecting ``${reduced_dir}/reduced_YYYYMMDDHHMMSS``.
         If not specified, a temporary directory will be used.
+    --cdb=CDB
+        Type: Path
+        Default: PosixPath('/path/to/demerge/data/cdb_20250528.zarr.zip')
+        Path of CDB (KID correspondence database) file.
     --ddb=DDB
         Type: Path
-        Default: PosixPath('/path/to/demerge/data/ddb_20240713.fits')
+        Default: PosixPath('/path/to/demerge/data/ddb_20250628.fits.gz')
         Path of DDB (DESHIMA database) file.
     --measure=MEASURE
         Type: Literal
@@ -71,24 +75,24 @@ FLAGS
 
 A typical command run is as follows:
 ```shell
-demerge YYYYmmddHHMMSS --data_dir /path/to/data --reduced_dir .cache
+demerge YYYYMMDDHHMMSS --data_dir /path/to/data --reduced_dir .cache
 ```
-where the raw data directory, `/path/to/data/cosmos_YYYYmmddHHMMSS`, will be selected, then an intermediate reduced data directory will be created as `./.cache/reduced_YYYYmmddHHMMSS`, and finally the merged DEMS file will be placed as `./dems_YYYYmmddHHMMSS.zarr.zip`.
+where the raw data directory, `/path/to/data/cosmos_YYYYMMDDHHMMSS`, will be selected, then an intermediate reduced data directory will be created as `./.cache/reduced_YYYYMMDDHHMMSS`, and finally the merged DEMS file will be placed as `./dems_YYYYMMDDHHMMSS.zarr.zip`.
 
 ## Raw data directory
 
 The name and the file structure of a raw data directory must be as follows:
 
 ```plaintext
-cosmos_YYYYmmddHHMMSS/
-├── YYYYmmddHHMMSS.ant
-├── YYYYmmddHHMMSS.cabin (optional)
-├── YYYYmmddHHMMSS.fits
-├── YYYYmmddHHMMSS.misti (optional)
-├── YYYYmmddHHMMSS.obs
-├── YYYYmmddHHMMSS.skychopper.dat.xz
-├── YYYYmmddHHMMSS.wea
-├── YYYYmmddHHMMSS_info.txt
+cosmos_YYYYMMDDHHMMSS/
+├── YYYYMMDDHHMMSS.ant
+├── YYYYMMDDHHMMSS.cabin
+├── YYYYMMDDHHMMSS.fits
+├── YYYYMMDDHHMMSS.misti
+├── YYYYMMDDHHMMSS.obs
+├── YYYYMMDDHHMMSS.skychopper.dat.xz
+├── YYYYMMDDHHMMSS.wea
+├── YYYYMMDDHHMMSS_info.txt
 ├── kid_corresp.json
 ├── kids.list
 ├── localsweep.sweep
@@ -108,11 +112,11 @@ For example, the following two runs are equivalent:
 
 ```shell
 # run by a shell script
-demerge YYYYmmddHHMMSS --data_dir /path/to/data --reduced_dir .cache
+demerge YYYYMMDDHHMMSS --data_dir /path/to/data --reduced_dir .cache
 ```
 
 ```python
 # run by a Python script
 from demerge import demerge
-demerge("YYYYmmddHHMMSS", data_dir="/path/to/data", reduced_dir=".cache")
+demerge("YYYYMMDDHHMMSS", data_dir="/path/to/data", reduced_dir=".cache")
 ```

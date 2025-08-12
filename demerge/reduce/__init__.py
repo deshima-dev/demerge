@@ -10,7 +10,7 @@ from pathlib import Path
 from shutil import rmtree
 from subprocess import run
 from tempfile import TemporaryDirectory
-from typing import Union
+from typing import Any, Union
 
 
 # dependencies
@@ -52,6 +52,7 @@ def reduce(
     plot_fitsweep: bool = False,
     overwrite: bool = False,
     debug: bool = False,
+    **_: Any,
 ) -> Path:
     """Reduce KID measurements into a single "reduced" FITS.
 

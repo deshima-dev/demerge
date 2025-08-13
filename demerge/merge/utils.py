@@ -136,41 +136,45 @@ def get_ddb(ddb: StrPath, /) -> xr.Dataset:
         version = hdus["PRIMARY"].header["DDB_ID"]
 
         # read from KIDDES HDU
-        ds_kiddes = xr.Dataset(
+        kiddes = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDDES"].data)[dim]),
+                dim: (data := to_native(hdus["KIDDES"].data))[dim],
             },
             data_vars={
-                "type": (dim, np.array(to_native(data["attribute"]))),
+                "type": (dim, np.array(data["attribute"])),
             },
-        ).drop_duplicates(dim)
+        )
 
         # read from KIDFILT HDU
-        ds_kidfilt = xr.Dataset(
+        kidfilt = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDFILT"].data)[dim]),
+                dim: (data := to_native(hdus["KIDFILT"].data))[dim],
             },
             data_vars={
-                "F": (dim, to_native(data["F_filter, df_filter"].T[0])),
-                "Q": (dim, to_native(data["Q_filter, dQ_filter"].T[0])),
+                "F": (dim, data["F_filter, df_filter"].T[0]),
+                "Q": (dim, data["Q_filter, dQ_filter"].T[0]),
             },
-        ).drop_duplicates(dim)
+        )
 
         # read from KIDRESP HDU
-        ds_kidresp = xr.Dataset(
+        kidresp = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDRESP"].data)[dim]),
+                dim: (data := to_native(hdus["KIDRESP"].data))[dim],
             },
             data_vars={
-                "p0": (dim, to_native(data["cal params"].T[0])),
-                "fwd": (dim, to_native(data["cal params"].T[1])),
-                "T0": (dim, to_native(data["cal params"].T[2])),
+                "p0": (dim, data["cal params"].T[0]),
+                "fwd": (dim, data["cal params"].T[1]),
+                "T0": (dim, data["cal params"].T[2]),
             },
-        ).drop_duplicates(dim)
+        )
 
-    ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
-    ds = ds.where(ds.masterid >= 0, drop=True)
-    return ds.assign_attrs(version=version)
+    return xr.merge(
+        [
+            kiddes.where(kiddes.masterid != MASTERID_MISSING, drop=True),
+            kidfilt.where(kidfilt.masterid != MASTERID_MISSING, drop=True),
+            kidresp.where(kidresp.masterid != MASTERID_MISSING, drop=True),
+        ]
+    ).assign_attrs(version=version)
 
 
 def get_misti(misti: StrPath, /) -> xr.Dataset:
@@ -575,7 +579,7 @@ def to_merge_options(locals: dict[str, Any], /) -> dict[str, Any]:
 
 def to_native(array: NDArray[Any], /) -> NDArray[Any]:
     """Convert the byte order of an array to native."""
-    return array.astype(array.dtype.type)
+    return array.astype(array.dtype.newbyteorder())
 
 
 def to_phase(array: xr.DataArray, /) -> xr.DataArray:

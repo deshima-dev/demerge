@@ -60,6 +60,7 @@ def merge(
     dt_weather: Union[int, str] = "0 ms",
     # optional merge strategies
     include_disabled_mkids: bool = False,
+    include_filterless_mkids: bool = False,
     measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
@@ -91,6 +92,9 @@ def merge(
             unit such that (dt_weather = t_weather - t_readout).
         include_disabled_mkids: Whether to include disabled
             (e.g. fit-failed) MKID responses in the merged DEMS.
+            Note that such data will be all filled with NaN.
+        include_filterless_mkids: Whether to include wideband and/or
+            no-filter-information MKID responses in the merged DEMS.
             Note that such data will be all filled with NaN.
         measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, ``dems`` will be overwritten even if it exists.
@@ -127,6 +131,7 @@ def merge(
         dt_weather=dt_weather,
         # optional merge strategies
         include_disabled_mkids=include_disabled_mkids,
+        include_filterless_mkids=include_filterless_mkids,
     )
 
     if measure == "brightness":

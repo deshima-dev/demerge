@@ -136,41 +136,45 @@ def get_ddb(ddb: StrPath, /) -> xr.Dataset:
         version = hdus["PRIMARY"].header["DDB_ID"]
 
         # read from KIDDES HDU
-        ds_kiddes = xr.Dataset(
+        kiddes = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDDES"].data)[dim]),
+                dim: (data := to_native(hdus["KIDDES"].data))[dim],
             },
             data_vars={
-                "type": (dim, np.array(to_native(data["attribute"]))),
+                "type": (dim, np.array(data["attribute"])),
             },
-        ).drop_duplicates(dim)
+        )
 
         # read from KIDFILT HDU
-        ds_kidfilt = xr.Dataset(
+        kidfilt = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDFILT"].data)[dim]),
+                dim: (data := to_native(hdus["KIDFILT"].data))[dim],
             },
             data_vars={
-                "F": (dim, to_native(data["F_filter, df_filter"].T[0])),
-                "Q": (dim, to_native(data["Q_filter, dQ_filter"].T[0])),
+                "F": (dim, data["F_filter, df_filter"].T[0]),
+                "Q": (dim, data["Q_filter, dQ_filter"].T[0]),
             },
-        ).drop_duplicates(dim)
+        )
 
         # read from KIDRESP HDU
-        ds_kidresp = xr.Dataset(
+        kidresp = xr.Dataset(
             coords={
-                dim: to_native((data := hdus["KIDRESP"].data)[dim]),
+                dim: (data := to_native(hdus["KIDRESP"].data))[dim],
             },
             data_vars={
-                "p0": (dim, to_native(data["cal params"].T[0])),
-                "fwd": (dim, to_native(data["cal params"].T[1])),
-                "T0": (dim, to_native(data["cal params"].T[2])),
+                "p0": (dim, data["cal params"].T[0]),
+                "fwd": (dim, data["cal params"].T[1]),
+                "T0": (dim, data["cal params"].T[2]),
             },
-        ).drop_duplicates(dim)
+        )
 
-    ds = xr.merge([ds_kiddes, ds_kidfilt, ds_kidresp])
-    ds = ds.where(ds.masterid >= 0, drop=True)
-    return ds.assign_attrs(version=version)
+    return xr.merge(
+        [
+            kiddes.where(kiddes.masterid != MASTERID_MISSING, drop=True),
+            kidfilt.where(kidfilt.masterid != MASTERID_MISSING, drop=True),
+            kidresp.where(kidresp.masterid != MASTERID_MISSING, drop=True),
+        ]
+    ).assign_attrs(version=version)
 
 
 def get_misti(misti: StrPath, /) -> xr.Dataset:
@@ -333,6 +337,7 @@ def to_dems(
     dt_weather: Union[int, str] = "0 ms",
     # optional merge strategies
     include_disabled_mkids: bool = False,
+    include_filterless_mkids: bool = False,
 ) -> xr.DataArray:
     """Merge observation datasets into a single DEMS of df/f.
 
@@ -360,6 +365,9 @@ def to_dems(
         include_disabled_mkids: Whether to include disabled
             (e.g. fit-failed) MKID responses in the merged DEMS.
             Note that such data will be all filled with NaN.
+        include_filterless_mkids: Whether to include wideband and/or
+            no-filter-information MKID responses in the merged DEMS.
+            Note that such data will be all filled with NaN.
 
     Returns:
         Merged DEMS of df/f as xarray DataArray.
@@ -373,6 +381,9 @@ def to_dems(
     ddb_ = get_ddb(ddb)
     readout_ = get_readout(readout)
     obsinst_ = get_obsinst(obsinst)
+
+    if not include_filterless_mkids:
+        ddb_ = ddb_.dropna("masterid")
 
     if not include_disabled_mkids:
         readout_ = readout_.where(readout_.enabled, drop=True)
@@ -410,9 +421,9 @@ def to_dems(
     cdb_ = cdb_.where(cdb_ != MASTERID_MISSING, drop=True)
 
     # merge datasets
-    merged = xr.merge([cdb_[0], readout_], join="left")
-    merged = merged.swap_dims({"kidid": "masterid"})
-    merged = xr.merge([merged, ddb_], join="left")
+    merged_ = xr.merge([cdb_[0], readout_], join="inner")
+    merged_ = merged_.swap_dims({"kidid": "masterid"})
+    merged_ = xr.merge([ddb_, merged_], join="inner")
 
     # correct for time offset and sampling
     # fmt: off
@@ -459,13 +470,13 @@ def to_dems(
 
     return MS.new(
         # data
-        data=merged["df/f"].data,
+        data=merged_["df/f"].data,
         long_name="df/f",
         units="dimensionless",
         name=obsinst_["obs_id"],
         # dimensions
-        time=merged.time.data,
-        chan=merged.masterid.data,
+        time=merged_.time.data,
+        chan=merged_.masterid.data,
         # labels
         observation=obsinst_["obs_id"],
         scan=(scan := to_phase(antenna_.scan_type)).data,
@@ -486,7 +497,7 @@ def to_dems(
         wind_speed=weather_.wind_speed.data,
         wind_direction=weather_.wind_direction.data,
         # data information
-        frequency=merged.F.data * 1e9,  # GHz -> Hz
+        frequency=merged_.F.data * 1e9,  # GHz -> Hz
         exposure=1 / 160,
         interval=1 / 160,
         # observation information
@@ -518,13 +529,13 @@ def to_dems(
         aste_misti_pwv=misti_.pwv.data * 1e-3,  # um -> mm
         aste_misti_frame="altaz",
         # deshima 2.0 specific
-        d2_mkid_id=merged.masterid.data,
-        d2_mkid_type=merged.type.data,
-        d2_mkid_frequency=merged.F.data * 1e9,  # GHz -> Hz
-        d2_mkid_q=merged.Q.data,
-        d2_resp_fwd=merged.fwd.data,
-        d2_resp_p0=merged.p0.data,
-        d2_resp_t0=merged.T0.data,
+        d2_mkid_id=merged_.masterid.data,
+        d2_mkid_type=merged_.type.data,
+        d2_mkid_frequency=merged_.F.data * 1e9,  # GHz -> Hz
+        d2_mkid_q=merged_.Q.data,
+        d2_resp_fwd=merged_.fwd.data,
+        d2_resp_p0=merged_.p0.data,
+        d2_resp_t0=merged_.T0.data,
         d2_skychopper_isblocking=skychop_.is_blocking.data,
         d2_ddb_version=ddb_.version,
         d2_merge_options=d2_merge_options,
@@ -575,7 +586,7 @@ def to_merge_options(locals: dict[str, Any], /) -> dict[str, Any]:
 
 def to_native(array: NDArray[Any], /) -> NDArray[Any]:
     """Convert the byte order of an array to native."""
-    return array.astype(array.dtype.type)
+    return array.astype(array.dtype.newbyteorder())
 
 
 def to_phase(array: xr.DataArray, /) -> xr.DataArray:

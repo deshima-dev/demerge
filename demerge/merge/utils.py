@@ -1,4 +1,15 @@
-__all__ = ["to_dems"]
+__all__ = [
+    "open_antenna",
+    "open_cabin",
+    "open_cdb",
+    "open_ddb",
+    "open_misti",
+    "open_obsinst",
+    "open_readout",
+    "open_skychop",
+    "open_weather",
+    "to_dems",
+]
 
 
 # standard library
@@ -88,7 +99,7 @@ MASTERID_MISSING = -1
 PACKAGE_DATA = Path(__file__).parents[1] / "data"
 
 
-def get_antenna(antenna: StrPath, /) -> xr.Dataset:
+def open_antenna(antenna: StrPath, /) -> xr.Dataset:
     """Load an antenna log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         antenna,
@@ -103,7 +114,7 @@ def get_antenna(antenna: StrPath, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_cabin(cabin: StrPath, /) -> xr.Dataset:
+def open_cabin(cabin: StrPath, /) -> xr.Dataset:
     """Load a cabin log as xarray Dataset."""
     return (
         pd.read_csv(  # type: ignore
@@ -122,12 +133,12 @@ def get_cabin(cabin: StrPath, /) -> xr.Dataset:
     )
 
 
-def get_cdb(cdb: StrPath, /) -> xr.DataArray:
+def open_cdb(cdb: StrPath, /) -> xr.DataArray:
     """Load a CDB Zarr as xarray DataArray."""
     return xr.open_dataarray(cdb, engine="zarr").compute()
 
 
-def get_ddb(ddb: StrPath, /) -> xr.Dataset:
+def open_ddb(ddb: StrPath, /) -> xr.Dataset:
     """Load a DDB FITS as xarray Dataset."""
     dim = "masterid"
 
@@ -177,7 +188,7 @@ def get_ddb(ddb: StrPath, /) -> xr.Dataset:
     ).assign_attrs(version=version)
 
 
-def get_misti(misti: StrPath, /) -> xr.Dataset:
+def open_misti(misti: StrPath, /) -> xr.Dataset:
     """Load a MiSTI log as xarray Dataset."""
     return (
         pd.read_csv(  # type: ignore
@@ -196,7 +207,7 @@ def get_misti(misti: StrPath, /) -> xr.Dataset:
     )
 
 
-def get_obsinst(obsinst: StrPath, /) -> dict[str, str]:
+def open_obsinst(obsinst: StrPath, /) -> dict[str, str]:
     """Load an observation instruction to get parameters."""
     with open(obsinst) as f:
         lines = f.read()
@@ -227,7 +238,7 @@ def get_obsinst(obsinst: StrPath, /) -> dict[str, str]:
     }
 
 
-def get_readout(readout: StrPath, /) -> xr.DataArray:
+def open_readout(readout: StrPath, /) -> xr.DataArray:
     """Load a reduced readout FITS as xarray DataArray."""
     with fits.open(readout) as hdus:  # type:ignore
         kidsinfo = hdus["KIDSINFO"].data
@@ -262,7 +273,7 @@ def get_readout(readout: StrPath, /) -> xr.DataArray:
     )
 
 
-def get_skychop(skychop: StrPath, /) -> xr.Dataset:
+def open_skychop(skychop: StrPath, /) -> xr.Dataset:
     """Load a sky chopper log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         skychop,
@@ -277,7 +288,7 @@ def get_skychop(skychop: StrPath, /) -> xr.Dataset:
     ).to_xarray()
 
 
-def get_weather(weather: StrPath, /) -> xr.Dataset:
+def open_weather(weather: StrPath, /) -> xr.Dataset:
     """Load a weather log as xarray Dataset."""
     return pd.read_csv(  # type: ignore
         weather,
@@ -353,10 +364,10 @@ def to_dems(
     d2_merge_options = to_merge_options(locals())
 
     # load required datasets
-    cdb_ = get_cdb(cdb)
-    ddb_ = get_ddb(ddb)
-    readout_ = get_readout(readout)
-    obsinst_ = get_obsinst(obsinst)
+    cdb_ = open_cdb(cdb)
+    ddb_ = open_ddb(ddb)
+    readout_ = open_readout(readout)
+    obsinst_ = open_obsinst(obsinst)
 
     if not include_filterless_mkids:
         ddb_ = ddb_.dropna("masterid")
@@ -382,11 +393,11 @@ def to_dems(
 
     with catch_warnings():
         simplefilter("ignore")
-        antenna_ = get_antenna(antenna)
-        cabin_ = get_cabin(cabin)
-        misti_ = get_misti(misti)
-        skychop_ = get_skychop(skychop)
-        weather_ = get_weather(weather)
+        antenna_ = open_antenna(antenna)
+        cabin_ = open_cabin(cabin)
+        misti_ = open_misti(misti)
+        skychop_ = open_skychop(skychop)
+        weather_ = open_weather(weather)
 
     # select KID correspondence
     cdb_ = cdb_.reindex(

@@ -1,4 +1,4 @@
-__all__ = ["merge"]
+__all__ = ["merge", "utils"]
 
 
 # standard library
@@ -11,6 +11,7 @@ from typing import Any, Optional, Union
 
 
 # dependencies
+from . import utils
 from fire import Fire
 from .utils import to_dems
 

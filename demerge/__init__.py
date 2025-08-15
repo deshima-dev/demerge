@@ -9,7 +9,7 @@ from logging import DEBUG, basicConfig, getLogger
 from os import PathLike
 from pathlib import Path
 from tempfile import TemporaryDirectory
-from typing import Any, Literal, Optional, Union
+from typing import Any, Optional, Union
 
 
 # dependencies
@@ -61,7 +61,6 @@ def demerge(
     cdb: StrPath = PACKAGE_DATA / "cdb_20250528.zarr.zip",
     ddb: StrPath = PACKAGE_DATA / "ddb_20250814.fits.gz",
     # merge options
-    measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
     **options: Any,
@@ -79,7 +78,6 @@ def demerge(
             If not specified, a temporary directory will be used.
         cdb: Path of CDB (KID correspondence database) file.
         ddb: Path of DDB (DESHIMA database) file.
-        measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, the reduced package and the merged DEMS file
             will be overwritten even if they exist.
         debug: If True, detailed logs for debugging will be printed.
@@ -126,7 +124,6 @@ def demerge(
             skychop=data_pack_.skychop,
             weather=data_pack_.weather,
             # merge options
-            measure=measure,
             overwrite=overwrite,
             debug=debug,
             **options,

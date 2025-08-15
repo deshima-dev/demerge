@@ -1,4 +1,4 @@
-__all__ = ["to_brightness", "to_dems"]
+__all__ = ["to_dems"]
 
 
 # standard library
@@ -290,30 +290,6 @@ def get_weather(weather: StrPath, /) -> xr.Dataset:
         parse_dates=[0],
         date_parser=DATE_PARSER_WEATHER,
     ).to_xarray()
-
-
-def to_brightness(dfof: xr.DataArray, /) -> xr.DataArray:
-    """Convert a DEMS of df/f to that of brightness."""
-    if np.isnan(T_room := dfof.aste_cabin_temperature.mean().data):
-        T_room = 293.0
-
-    if np.isnan(T_amb := dfof.temperature.mean().data):
-        T_amb = 273.0
-
-    fwd = dfof.d2_resp_fwd.data
-    p0 = dfof.d2_resp_p0.data
-    T0 = dfof.d2_resp_t0.data
-
-    return (
-        dfof.copy(
-            deep=True,
-            data=(dfof.data + p0 * np.sqrt(T_room + T0)) ** 2 / (p0**2 * fwd)
-            - T0 / fwd
-            - (1 - fwd) / fwd * T_amb,
-        )
-        .astype(dfof.dtype)
-        .assign_attrs(long_name="Brightness", units="K")
-    )
 
 
 def to_dems(

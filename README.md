@@ -11,7 +11,7 @@ DESHIMA merge code for observed datasets
 ## Installation
 
 ```shell
-pip install demerge==2025.8.2
+pip install demerge==2025.8.3
 ```
 
 ## Command line interface
@@ -58,10 +58,6 @@ FLAGS
         Type: Path
         Default: PosixPath('/path/to/demerge/data/ddb_20250814.fits.gz')
         Path of DDB (DESHIMA database) file.
-    --measure=MEASURE
-        Type: Literal
-        Default: 'df/f'
-        Measure of the DEMS (either df/f or brightness).
     --overwrite=OVERWRITE
         Type: bool
         Default: False

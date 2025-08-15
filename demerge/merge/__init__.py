@@ -1,4 +1,4 @@
-__all__ = ["merge"]
+__all__ = ["merge", "utils"]
 
 
 # standard library
@@ -7,12 +7,13 @@ from contextlib import contextmanager
 from logging import DEBUG, basicConfig, getLogger
 from os import PathLike
 from pathlib import Path
-from typing import Any, Literal, Optional, Union
+from typing import Any, Optional, Union
 
 
 # dependencies
+from . import utils
 from fire import Fire
-from .utils import to_brightness, to_dems
+from .utils import to_dems
 
 
 # type hints
@@ -61,7 +62,6 @@ def merge(
     # optional merge strategies
     include_disabled_mkids: bool = False,
     include_filterless_mkids: bool = False,
-    measure: Literal["df/f", "brightness"] = "df/f",
     overwrite: bool = False,
     debug: bool = False,
     **_: Any,
@@ -96,7 +96,6 @@ def merge(
         include_filterless_mkids: Whether to include wideband and/or
             no-filter-information MKID responses in the merged DEMS.
             Note that such data will be all filled with NaN.
-        measure: Measure of the DEMS (either df/f or brightness).
         overwrite: If True, ``dems`` will be overwritten even if it exists.
         debug: If True, detailed logs for debugging will be printed.
 
@@ -133,14 +132,6 @@ def merge(
         include_disabled_mkids=include_disabled_mkids,
         include_filterless_mkids=include_filterless_mkids,
     )
-
-    if measure == "brightness":
-        LOGGER.warning(
-            "df/f-to-brightness conversion in de:merge will be deprecated in a future release. "
-            "Convert in de:code by specifying measure='brightness' when loading "
-            "or by explicitly calling the to_brightness function after loading."
-        )
-        da = to_brightness(da)
 
     if (dems := Path(dems)).exists() and not overwrite:
         raise FileExistsError(dems)

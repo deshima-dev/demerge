@@ -1,5 +1,5 @@
 __all__ = ["data", "demerge", "merge", "reduce"]
-__version__ = "2025.8.2"
+__version__ = "2025.8.3"
 
 
 # standard library

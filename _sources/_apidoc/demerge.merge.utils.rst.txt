@@ -1,0 +1,7 @@
+demerge.merge.utils module
+==========================
+
+.. automodule:: demerge.merge.utils
+   :members:
+   :show-inheritance:
+   :undoc-members:

@@ -56,7 +56,7 @@ FLAGS
         Path of CDB (KID correspondence database) file.
     --ddb=DDB
         Type: Path
-        Default: PosixPath('/path/to/demerge/data/ddb_20250814.fits.gz')
+        Default: PosixPath('/path/to/demerge/data/ddb_20250819.fits.gz')
         Path of DDB (DESHIMA database) file.
     --overwrite=OVERWRITE
         Type: bool

@@ -1,5 +1,5 @@
 __all__ = ["data", "demerge", "merge", "reduce"]
-__version__ = "2025.8.3"
+__version__ = "2025.8.4"
 
 
 # standard library
@@ -59,7 +59,7 @@ def demerge(
     dems_dir: StrPath = Path(),
     reduced_dir: Optional[Path] = None,
     cdb: StrPath = PACKAGE_DATA / "cdb_20250528.zarr.zip",
-    ddb: StrPath = PACKAGE_DATA / "ddb_20250814.fits.gz",
+    ddb: StrPath = PACKAGE_DATA / "ddb_20250819.fits.gz",
     # merge options
     overwrite: bool = False,
     debug: bool = False,
